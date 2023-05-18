@@ -9,7 +9,7 @@
 .content{
   display: flex;
   min-width: 100vh;
-  max-height: 600px;
+  max-height: 900px;
 }
 
 .swap{
