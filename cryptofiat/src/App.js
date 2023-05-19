@@ -4590,6 +4590,13 @@ const Auctions = {
     subtitle: '',
 }
 
+const Pools = {
+    title: 'Pools',
+    plus: false,
+    expander:true,
+    subtitle: '',
+}
+
 const Deposits = {
     title: 'Deposits',
     plus: true,
@@ -4612,6 +4619,12 @@ const balances = [
     { title: 'TSC', name:'True stable coin', id: 2, iconType: 'wallet' },
     { title: 'WETH', name:'wrapped ETC', id: 3, iconType: 'wallet' },
     { title: 'RLE', name:'Rule token', id: 4, iconType: 'wallet' },
+];
+
+const pools = [
+    { title: 'TrueStableCoin', name:'TSC/ETC', id: 1, iconType: 'pool' },
+    { title: 'Rule token', name:'RLE/TSC', id: 2, iconType: 'pool' },
+    { title: 'Gold', name:'Gold/TSC', id: 3, iconType: 'pool' },
 ];
 
 const auctions = [
@@ -4952,12 +4965,18 @@ class DebtPosition extends React.Component{
     }
 
     closeCDP(){
+        /*
         const { contracts } = this.props;
-        contracts['cdp'].methods.closeCDP(this.props.id).send({from:this.props.account});
+        contracts['cdp'].methods.closeCDP(this.props.id).send({from:this.props.account});*/
     }
     updateCDP(){}
     withdraw(){}
-    payInterest(){}
+    payInterest(){
+        /*
+        this.props.contracts['cdp'].methods.transferFee(this.props.id).send({from:this.props.account}).then(function (result) {
+            alert('success');
+        });*/
+    }
 
     render() {
         return  <div align='left'>
@@ -5032,9 +5051,18 @@ class Deposit extends React.Component{
 
     close(){
         this.props.contracts['deposit'].methods.deposits(this.props.id).call().then((d)=>{
-            this.props.contracts['deposit'].methods.withdraw(this.props.id,d.coinsDeposited).send({from:this.props.account}).then(()=>{
-                alert ('deposit closed');
-            });
+            this.props.contracts['deposit'].methods.withdraw(this.props.id,d.coinsDeposited).send({from:this.props.account})
+                .on('transactionHash', (hash) => {
+                    this.setState({'loader':true})
+                })
+                .on('receipt', (receipt) => {
+                    this.setState({'loader':true})
+                })
+                .on('confirmation', (confirmationNumber, receipt) => {
+                    this.setState({'loader':false})
+                    window.location.reload();
+                })
+                .on('error', console.error);
         });
 
     }
@@ -5052,6 +5080,7 @@ class Deposit extends React.Component{
             <div>accumulated interest: <b>{this.state.accumulatedInterest}</b></div>
             <input  type='button' value='claim interest' onClick={this.claimInterest}/>
             <input className={'green'} type='button' value='close' onClick={this.close}/>
+            {this.state.loader?<Loader/>:''}
         </div>;
     }
 }
@@ -5070,9 +5099,18 @@ class WithDrawDeposit extends React.Component{
     }
 
     withdraw(){
-        this.props.contracts['deposit'].methods.withdraw(this.props.depositId,localWeb3.utils.toWei(this.state.toWithdraw)).send({from:this.props.account}).then((result)=>{
-            window.location.reload();
-        });
+        this.props.contracts['deposit'].methods.withdraw(this.props.depositId,localWeb3.utils.toWei(this.state.toWithdraw)).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
     }
 
     changeToWithdraw(e){
@@ -5098,6 +5136,7 @@ class WithDrawDeposit extends React.Component{
             <br></br>
             <br></br>
             <br></br>
+            {this.state.loader?<Loader/>:''}
         </div>
     }
 }
@@ -5114,11 +5153,20 @@ class OpenDeposit extends React.Component{
 
     allowStables(){
         if (this.state.toAllow<=this.state.tscBalance && this.props.contracts['deposit'] !== undefined){
-            this.props.contracts['stableCoin'].methods.approve(this.props.contracts['deposit']._address,localWeb3.utils.toWei(this.state.toAllow.toString())).send({from:this.props.account}).then((result)=>{
-                this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['deposit']._address).call().then((res)=>{
-                    this.setState({allowed:(res/10**18)})
+            this.props.contracts['stableCoin'].methods.approve(this.props.contracts['deposit']._address,localWeb3.utils.toWei(this.state.toAllow.toString())).send({from:this.props.account})
+                .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
                 })
-            });
+                .on('receipt', (receipt) => {
+                    this.setState({'loader':true})
+                })
+                .on('confirmation', (confirmationNumber, receipt) => {
+                    this.setState({'loader':false})
+                    this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['deposit']._address).call().then((res)=>{
+                        this.setState({allowed:(res/10**18)})
+                    })
+                })
+                .on('error', console.error);
         }
     }
 
@@ -5127,15 +5175,33 @@ class OpenDeposit extends React.Component{
     }
 
     deposit(){
-        this.props.contracts['deposit'].methods.deposit().send({from:this.props.account}).then((result)=>{
-            window.location.reload();
-        });
+        this.props.contracts['deposit'].methods.deposit().send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
     }
 
     topUp(){
-        this.props.contracts['deposit'].methods.topUp(this.props.depositId).send({from:this.props.account}).then((result)=>{
-            window.location.reload();
-        });
+        this.props.contracts['deposit'].methods.topUp(this.props.depositId).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+            this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
     }
 
     changeToAllow(e){
@@ -5176,6 +5242,7 @@ class OpenDeposit extends React.Component{
             <br></br>
             <br></br>
             <br></br>
+            {this.state.loader?<Loader/>:''}
         </div>
     }
 }
@@ -5270,6 +5337,7 @@ class Product extends React.Component{
             case 'out': return <svg className='rotate-180' width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M18 36C8.059 36 0 27.941 0 18S8.059 0 18 0s18 8.059 18 18-8.059 18-18 18Zm3.6-25.8 9.334 7a1 1 0 0 1 0 1.6l-9.334 7A1 1 0 0 1 20 25v-2h-9a1 1 0 1 1 0-2h3v-2H4a1 1 0 0 1 0-2h8v-2H7a1 1 0 0 1 0-2h13v-2a1 1 0 0 1 1.6-.8Z"></path></svg>
             case 'in': return <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M18 36C8.059 36 0 27.941 0 18S8.059 0 18 0s18 8.059 18 18-8.059 18-18 18Zm3.6-25.8 9.334 7a1 1 0 0 1 0 1.6l-9.334 7A1 1 0 0 1 20 25v-2h-9a1 1 0 1 1 0-2h3v-2H4a1 1 0 0 1 0-2h8v-2H7a1 1 0 0 1 0-2h13v-2a1 1 0 0 1 1.6-.8Z"></path></svg>
             case 'auction': return <img src='img/auction.png'/>; break;
+            case 'pool': return <img src='img/liquidity.png'/>; break;
             default:
                 return '';
         }
@@ -5365,6 +5433,12 @@ class Product extends React.Component{
                         </div>
                     </div>
                 </div>
+    }
+}
+
+class Loader extends React.Component{
+    render(){
+        return <div><img className={'loader abs-centered'} src='img/loading.png' width={'50'} height={'50'}/></div>;
     }
 }
 
@@ -5957,7 +6031,8 @@ class App extends React.Component{
                                 <MyPanel bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={Credits}/>
                                 <MyPanel bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={Deposits}/></>
                             :''}
-                        <MyPanel bgColor="#FFFFFF" contracts={this.state.contracts} waitInit={true} content={Auctions} products={auctions}/>
+                        <MyPanel bgColor="#FFFFFF" contracts={this.state.contracts} content={Auctions} products={auctions}/>
+                        <MyPanel bgColor="#FFFFFF" contracts={this.state.contracts} content={Pools} products={pools}/>
 
                     </div>
 

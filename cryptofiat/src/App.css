@@ -34,6 +34,23 @@
 }
 
 
+@media (prefers-reduced-motion: no-preference) {
+  .loader {
+    animation: App-logo-spin infinite 2s linear;
+  }
+}
+
+.abs-centered{
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.relative{
+  position: relative;
+}
+
 .region-scaffold:not(:last-child) {
   border-bottom: 1px solid rgba(38, 38, 38, 0.08);
 }
