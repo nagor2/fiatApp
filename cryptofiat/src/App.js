@@ -95,6 +95,7 @@ class MyPanel extends React.Component {
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'WETH':return <Transfers localWeb3={localWeb3} contractName={'weth'} account={this.props.account} contracts={this.props.contracts}/>; break;
                 case 'Borrow': return <Borrow contracts={this.props.contracts} account={this.props.account}/>; break;
+                case 'updateCDP': return <UpdateCDP position={content[0]} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'CDP': return <CDP contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
                 case 'debt position': return <DebtPosition contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'deposit': return <Deposit contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
@@ -503,8 +504,10 @@ class DebtPosition extends React.Component{
             <div>opened: <b>{this.state.timeOpened}</b></div>
             <div>updated: <b>{this.state.lastTimeUpdated}</b></div>
             <div>coinsMinted (red/yellow/green): <b>{this.state.coinsMinted}</b></div>
+            <Button action={'updateCDP'} id={this.props.id} name={"Update position"} item={this.state.position}/>
             <div>interest rate: <b>{this.state.interestRate}%</b></div>
             <div>wethLocked: <b>{this.state.wethLocked}</b></div>
+
             <div>maxCoinsToMint : <b>{this.state.maxStableCoinsToMint}</b></div>
             <div>recorded fee: <b>{this.state.feeGeneratedRecorded}</b></div>
             <div>accumulated interest: <b>{this.state.fee}</b></div>
@@ -773,13 +776,22 @@ class Borrow extends React.Component{
         super(props);
         this.openCDP = this.openCDP.bind(this);
 
-        this.state={amount:1.1, collateral:0, buttonInactive: false, balance:0};
+        this.state={loader: false, amount:1.1, collateral:0, buttonInactive: false, balance:0};
     }
 
     openCDP(){
-        this.props.contracts['cdp'].methods.openCDP(localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: localWeb3.utils.toWei(this.state.collateral.toString())}).then(function (result) {
-            window.location.reload();
-        });
+        this.props.contracts['cdp'].methods.openCDP(localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: localWeb3.utils.toWei(this.state.collateral.toString())})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
     }
 
     componentDidMount() {
@@ -1052,6 +1064,89 @@ class PayInterestCDP extends React.Component{
     }
 
     
+}
+
+class UpdateCDP extends React.Component{
+    constructor(props){
+        super(props);
+        this.updateCDP = this.updateCDP.bind(this);
+        this.state={loader: false, maxCoins:0, amount:this.props.position.coinsMinted/10**18, collateral:this.props.position.wethAmountLocked/10**18, buttonIsActive: false, balance:0};
+    }
+
+    updateCDP(){
+        this.props.contracts['cdp'].methods.openCDP(localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: localWeb3.utils.toWei(this.state.collateral.toString())})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
+    }
+
+    componentDidMount() {
+
+        localWeb3.eth.getBalance(this.props.account).then((result)=> {
+            this.setState({balance: result});
+        })
+
+        this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(this.props.position.wethAmountLocked).call().then((result)=>{
+            this.setState({maxCoins : localWeb3.utils.fromWei(result)})
+        });
+
+
+    }
+
+    changeProportions(e) {
+        if (!Number(e.target.value)||e.target.value>10000000||e.target.value<0) {
+            return;
+        }
+        if (e.target.name=='amount'){
+            this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(localWeb3.utils.toWei(this.state.collateral.toString())).call().then((result)=>{
+                this.setState({maxCoins : localWeb3.utils.fromWei(result)})
+                (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<this.state.balance/10**18)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
+            });
+
+            if (e.target.value>1)
+                this.setState({amount : e.target.value})
+            else
+                this.setState({amount : 1.1})
+        }
+        else {
+            this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(localWeb3.utils.toWei(e.target.value)).call().then((result)=>{
+                this.setState({maxCoins : localWeb3.utils.fromWei(result)})
+                this.setState({amount : localWeb3.utils.fromWei(result)})
+            });
+            (e.target.value<(this.state.balance/10**18)&&this.state.amount>1)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
+
+            this.setState({collateral : e.target.value})
+        }
+        return;
+    }
+
+    setMax(){
+        const max = this.props.position.wethAmountLocked/10**18 + this.state.balance/10**18-0.01;
+        this.setState({collateral: max})
+        this.changeProportions({target:{name:'collateral', value:max.toString()}});
+    }
+
+    render() {
+        return <form>
+            <div align='center'><b>Update debt position</b></div>
+            <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
+            ETC collateral you provide: <input type='number' step="0.1" min="0" max="10000" name='collateral' value={this.state.collateral} onChange={e => this.changeProportions(e)}/>
+            stable coins you'll get <input type='number' min="1.1" name='amount' value={this.state.amount} onChange={e => this.changeProportions(e)}/>
+            <br/>max coins you can mint: {this.state.maxCoins}
+            {this.state.buttonIsActive?<a className={"button pointer green right"} onClick={this.updateCDP}>Update</a>:<div className="button address right">
+                {'Insufficient ETC '}</div>}
+            {this.state.loader?<Loader/>:''}
+            <br></br><br></br><br></br><br></br><br></br>
+        </form>;
+    }
 }
 
 class Paginator extends React.Component{
