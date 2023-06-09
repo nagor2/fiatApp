@@ -137,9 +137,10 @@ class MyPanel extends React.Component {
         let products=[];
         if (contracts['cdp']!==undefined)
             contracts['cdp'].getPastEvents('PositionOpened', {
-                fromBlock: 17000000,
-                toBlock: 'latest'
+                fromBlock: 0//fromBlock: 17000000,
+                ,toBlock: 'latest'
             }).then((events) => {
+                console.dir (events);
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
@@ -985,7 +986,7 @@ class PayInterestCDP extends React.Component{
 
     allow(){
         const {contracts} = this.props;
-        contracts['stableCoin'].methods.approve(contracts['cdp']._address,this.state.needed*10**18).send({from:this.props.account})
+        contracts['stableCoin'].methods.approve(contracts['cdp']._address,localWeb3.utils.toWei(this.state.needed.toFixed(18).toString())).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -1017,7 +1018,7 @@ class PayInterestCDP extends React.Component{
     componentDidMount() {
         const {contracts} = this.props;
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({needed:localWeb3.utils.fromWei(fee)*1.001});
+            this.setState({needed:localWeb3.utils.fromWei(fee)*1.2}); //1.001
         })
 
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
@@ -1074,7 +1075,7 @@ class UpdateCDP extends React.Component{
     }
 
     updateCDP(){
-        this.props.contracts['cdp'].methods.openCDP(localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: localWeb3.utils.toWei(this.state.collateral.toString())})
+        this.props.contracts['cdp'].methods.updateCDP(localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: this.state.collateral-this.props.position.wethAmountLocked})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -1089,7 +1090,6 @@ class UpdateCDP extends React.Component{
     }
 
     componentDidMount() {
-
         localWeb3.eth.getBalance(this.props.account).then((result)=> {
             this.setState({balance: result});
         })
@@ -1108,7 +1108,8 @@ class UpdateCDP extends React.Component{
         if (e.target.name=='amount'){
             this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(localWeb3.utils.toWei(this.state.collateral.toString())).call().then((result)=>{
                 this.setState({maxCoins : localWeb3.utils.fromWei(result)})
-                (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<this.state.balance/10**18)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
+
+                (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<(this.state.balance+this.props.position.wethAmountLocked)/10**18)?this.setState({buttonIsActive:true}):this.setState({buttonIsActive:false});
             });
 
             if (e.target.value>1)
@@ -1121,7 +1122,8 @@ class UpdateCDP extends React.Component{
                 this.setState({maxCoins : localWeb3.utils.fromWei(result)})
                 this.setState({amount : localWeb3.utils.fromWei(result)})
             });
-            (e.target.value<(this.state.balance/10**18)&&this.state.amount>1)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
+
+            (e.target.value<(parseFloat(localWeb3.utils.fromWei(this.props.position.wethAmountLocked))+this.state.balance/10**18)&&this.state.amount>1)?this.setState({buttonIsActive:true}):this.setState({buttonIsActive:false});
 
             this.setState({collateral : e.target.value})
         }
@@ -1138,7 +1140,7 @@ class UpdateCDP extends React.Component{
         return <form>
             <div align='center'><b>Update debt position</b></div>
             <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
-            ETC collateral you provide: <input type='number' step="0.1" min="0" max="10000" name='collateral' value={this.state.collateral} onChange={e => this.changeProportions(e)}/>
+            ETC collateral you provide: <input type='number' step="0.1" min={parseFloat(localWeb3.utils.fromWei(this.props.position.wethAmountLocked))} max="10000" name='collateral' value={this.state.collateral} onChange={e => this.changeProportions(e)}/>
             stable coins you'll get <input type='number' min="1.1" name='amount' value={this.state.amount} onChange={e => this.changeProportions(e)}/>
             <br/>max coins you can mint: {this.state.maxCoins}
             {this.state.buttonIsActive?<a className={"button pointer green right"} onClick={this.updateCDP}>Update</a>:<div className="button address right">
