@@ -4,6 +4,7 @@ import React, { useState, Component } from 'react';
 import Web3 from 'web3'
 var events = require('events');
 let eventEmitter = new events.EventEmitter();
+const fromBlock = 0;//17000000;
 
 let localWeb3 = config.localWeb3;
 
@@ -51,6 +52,7 @@ class MyPanel extends React.Component {
         this.getItems = this.getItems.bind(this);
         this.getCommodities = this.getCommodities.bind(this);
         this.getLoans = this.getLoans.bind(this);
+        this.getAuctions = this.getAuctions.bind(this);
     }
 
     componentDidMount() {
@@ -88,6 +90,9 @@ class MyPanel extends React.Component {
             if (content[0]=='Transfers'){
                 return <Transaction tx={content[3]}/>;
             }
+            if (content[0]=='Auctions'){
+                return <Auction contracts={this.props.contracts} account={this.props.account} id={content[2]}/>;
+            }
 
             switch (content[1]){
                 case 'RLE':return (content[0]=='Balances')?<Transfers localWeb3={localWeb3} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken contract={this.props.contracts['rule']} name={content}/>; break;
@@ -95,7 +100,7 @@ class MyPanel extends React.Component {
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'WETH':return <Transfers localWeb3={localWeb3} contractName={'weth'} account={this.props.account} contracts={this.props.contracts}/>; break;
                 case 'Borrow': return <Borrow contracts={this.props.contracts} account={this.props.account}/>; break;
-                case 'updateCDP': return <UpdateCDP position={content[0]} contracts={this.props.contracts} account={this.props.account}/>; break;
+                case 'updateCDP': return <UpdateCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'CDP': return <CDP contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
                 case 'debt position': return <DebtPosition contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'deposit': return <Deposit contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
@@ -103,6 +108,8 @@ class MyPanel extends React.Component {
                 case 'openDeposit': return <OpenDeposit contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'withdrawFromDeposit': return <WithDrawDeposit contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'payInterest': return <PayInterestCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'closeCDP': return <CloseCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'withdrawEther': return <WithdrawEtherCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 default: return content;break;
             }
         }
@@ -132,12 +139,52 @@ class MyPanel extends React.Component {
 
     }
 
+    getAuctions(past){
+        const{contracts} = this.props;
+        let products=[];
+        if (contracts['auction']!==undefined)
+            contracts['auction'].getPastEvents('buyOutInit', {
+                fromBlock: fromBlock
+                ,toBlock: 'latest'
+            }).then((events) => {
+                //console.dir (events);
+                for (let i = 0; i < events.length; i++) {
+                    let event = events[i];
+                        let id = event.returnValues.auctionID;
+                        contracts['auction'].methods.auctions(id).call().then((auction) => {
+                            if (auction.finalized == past) {
+                                let title='Liquidate collateral';
+                                let balance = 0;
+                                if (auction.lotToken == contracts['rule']._address){
+                                    title = 'TSC buyout';
+                                    balance = (auction.paymentAmount / 10 ** 18).toFixed(2);
+                                }
+                                if (auction.lotToken == contracts['stableCoin']._address){
+                                    title = 'Rule buyout';
+                                    balance =  (auction.lotAmount / 10 ** 18).toFixed(2);
+                                }
+                                    products.push({
+                                        iconType: 'auction',
+                                        title: title,
+                                        id: id,
+                                        name: dateFromTimestamp(auction.initialized),
+                                        balance: balance
+                                    })
+                            }
+                        });
+
+                }
+                this.setState({products: products});
+            });
+
+    }
+
     getLoans(){
         const{contracts} = this.props;
         let products=[];
         if (contracts['cdp']!==undefined)
             contracts['cdp'].getPastEvents('PositionOpened', {
-                fromBlock: 0//fromBlock: 17000000,
+                fromBlock: fromBlock
                 ,toBlock: 'latest'
             }).then((events) => {
                 console.dir (events);
@@ -166,7 +213,7 @@ class MyPanel extends React.Component {
         const{contracts} = this.props;
         let products=[];
         if (contracts['deposit']!==undefined)
-            contracts['deposit'].getPastEvents('DepositOpened', {fromBlock: 17000000,toBlock: 'latest'}).then((events)=>{
+            contracts['deposit'].getPastEvents('DepositOpened', {fromBlock: fromBlock,toBlock: 'latest'}).then((events)=>{
                 for (let i =0; i<events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase()==this.props.account.toLowerCase()){
@@ -193,6 +240,7 @@ class MyPanel extends React.Component {
             case 'Commodities': this.getCommodities();break;
             case 'Loans': this.getLoans();break;
             case 'Deposits': this.getDeposits();break;
+            case 'Auctions': this.getAuctions(false);break;
             default: break;
         }
     }
@@ -292,7 +340,7 @@ class CDP extends React.Component{
 
         if (this.props.account!=='')
             contracts['stableCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
-                this.setState({userAllowence: (result/10**18).toFixed(2)});
+                this.setState({userAllowence: (result/10**18).toFixed(10)});
             });
 
         contracts['weth'].methods.balanceOf(contracts['cdp']._address).call().then((result) => {
@@ -358,6 +406,62 @@ class CDP extends React.Component{
     }
 }
 
+
+class Auction extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {
+            id: 0,
+            allowanceToDeposit: 0,
+            approvedFromCDP: 1,
+            depositsCount: 0,
+            overallVolume: 0,
+            overallFee: 0,
+            depositRate: 0
+        };
+    }
+
+    componentDidMount() {
+        const { contracts } = this.props;
+        this.setState({address:contracts['deposit']._address});
+
+        contracts['deposit'].methods.counter().call().then((result)=>{
+            this.setState({depositsCount:result});
+        });
+
+        if (this.props.account){
+            contracts['stableCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
+                this.setState({allowanceToDeposit:(result/10**18).toFixed(5)});
+            });
+            contracts['stableCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
+                this.setState({approvedFromCDP:(result/10**18).toFixed(5)});
+            });
+        }
+
+
+        contracts['stableCoin'].methods.balanceOf(contracts['deposit']._address).call().then((result) => {
+            this.setState({overallVolume:(result/10**18).toFixed(2)});
+        });
+
+        contracts['dao'].methods.params('depositRate').call().then((interest)=>{
+            this.setState({depositRate:interest});
+        })
+    }
+
+    render() {
+        return  <div align='left'>
+            <div align='center'><b>Auction (id: {this.props.id})</b></div>
+
+            {this.props.account!==''?<a className={"button pointer green right"} onClick={()=>this.makeBid()}>make bid</a>:''}
+            <div>interest rate: <b>{this.state.depositRate}%</b></div>
+
+            <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
+            <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
+        </div>;
+    }
+}
+
+
 class DepositContract extends React.Component{
     constructor(props) {
         super(props);
@@ -382,10 +486,10 @@ class DepositContract extends React.Component{
 
         if (this.props.account){
             contracts['stableCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
-                this.setState({allowanceToDeposit:(result/10**18).toFixed(2)});
+                this.setState({allowanceToDeposit:(result/10**18).toFixed(5)});
             });
             contracts['stableCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
-                this.setState({approvedFromCDP:(result/10**18).toFixed(2)});
+                this.setState({approvedFromCDP:(result/10**18).toFixed(5)});
             });
         }
 
@@ -485,9 +589,7 @@ class DebtPosition extends React.Component{
     }
 
     closeCDP(){
-        /*
-        const { contracts } = this.props;
-        contracts['cdp'].methods.closeCDP(this.props.id).send({from:this.props.account});*/
+        ;
     }
     updateCDP(){}
     withdraw(){}
@@ -508,15 +610,14 @@ class DebtPosition extends React.Component{
             <Button action={'updateCDP'} id={this.props.id} name={"Update position"} item={this.state.position}/>
             <div>interest rate: <b>{this.state.interestRate}%</b></div>
             <div>wethLocked: <b>{this.state.wethLocked}</b></div>
-
             <div>maxCoinsToMint : <b>{this.state.maxStableCoinsToMint}</b></div>
+            <Button action={'closeCDP'} id={this.props.id} name={"Close position"} item={this.state.position}/>
             <div>recorded fee: <b>{this.state.feeGeneratedRecorded}</b></div>
             <div>accumulated interest: <b>{this.state.fee}</b></div>
+            <br/>
+            <Button action={'withdrawEther'} id={this.props.id} name={"withdraw ether"} item={this.state.position}/>
 
-            <input type='button' value='closeCDP' onClick={this.closeCDP}/>
-            <input type='button' value='updateCDP' onClick={this.updateCDP}/>
-            <input type='button' value='withdraw ether' onClick={this.withdraw}/>
-
+            <br/><br/><br/><br/><br/>
 
 
         </div>;
@@ -591,7 +692,21 @@ class Deposit extends React.Component{
         });
 
     }
-    claimInterest(){}
+    claimInterest(){
+        //deposit.methods.claimInterest("+id+").send({from:userAddress});
+        this.props.contracts['deposit'].methods.claimInterest(this.state.id).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+            this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
+    }
 
     render() {
         return  <div align='left'>
@@ -603,7 +718,7 @@ class Deposit extends React.Component{
             <Button action={'withdrawFromDeposit'} id={this.props.id} name={"withdraw"}/>
             <div>interest rate: <b>{this.state.interestRate}%</b></div>
             <div>accumulated interest: <b>{this.state.accumulatedInterest}</b></div>
-            <input  type='button' value='claim interest' onClick={this.claimInterest}/>
+            <input className={'green'} type='button' value='claim interest' onClick={this.claimInterest}/>
             <input className={'green'} type='button' value='close' onClick={this.close}/>
             {this.state.loader?<Loader/>:''}
         </div>;
@@ -658,6 +773,107 @@ class WithDrawDeposit extends React.Component{
 
             {(parseFloat(this.state.toWithdraw)<=this.state.coinsDeposited)?<a className={"button pointer green right"} onClick={this.withdraw}>Withdraw {this.state.toWithdraw +' TSC'}</a>:<div className="button address right">
                 {'not enough TSC on deposit'}</div>}
+            <br></br>
+            <br></br>
+            <br></br>
+            {this.state.loader?<Loader/>:''}
+        </div>
+    }
+}
+
+class CloseCDP extends React.Component{
+
+    constructor(props){
+        super(props);
+        this.allowStables = this.allowStables.bind(this);
+        this.close = this.close.bind(this);
+        this.state={tscBalance:0, buttonInactive: false, allowed:0, toAllow:0, coinsDeposited:0};
+    }
+
+    componentDidMount() {
+        if (this.props.account)
+            this.props.contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((res)=>{
+                this.setState({tscBalance:(res/10**18)})
+            })
+
+        if (this.props.account)
+            this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['cdp']._address).call().then((res)=>{
+                this.setState({allowed:(res/10**18)})
+            })
+
+        if (this.props.contracts !== 'undefined'){
+            this.props.contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
+            const minted = parseFloat(localWeb3.utils.fromWei(this.props.position.coinsMinted));
+            const feeNeeded = 1.2*parseFloat(localWeb3.utils.fromWei(fee));
+            const needed = minted+feeNeeded;
+            console.log(typeof (feeNeeded))
+            console.log(typeof (minted))
+
+            this.setState({toAllow:needed});
+            this.setState({needed:needed});
+            //TODO: set 1.001
+        })
+        }
+
+    }
+
+
+    allowStables(){
+        if (this.state.toAllow<=this.state.tscBalance && this.props.contracts['cdp'] !== undefined){
+            this.props.contracts['stableCoin'].methods.approve(this.props.contracts['cdp']._address,localWeb3.utils.toWei(this.state.toAllow.toString())).send({from:this.props.account})
+                .on('transactionHash', (hash) => {
+                    this.setState({'loader':true})
+                })
+                .on('receipt', (receipt) => {
+                    this.setState({'loader':true})
+                })
+                .on('confirmation', (confirmationNumber, receipt) => {
+                    this.setState({'loader':false})
+                    this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['cdp']._address).call().then((res)=>{
+                        this.setState({allowed:(res/10**18)})
+                    })
+                })
+                .on('error', console.error);
+        }
+    }
+
+    changeToAllow(e){
+        this.setState({toAllow: e.target.value})
+    }
+
+    setMax(){
+        this.setState({toAllow: this.state.tscBalance})
+    }
+
+
+    close(){
+        this.props.contracts['cdp'].methods.closeCDP(this.props.id).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
+    }
+
+    render(){
+        return <div align={'left'}><div align={'center'}><b>Close CDP {this.props.id==undefined || this.props.id == ''?'':'(id: '+this.props.id+')'}</b></div>
+            {(parseFloat(this.state.toAllow)<=this.state.tscBalance)?<a className={"button pointer green right"} onClick={()=>this.allowStables()}>Allow</a>:<div className="button address right">
+                {'not enough TSC'}</div>}
+
+            TSC to allow: <input type='number' step="0.1" min="0" max={this.state.tscBalance} name='amount' value={this.state.toAllow} onChange={e => this.changeToAllow(e)}/>
+
+            <div>Your TSC allowance to CDP contract: {this.state.allowed}</div><br></br>
+            <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
+
+
+            {(this.state.allowed>0)?<a className={"button pointer green right"} onClick={this.close}>Confirm closure</a>:<div className="button address right">
+                {'you need to allow '+this.state.needed+' TSC to close this position'}</div>}
             <br></br>
             <br></br>
             <br></br>
@@ -772,11 +988,67 @@ class OpenDeposit extends React.Component{
     }
 }
 
+class WithdrawEtherCDP extends React.Component{
+
+    constructor(props){
+        super(props);
+        this.state={maxToWithdraw: 0, toWithdraw:0, locked: 0};
+    }
+
+
+
+
+    componentDidMount() {
+        const locked = this.props.position.wethLocked;
+
+        this.props.contracts['cdp'].getMaxStableCoinsToMint(locked).call().then((maxCoins)=>{
+            const coinsDifference = maxCoins - this.props.position.coinsMinted;
+            this.props.contracts['cdp'].getMaxStableCoinsToMint(localWeb3.utils.toWei(1, 'ether')).call().then((coinsPerEther)=>{
+                const wethToWithdraw = coinsDifference/coinsPerEther;
+                this.setState({maxToWithdraw: wethToWithdraw})
+                this.setState({toWithdraw: wethToWithdraw})
+            })
+
+            })
+
+    }
+
+    setMax(){
+        this.setState({toWithdraw: this.state.maxToWithdraw});
+    }
+
+    changeToWithdraw(e) {
+        if (!Number(e.target.value) || e.target.value > this.state.maxToWithdraw || e.target.value < 0) {
+            this.setState({buttonInactive:false})
+            return;
+        }
+        if (e.target.name == 'toWithdraw') {
+            if (e.target.value<=this.state.maxToWithdraw){
+                this.setState({buttonInactive:true})
+
+            } else this.setState({buttonInactive:false})
+        }
+    }
+
+    render() {
+        return <form>
+            <div align='center'><b>WithdrawEtherCDP</b></div>
+            <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
+            ETC to withdraw: <input type='number' step="0.1" min="0" max={this.state.maxToWithdraw} name='toWithdraw' value={this.state.toWithdraw}/>
+            {this.state.buttonInactive?<a className={"button pointer green right"} onClick={this.withdraw}>withdraw</a>:<div className="button address right">
+                {'wrong ETC amount'}</div>}
+            {this.state.loader?<Loader/>:''}
+            <br></br><br></br><br></br><br></br><br></br>
+        </form>;
+    }
+
+}
+
 class Borrow extends React.Component{
+
     constructor(props){
         super(props);
         this.openCDP = this.openCDP.bind(this);
-
         this.state={loader: false, amount:1.1, collateral:0, buttonInactive: false, balance:0};
     }
 
@@ -811,7 +1083,7 @@ class Borrow extends React.Component{
                 (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<this.state.balance/10**18)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
             });
 
-            if (e.target.value>1)
+            if (e.target.value>=1)
                 this.setState({amount : e.target.value})
             else
                 this.setState({amount : 1.1})
@@ -843,6 +1115,7 @@ class Borrow extends React.Component{
              stable coins you'll get <input type='number' min="1.1" name='amount' value={this.state.amount} onChange={e => this.changeProportions(e)}/>
             {this.state.buttonInactive?<a className={"button pointer green right"} onClick={this.openCDP}>Borrow</a>:<div className="button address right">
             {'Insufficient ETC '}</div>}
+            {this.state.loader?<Loader/>:''}
             <br></br><br></br><br></br><br></br><br></br>
             </form>;
     }
@@ -865,7 +1138,6 @@ class Product extends React.Component{
                 return <img src='img/deposit-box.png'/>;break;
             case 'crude':
                 return <img src='img/crude.png'/>;break;
-
             case 'loan': return <img src='img/credit.png'/>; break;
             case 'out': return <svg className='rotate-180' width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M18 36C8.059 36 0 27.941 0 18S8.059 0 18 0s18 8.059 18 18-8.059 18-18 18Zm3.6-25.8 9.334 7a1 1 0 0 1 0 1.6l-9.334 7A1 1 0 0 1 20 25v-2h-9a1 1 0 1 1 0-2h3v-2H4a1 1 0 0 1 0-2h8v-2H7a1 1 0 0 1 0-2h13v-2a1 1 0 0 1 1.6-.8Z"></path></svg>
             case 'in': return <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M18 36C8.059 36 0 27.941 0 18S8.059 0 18 0s18 8.059 18 18-8.059 18-18 18Zm3.6-25.8 9.334 7a1 1 0 0 1 0 1.6l-9.334 7A1 1 0 0 1 20 25v-2h-9a1 1 0 1 1 0-2h3v-2H4a1 1 0 0 1 0-2h8v-2H7a1 1 0 0 1 0-2h13v-2a1 1 0 0 1 1.6-.8Z"></path></svg>
@@ -879,7 +1151,7 @@ class Product extends React.Component{
     componentDidMount() {
         const{contracts} = this.props;
 
-        if (this.props.section == 'Balances' || this.props.section == 'Loans' ||this.props.section == 'Deposits' ||this.props.section == 'Transfers' ){
+        if (this.props.section == 'Balances' || this.props.section == 'Loans' || this.props.section == 'Auctions' ||this.props.section == 'Deposits' ||this.props.section == 'Transfers' ){
             if (contracts['stableCoin']!==undefined && contracts['rule']!==undefined && contracts['weth']!==undefined)
 
                 switch (this.props.title) {
@@ -994,7 +1266,7 @@ class PayInterestCDP extends React.Component{
                 this.setState({'loader':true})
             })
             .on('confirmation', (confirmationNumber, receipt) => {
-                this.setState({'loader':false})
+                this.setState({'loader':false});
                 //window.location.reload();
             })
             .on('error', console.error);
@@ -1018,7 +1290,8 @@ class PayInterestCDP extends React.Component{
     componentDidMount() {
         const {contracts} = this.props;
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({needed:localWeb3.utils.fromWei(fee)*1.2}); //1.001
+            this.setState({needed:localWeb3.utils.fromWei(fee)*1.2});
+            //TODO: set 1.001
         })
 
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
@@ -1075,7 +1348,8 @@ class UpdateCDP extends React.Component{
     }
 
     updateCDP(){
-        this.props.contracts['cdp'].methods.updateCDP(localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: this.state.collateral-this.props.position.wethAmountLocked})
+        console.log(this.state.collateral*10**18-this.props.position.wethAmountLocked);
+        this.props.contracts['cdp'].methods.updateCDP(this.props.id, localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: this.state.collateral*10**18-this.props.position.wethAmountLocked})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -1107,12 +1381,11 @@ class UpdateCDP extends React.Component{
         }
         if (e.target.name=='amount'){
             this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(localWeb3.utils.toWei(this.state.collateral.toString())).call().then((result)=>{
-                this.setState({maxCoins : localWeb3.utils.fromWei(result)})
-
+                this.setState({maxCoins : localWeb3.utils.fromWei(result)});
                 (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<(this.state.balance+this.props.position.wethAmountLocked)/10**18)?this.setState({buttonIsActive:true}):this.setState({buttonIsActive:false});
             });
 
-            if (e.target.value>1)
+            if (e.target.value>=1)
                 this.setState({amount : e.target.value})
             else
                 this.setState({amount : 1.1})
@@ -1191,14 +1464,21 @@ class Transfers extends React.Component{
 
     constructor(props) {
         super(props);
-        this.state = {txs:[]}
+        this.state = {txs:[], wethBalance:0}
     }
 
     componentDidMount() {
+
+        if (this.props.contractName=="weth"){
+            this.props.contracts['weth'].methods.balanceOf(this.props.account).call().then((result)=>{
+                this.setState({wethBalance:result})
+            })
+        }
+
         const {contracts} = this.props;
         let txs = [];
         this.setState({txs:txs})
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { from: this.props.account }, fromBlock: 17000000}).then((res)=> {
+        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { from: this.props.account }, fromBlock: fromBlock}).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.localWeb3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -1208,7 +1488,7 @@ class Transfers extends React.Component{
             txs.push.apply(txs,res);
             this.setState({txs:txs})
         })
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { to: this.props.account }, fromBlock: 17000000}).then((res)=> {
+        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { to: this.props.account }, fromBlock: fromBlock}).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.localWeb3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -1225,7 +1505,7 @@ class Transfers extends React.Component{
         const {contracts} = this.props;
         let txs = [];
         this.setState({txs:txs})
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { from: this.props.account }, fromBlock: 17000000}).then((res)=> {
+        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { from: this.props.account }, fromBlock: fromBlock}).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.localWeb3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -1235,7 +1515,7 @@ class Transfers extends React.Component{
             txs.push.apply(txs,res);
             this.setState({txs:txs})
         })
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { to: this.props.account }, fromBlock: 17000000}).then((res)=> {
+        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { to: this.props.account }, fromBlock: fromBlock}).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.localWeb3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -1245,6 +1525,10 @@ class Transfers extends React.Component{
             txs.push.apply(txs,res);
             this.setState({txs:txs})
         })
+    }
+
+    convertWeth(){
+        this.props.contracts['weth'].methods.withdraw(this.state.wethBalance).send({from:this.props.account})
     }
 
     render(){
@@ -1256,7 +1540,7 @@ class Transfers extends React.Component{
                      name={product.block==undefined?'':dateFromTimestamp(product.block.timestamp)}
                      hash={product.transactionHash}
             />):'';
-        return <><div className={'flex-col'}><b>Your {this.props.contractName.replace(/\b\w/g, l => l.toUpperCase())} transfers</b><p></p><Paginator items={items} perPage={10}/></div>
+        return <><div className={'flex-col'}>{(this.props.contractName=="weth"&&this.state.wethBalance>0)?<a className={"button pointer green right"} onClick={()=>this.convertWeth()}>convert to ETC</a>:''}<b>Your {this.props.contractName.replace(/\b\w/g, l => l.toUpperCase())} transfers</b><p></p><Paginator items={items} perPage={10}/></div>
         </>;
     }
 }
@@ -1264,12 +1548,22 @@ class Transfers extends React.Component{
 class Tsc extends React.Component{
     constructor(props) {
         super(props);
-        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'', indicative:'', etherPool:'', tscPool:'', collateral:'', collateralPercent:'', stubFund:''}
+        this.initCoinsBuyOut = this.initCoinsBuyOut.bind(this);
+        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'', indicative:'', etherPool:'', tscPool:'', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: ''}
     }
     componentDidMount() {
         const {contracts} = this.props;
+
         contracts['stableCoin'].methods.totalSupply().call().then((supply)=>{
             this.setState({supply: (supply/10**18).toFixed(2)});
+            contracts['stableCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stub)=>{
+                this.setState({stubFund:(stub/10**18).toFixed(8)})
+
+                contracts['dao'].methods.params('stabilizationFundPercent').call().then((stabilizationFundPercent) => {
+                    this.setState({stubFundDemand:(supply * stabilizationFundPercent / 100 - stub)});
+                });
+            });
+
         });
         getTransfers(contracts['stableCoin']).then((result)=>{this.setState({transfers: result.length})});
         getHolders(contracts['stableCoin']).then((result)=>{this.setState({holders: result.length})});
@@ -1289,9 +1583,25 @@ class Tsc extends React.Component{
                 this.setState({collateralPercent:percent});
             });
         });
-        contracts['stableCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stub)=>{
-            this.setState({stubFund:(stub/10**18).toFixed(8)})
-        });
+
+    }
+
+
+    initCoinsBuyOut = ()=>{
+        console.log('initCoinsBuyOut')
+        this.props.contracts['auction'].methods.initCoinsBuyOutForStabilization(this.state.stubFundDemand.toString()).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                //TODO: route to auction initCoinsBuyOutForStabilization returns uint256 auctionID
+                window.location.reload();
+            })
+            .on('error', console.error);
     }
 
     render() {
@@ -1304,7 +1614,8 @@ class Tsc extends React.Component{
             <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>
 
             <div>N of holders: <b>{this.state.holders}</b></div>
-
+            {this.props.account!==''?
+                <a className={"button pointer green right"} onClick={()=>this.initCoinsBuyOut()}>init auction to top up stubFund</a>:''}
             <div>price vs USD (pool): <b>{this.state.pricePool}</b></div>
 
             <div>price vs USD (indicative): <b>{this.state.indicative}</b></div>
@@ -1312,6 +1623,7 @@ class Tsc extends React.Component{
             <div>TSC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button action={'Borrow'} name={"Borrow"}/>:''}</div>
             <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of TSC supply)</b></div>
             <div>stabilization fund: <b>{this.state.stubFund}</b></div>
+            <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>
 
             <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
@@ -1610,7 +1922,7 @@ class App extends React.Component{
 }
 
 async function getTransfers(contract) {
-    const txs = await contract.getPastEvents('Transfer', {fromBlock: 17000000})
+    const txs = await contract.getPastEvents('Transfer', {fromBlock: fromBlock})
     return txs;
 }
 

@@ -2,7 +2,7 @@ import React from "react";
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0xC265FDa5db5484F4AF27C324fcBf5023646F0721';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0xBe2058B554b405006Ce20B38E71EC40CFB217e26';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
@@ -4581,7 +4581,7 @@ config.Auctions = {
     title: 'Auctions',
     plus: true,
     expander:true,
-    add:'1',
+    add:'initSomeAuction',
     subtitle: '',
 }
 
@@ -4625,6 +4625,7 @@ config.pools = [
 config.auctions = [
     { title: 'TSC buyout', name:'True stable coin', id: 1, iconType: 'auction' },
     { title: 'Rule buyout', name:'Rule tokens buyout', id: 2, iconType: 'auction' },
+    { title: 'Liquidate collateral', name:'Liquidate collateral', id: 3, iconType: 'auction' },
 ];
 
 config.contractsList = [
