@@ -109,7 +109,9 @@ class MyPanel extends React.Component {
                 case 'withdrawFromDeposit': return <WithDrawDeposit contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'payInterest': return <PayInterestCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'closeCDP': return <CloseCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'makeBidTSCBuyout': return <MakeBidTSCBuyout auction={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'withdrawEther': return <WithdrawEtherCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'INTDAO': return <DAO contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 default: return content;break;
             }
         }
@@ -288,7 +290,11 @@ class Button extends React.Component{
 class Swap extends React.Component{
     render() {
         return <div>
-            <div><b>Buy stable coins</b><br/><br/></div>
+            <div><b>Buy stable coins</b><br/><br/>
+                <b>Add list: </b> https://raw.githubusercontent.com/nagor2/cryptoFiat/Oracle/tokenList/list.json
+                <br/>
+                <br/>
+            </div>
             <iframe  src="https://swap.ethereumclassic.com/#/swap?outputCurrency=0x05e70011940cc4AfA46ef7c79BEf44E6348c702d"  height="900px"  width="100%" className='swap' />
         </div>;
     }
@@ -386,7 +392,7 @@ class CDP extends React.Component{
             <div align='center'><b>CDP</b></div>
             <div>stubFund: <b>{this.state.stubFund} TSC</b></div>
             <div>stubFund exceed: <b>{this.state.exceed} TSC</b></div>
-
+            {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['cdp'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
             {this.props.account!==''?<div><input type='button' value='allow surplus to auction' onClick={this.allowSurplusToAuction}/></div>:''}
             <div>allowed to auction: <b>{this.state.toAuction} TSC</b></div>
             {this.props.account!==''?<div><input type='button' value='initRuleBuyOut' onClick={this.initRuleBuyOut}/></div>:''}
@@ -406,59 +412,475 @@ class CDP extends React.Component{
     }
 }
 
+class Bids extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {bestBid:false};
+    }
+
+    render() {
+        let bids = (this.props.bids!==undefined)?this.props.bids.sort((a,b)=>(b.blockNumber - a.blockNumber)).map(bid =>
+            <Bid auction={this.props.auction} bestBid={this.props.auction.bestBidId==bid.returnValues.bidId} bid={bid} key={bid.returnValues.bidId} account={this.props.account} contracts={this.props.contracts}/>):'';
+        return <div> {bids} </div>
+    }
+}
+
+class Bid extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {bestBid:false, yourBid:false, symbol:'', canceled:false};
+
+    }
+
+    componentDidMount() {
+        this.setState({bestbid:this.props.auction.bestBidId==this.props.bid.returnValues.bidId});
+        this.setState({yourBid:this.props.bid.returnValues.owner.toLowerCase()==this.props.account.toLowerCase()});
+
+    }
+    componentWillReceiveProps(nextProps, nextContext) {
+        if (this.props.bid.bid!=undefined)
+        this.setState({canceled:this.props.bid.bid.canceled})
+    }
+
+    render(){
+        return <div className="v-center row-container">
+                <div className="product">
+                    <div className="products-name">
+                        <div>
+                            {this.state.bestbid?'Best bid':''}
+                        </div>
+                        <div>
+                            {this.state.yourBid?'Your bid':''}
+                        </div>
+                        <div>
+                            {this.state.canceled?'canceled':'active'}
+                        </div>
+                        <div>
+                            {localWeb3.utils.fromWei(this.props.bid.returnValues.bidAmount)}
+                        </div>
+                        <div>
+                            {this.state.yourBid&&!this.state.canceled?<a className={"small-button pointer green"} onClick={()=>this.finalize()}>improve bid</a>:''}
+                        </div>
+                        <div>
+                            {this.state.yourBid&&!this.state.canceled&&!this.props.bestBid?<a className={"small-button pointer green"} onClick={()=>this.props.contracts['auction'].methods.cancelBid(this.props.bid.returnValues.bidId).send({from:this.props.account})}>cancel bid</a>:''}
+                        </div>
+                    </div>
+                    <div className="small-text">{this.props.bid.block==undefined?'':dateFromTimestamp(this.props.bid.block.timestamp)}</div>
+                </div>
+            </div>
+    }
+}
 
 class Auction extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
             id: 0,
-            allowanceToDeposit: 0,
-            approvedFromCDP: 1,
-            depositsCount: 0,
-            overallVolume: 0,
-            overallFee: 0,
-            depositRate: 0
+            allowanceToAuction: 0,
+            auction: 0,
+            payment: 0,
+            stableBalance: 0,
+            bestBid:0,
+            nextBid:0,
+            block:0,
+            timeLeft:0,
+            bids:[],
+            a: true
         };
     }
 
     componentDidMount() {
         const { contracts } = this.props;
-        this.setState({address:contracts['deposit']._address});
+        this.setState({address:contracts['auction']._address});
 
-        contracts['deposit'].methods.counter().call().then((result)=>{
-            this.setState({depositsCount:result});
+        let bids = [];
+
+        contracts['auction'].getPastEvents('newBid', {filter: { auctionID: this.props.id }, fromBlock: fromBlock}).then((res)=> {
+            bids.push.apply(bids,res);
+            //console.log(res);
+            for (let i=0; i<res.length; i++) {
+                localWeb3.eth.getBlock(res[i].blockHash).then((b)=>{
+                    res[i].block = b;
+                    this.setState({a:true})
+
+                    console.log(res[i].auctionID)
+                });
+                contracts['auction'].methods.bids(res[i].returnValues.bidId).call().then((bid)=>{
+                    res[i].bid = bid;
+                    this.setState({a:true})
+                })
+            }
+            this.setState({bids:bids})
+        })
+
+        contracts['auction'].methods.auctions(this.props.id).call().then((auction)=>{
+            this.setState({auction:auction});
+
+            localWeb3.eth.getBlock('latest').then((block)=>{
+                this.setState({block:block})
+                contracts['dao'].methods.params('auctionTurnDuration').call().then((auctionTurnDuration)=> {
+                    this.setState({timeLeft:(auctionTurnDuration - (block.timestamp - auction.lastTimeUpdated))})
+                });
+            });
+
+            if (auction.bestBidId!=0){
+                    contracts['auction'].methods.bids(auction.bestBidId).call().then((bestBid)=>{
+                        this.setState({bestBid:bestBid})
+
+                        contracts['dao'].methods.params('minAuctionPriceMove').call().then((minAuctionPriceMove)=> {
+                            let nextBid = ((bestBid.bidAmount/100 * (100 - minAuctionPriceMove))/10**18).toFixed();
+                            this.setState({nextBid:nextBid})
+                        });
+
+                    });
+
+                }
+            else {
+                    contracts['rule'].methods.totalSupply().call().then((ruleSupply)=>{
+                        contracts['dao'].methods.params('maxRuleEmissionPercent').call().then((maxRuleEmissionPercent)=> {
+                            this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100});
+                        });
+                    });
+
+                }
+
+            if (auction.lotToken== this.props.contracts['rule']._address)
+                this.setState({payment:auction.paymentAmount});
         });
 
         if (this.props.account){
-            contracts['stableCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
-                this.setState({allowanceToDeposit:(result/10**18).toFixed(5)});
+            contracts['stableCoin'].methods.allowance(this.props.account,contracts['auction']._address).call().then((result) => {
+                this.setState({allowanceToAuction:result});
             });
-            contracts['stableCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
-                this.setState({approvedFromCDP:(result/10**18).toFixed(5)});
-            });
+
+            {this.props.contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((result)=>{
+                this.setState({stableBalance:result});
+            })}
         }
+    }
 
+    allowStables(){
+        this.props.contracts['stableCoin'].methods.approve(this.props.contracts['auction']._address,this.state.payment).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['auction']._address).call().then((res)=>{
+                    this.setState({allowanceToAuction:(res)})
+                })
+            })
+            .on('error', console.error);
 
-        contracts['stableCoin'].methods.balanceOf(contracts['deposit']._address).call().then((result) => {
-            this.setState({overallVolume:(result/10**18).toFixed(2)});
-        });
+    }
 
-        contracts['dao'].methods.params('depositRate').call().then((interest)=>{
-            this.setState({depositRate:interest});
-        })
+    makeBid(){
+        let bid = localWeb3.utils.toWei((this.state.nextBid).toString());
+        this.props.contracts['auction'].methods.makeBid(this.props.id,bid).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                //TODO: change bids
+            })
+            .on('error', console.error);
+
+    }
+
+    finalize(){
+        this.props.contracts['auction'].methods.claimToFinalizeAuction(this.props.id).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+            })
+            .on('error', console.error);
+
     }
 
     render() {
         return  <div align='left'>
-            <div align='center'><b>Auction (id: {this.props.id})</b></div>
+            <div align='center'><b>Auction {(this.state.auction.lotToken== this.props.contracts['rule']._address)?'TSC buyout':''} (id: {this.props.id})</b></div>
+            {(this.state.timeLeft<=0)?<a className={"small-button pointer green right"} onClick={()=>this.finalize()}>claim to finalize</a>:<div className="small-button address right" alt={'you have to wait until you may claim to finalize auction'}>
+                {'claim to finalize auction in '+Math.floor(this.state.timeLeft / 3600)+':'+Math.floor(this.state.timeLeft / 60)+':'+this.state.timeLeft % 60}</div>}
 
-            {this.props.account!==''?<a className={"button pointer green right"} onClick={()=>this.makeBid()}>make bid</a>:''}
-            <div>interest rate: <b>{this.state.depositRate}%</b></div>
+            <div>TSC buyout amount: {this.state.payment/10**18}</div>
+
+            <div>your TSC allowance to auction: {this.state.allowanceToAuction/10**18}</div>
+
+            {(this.state.stableBalance>=this.state.payment)?<a className={"small-button pointer green right"} onClick={()=>this.allowStables()}>Allow {this.state.auction.paymentAmount/10**18} TSC</a>:<div className="small-button address right">
+                {'not enough TSC to participate in this auction'}</div>}
+            <div>the amount of Rule you'll recieve: {this.state.nextBid}</div>
+
+            <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
+            {(this.state.allowanceToAuction>=this.state.payment)?
+                <a className={"small-button pointer green right"} onClick={()=>this.makeBid()}>Make a bid (get {this.state.nextBid} Rule for {this.state.auction.paymentAmount/10**18} TSC)</a>:
+                <div className="small-button address right">{'insufficient allowance to bid'}</div>}
+            <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
+
+
+
+
+            {this.state.loader?<Loader/>:''}
+
+            <br/>
+            {<a className={"small-button pointer orange left"} onClick={()=>this.props.contracts['auction'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
+            <br/>
+            <br/>
+            <br/>
+            <Bids auction={this.state.auction} bids={this.state.bids} account={this.props.account} contracts={this.props.contracts}/>
+
+        </div>;
+    }
+}
+
+class DAO extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {address:'', isActiveVoting:false, votingID:0, allowed:0, ruleBalanceOfDAO:0, totalPooled:0, userPooled:0,
+            votingDiv:false, addVotingDiv:false, voteDiv:false, loader:false, amount:0, userDecision:false,
+            addVoting: {votingType:'1',name:'name', address:'0x0000000000000000000000000000000000000000', value:0, decision:false},
+            currentVoitng:[]};
+
+        this.toggle = this.toggle.bind(this);
+    }
+
+    componentDidMount() {
+        this.setState({address:this.props.contracts['dao']._address});
+
+        this.props.contracts['dao'].methods.activeVoting().call().then((is)=>{
+            this.setState({isActiveVoting:is})});
+
+        this.props.contracts['dao'].methods.pooled(this.props.account).call().then((res)=>{
+            this.setState({userPooled:res})})
+
+        this.props.contracts['rule'].methods.balanceOf(this.props.contracts['dao']._address).call().then((res)=>{
+            this.setState({totalPooled:res})});
+
+        this.props.contracts['rule'].methods.allowance(this.props.account, this.props.contracts['dao']._address).call().then((res)=>{
+            this.setState({allowed:res})});
+
+
+        let events=[];
+
+        this.props.contracts['dao'].getPastEvents('NewVoting', {fromBlock: fromBlock,toBlock: 'latest'}).then((res)=>{
+            events.push.apply(events,res);
+            let id = events[events.length-1].returnValues.id;
+            this.setState({votingID:id})
+            this.props.contracts['dao'].methods.votings(id).call().then((res)=> {
+                this.setState({currentVoitng:res});
+
+            })
+            })
+
+
+
+    }
+
+    allowRLE(){
+        this.props.contracts['rule'].methods.approve(this.props.contracts['dao']._address, localWeb3.utils.toWei((this.state.amount/10**18).toString())).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                this.props.contracts['rule'].methods.allowance(this.props.account, this.props.contracts['dao']._address).call().then((res)=>{
+                    this.setState({allowed:res})});
+            })
+            .on('error', console.error);
+    }
+
+    poolRLE(){
+        this.props.contracts['dao'].methods.poolTokens().send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+
+                this.props.contracts['rule'].methods.balanceOf(this.props.contracts['dao']._address).call().then((res)=>{
+                    this.setState({totalPooled:res})});
+                this.props.contracts['dao'].methods.pooled(this.props.account).call().then((res)=>{
+                    this.setState({userPooled:res})})
+                this.props.contracts['rule'].methods.allowance(this.props.account, this.props.contracts['dao']._address).call().then((res)=>{
+                    this.setState({allowed:res})});
+            })
+            .on('error', console.error);
+    }
+
+    returnRLE(){
+        this.props.contracts['dao'].methods.returnTokens().send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                this.props.contracts['rule'].methods.balanceOf(this.props.contracts['dao']._address).call().then((res)=>{
+                    this.setState({totalPooled:res})});
+                this.props.contracts['dao'].methods.pooled(this.props.account).call().then((res)=>{
+                    this.setState({userPooled:res})})
+            })
+            .on('error', console.error);
+    }
+
+    vote(){
+        this.props.contracts['dao'].methods.vote(this.state.votingID, this.state.userDecision).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+            })
+            .on('error', console.error);
+    }
+
+
+    toggle(name){
+        this.setState({[name]: !this.state[name]});
+    }
+
+    newVoting(){
+        console.log (this.state.addVoting);
+        this.props.contracts['dao'].methods.addVoting(this.state.addVoting.votingType, this.state.addVoting.name,
+            this.state.addVoting.value, this.state.addVoting.address.toString(), this.state.addVoting.decision).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                this.props.contracts['dao'].methods.activeVoting().call().then((is)=>{
+                    this.setState({isActiveVoting:is})});
+
+            })
+            .on('error', console.error);
+
+    }
+
+    claimToFinalize(){
+        this.props.contracts['dao'].methods.claimToFinalizeVoting(this.state.votingID).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                this.props.contracts['dao'].methods.activeVoting().call().then((is)=>{
+                    this.setState({isActiveVoting:is})});
+            })
+            .on('error', console.error);
+    }
+
+    render() {
+        return  <div align='left'>
+            <div align='center'><b>DAO</b></div>
+            {this.state.amount>0?<a className={"small-button pointer green right"} onClick={()=>this.allowRLE()}>allow Rule tokens</a>:''}
+            <div>ruleBalanceOf DAO: <b>{(this.state.ruleBalanceOfDAO/10**18).toFixed(2)}</b></div>
+            <div>Total pooled tokens: <b>{(this.state.totalPooled/10**18).toFixed(2)}</b></div>
+            {this.state.allowed>0?<a className={"small-button pointer green right"} onClick={()=>this.poolRLE()}>pool tokens</a>:''}
+            <div>Your allowed tokens: <b>{(this.state.allowed/10**18).toFixed(2)}</b></div>
+            <div>Your pooled tokens: <b>{(this.state.userPooled/10**18).toFixed(2)}</b></div>
+
+            {this.state.loader?<Loader/>:''}
+
+
+            {this.state.userPooled>0?<a className={"small-button pointer green right"} onClick={()=>this.returnRLE()}>return tokens</a>:''}
+            <input type='number' step="10000" min="0" name='amount' value={(this.state.amount/10**18).toFixed()} onChange={e => this.setState({amount:e.target.value*10**18})}/>
+
+            <div>is active voting: <b>{this.state.isActiveVoting?'true':'false'}</b></div>
+
+            {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['dao'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
+            <a className={'pointer link'} onClick={()=>this.toggle('votingDiv')}>{this.state.isActiveVoting?'current':'last'} voting</a>
+            <div className={"collapsed" + (this.state.votingDiv ? ' in' : '')}>
+                <div>votingID: <b>{this.state.votingID}</b></div>
+                <div>totalPositive: <b>{(this.state.currentVoitng[0]/10**18).toFixed(2)}</b></div>
+                <div>voteingType: <b>{this.state.currentVoitng[1]}</b></div>
+                <div>name: <b>{this.state.currentVoitng[2]}</b></div>
+                <div>value: <b>{this.state.currentVoitng[3]}</b></div>
+                <div>addr: <b>{this.state.currentVoitng[4]}</b></div>
+                <div>startTime: <b>{dateFromTimestamp(this.state.currentVoitng[5])}</b></div>
+                <div>decision: <b>{this.state.currentVoitng[6]?'true':'false'}</b></div>
+
+                {this.state.isActiveVoting?<a className='link pointer' onClick={()=>this.claimToFinalize()}>claim to finalize</a>:''}
+            </div>
+
+
+            {!this.state.isActiveVoting&&this.state.userPooled>0?<>
+            <a className={'pointer link'} onClick={()=>this.toggle('addVotingDiv')}>add new voting</a>
+            <div className={"collapsed" + (this.state.addVotingDiv ? ' in' : '')}>
+                <select id="votingType" onChange ={(e)=>{
+                    const { addVoting } = this.state;
+                    addVoting.votingType = e.target.value;
+                    this.setState({addVoting,})}}>
+                    <option value="1">Param</option>
+                    <option value="2">Address</option>
+                    <option value="3">Pause (on/off)</option>
+                    <option value="4">Authorize (on/off)</option>
+                </select>
+                <input type="text" value={this.state.addVoting.name} onChange ={(e)=>{
+                    const { addVoting } = this.state;
+                    addVoting.name = e.target.value;
+                    this.setState({addVoting,})}}/>
+
+                <input type="text" value={this.state.addVoting.value} onChange ={(e)=>{const { addVoting } = this.state;
+                    addVoting.value = e.target.value;
+                    this.setState({addVoting,})}}/>
+
+                <input type="text" value={this.state.addVoting.address} onChange ={(e)=>{const { addVoting } = this.state;
+                    addVoting.address = e.target.value;
+                    this.setState({addVoting,})}}/>
+
+                <input type="checkbox" id="decision" onChange ={(e)=>{const { addVoting } = this.state;
+                    addVoting.decision = e.target.checked;
+                    this.setState({addVoting,})}}/>
+                <a className={'pointer link right'} onClick={()=>this.newVoting()}>submit new voting</a>
+            </div></>
+                :''}
+
+            {this.state.isActiveVoting&&this.state.userPooled>0?<>
+                <a className={'pointer link'} onClick={()=>this.toggle('voteDiv')}>vote</a>
+                <div className={"collapsed" + (this.state.voteDiv ? ' in' : '')}>
+                    <input type="checkbox" id="voteDecision" onChange ={(e)=>{
+                        this.setState({userDecision:e.target.checked})}
+                    }/>
+                    <a className={'pointer link right'} onClick={()=>this.vote()}>submit vote</a>
+                </div>
+            </>:''}
 
             <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
+
+
         </div>;
     }
+
 }
 
 
@@ -515,7 +937,7 @@ class DepositContract extends React.Component{
             <div>overall volume: <b>{this.state.overallVolume}</b></div>
             <div>overall fee payed: <b>{this.state.overallFee}</b></div>
             <div>interest rate: <b>{this.state.depositRate}%</b></div>
-
+            {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['deposit'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
             <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
         </div>;
@@ -694,7 +1116,7 @@ class Deposit extends React.Component{
     }
     claimInterest(){
         //deposit.methods.claimInterest("+id+").send({from:userAddress});
-        this.props.contracts['deposit'].methods.claimInterest(this.state.id).send({from:this.props.account})
+        this.props.contracts['deposit'].methods.claimInterest(this.props.id).send({from:this.props.account})
             .on('transactionHash', (hash) => {
             this.setState({'loader':true})
             })
@@ -771,7 +1193,9 @@ class WithDrawDeposit extends React.Component{
             <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
 
 
-            {(parseFloat(this.state.toWithdraw)<=this.state.coinsDeposited)?<a className={"button pointer green right"} onClick={this.withdraw}>Withdraw {this.state.toWithdraw +' TSC'}</a>:<div className="button address right">
+            {(parseFloat(this.state.toWithdraw)<=this.state.coinsDeposited)?
+                <a className={"button pointer green right"} onClick={this.withdraw}>Withdraw {this.state.toWithdraw +' TSC'}</a>:<div className="button address right">
+
                 {'not enough TSC on deposit'}</div>}
             <br></br>
             <br></br>
@@ -873,6 +1297,107 @@ class CloseCDP extends React.Component{
 
 
             {(this.state.allowed>0)?<a className={"button pointer green right"} onClick={this.close}>Confirm closure</a>:<div className="button address right">
+                {'you need to allow '+this.state.needed+' TSC to close this position'}</div>}
+            <br></br>
+            <br></br>
+            <br></br>
+            {this.state.loader?<Loader/>:''}
+        </div>
+    }
+}
+
+class MakeBidTSCBuyout extends React.Component{
+
+    constructor(props){
+        super(props);
+        this.allowStables = this.allowStables.bind(this);
+        this.makebid = this.makebid.bind(this);
+        this.state={tscBalance:0, buttonInactive: false, allowed:0, toAllow:0, coinsDeposited:0};
+    }
+
+    componentDidMount() {
+        if (this.props.account)
+            this.props.contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((res)=>{
+                this.setState({tscBalance:(res/10**18)})
+            })
+
+        if (this.props.account)
+            this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['cdp']._address).call().then((res)=>{
+                this.setState({allowed:(res/10**18)})
+            })
+
+        if (this.props.contracts !== 'undefined'){
+            this.props.contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
+                const minted = parseFloat(localWeb3.utils.fromWei(this.props.position.coinsMinted));
+                const feeNeeded = 1.2*parseFloat(localWeb3.utils.fromWei(fee));
+                const needed = minted+feeNeeded;
+                console.log(typeof (feeNeeded))
+                console.log(typeof (minted))
+
+                this.setState({toAllow:needed});
+                this.setState({needed:needed});
+                //TODO: set 1.001
+            })
+        }
+
+    }
+
+    allowStables(){
+        if (this.state.toAllow<=this.state.tscBalance && this.props.contracts['cdp'] !== undefined){
+            this.props.contracts['stableCoin'].methods.approve(this.props.contracts['cdp']._address,localWeb3.utils.toWei(this.state.toAllow.toString())).send({from:this.props.account})
+                .on('transactionHash', (hash) => {
+                    this.setState({'loader':true})
+                })
+                .on('receipt', (receipt) => {
+                    this.setState({'loader':true})
+                })
+                .on('confirmation', (confirmationNumber, receipt) => {
+                    this.setState({'loader':false})
+                    this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['cdp']._address).call().then((res)=>{
+                        this.setState({allowed:(res/10**18)})
+                    })
+                })
+                .on('error', console.error);
+        }
+    }
+
+    changeToAllow(e){
+        this.setState({toAllow: e.target.value})
+    }
+
+    setMax(){
+        this.setState({toAllow: this.state.tscBalance})
+    }
+
+
+    makebid(){
+        this.props.contracts['cdp'].methods.closeCDP(this.props.id).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                window.location.reload();
+            })
+            .on('error', console.error);
+    }
+
+    render(){
+        return <div align={'left'}><div align={'center'}><b>Close CDP {this.props.id==undefined || this.props.id == ''?'':'(id: '+this.props.id+')'}</b></div>
+            {(parseFloat(this.state.toAllow)<=this.state.tscBalance)?<a className={"button pointer green right"} onClick={()=>this.allowStables()}>Allow</a>:<div className="button address right">
+                {'not enough TSC'}</div>}
+
+            TSC to allow: <input type='number' step="0.1" min="0" max={this.state.tscBalance} name='amount' value={this.state.toAllow} onChange={e => this.changeToAllow(e)}/>
+            Your bid (Rule tokens you'll recieve): <input type='number' step="0.1" min="0" max={this.state.tscBalance} name='amount' value={this.state.toAllow} onChange={e => this.changeToAllow(e)}/>
+
+            <div>Your TSC allowance to Auction contract: {this.state.allowed}</div><br></br>
+            <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
+
+
+            {(this.state.allowed>0)?<a className={"button pointer green right"} onClick={this.close}>Make a bid</a>:<div className="button address right">
                 {'you need to allow '+this.state.needed+' TSC to close this position'}</div>}
             <br></br>
             <br></br>
@@ -1220,7 +1745,6 @@ class Product extends React.Component{
 
     }
 
-
     render() {
         return <div className="product bt-tile__title pointer" onClick={()=>eventEmitter.emit('change-state', [this.props.section,this.props.title,this.props.id, this.props.hash])}>
                 <div className="v-center row-container">
@@ -1348,7 +1872,7 @@ class UpdateCDP extends React.Component{
     }
 
     updateCDP(){
-        console.log(this.state.collateral*10**18-this.props.position.wethAmountLocked);
+        //console.log(this.state.collateral*10**18-this.props.position.wethAmountLocked);
         this.props.contracts['cdp'].methods.updateCDP(this.props.id, localWeb3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: this.state.collateral*10**18-this.props.position.wethAmountLocked})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
@@ -1460,6 +1984,58 @@ class Paginator extends React.Component{
 
 }
 
+
+class TransferForm extends React.Component{
+
+    constructor(props) {
+        super(props);
+        this.state = {loader:false, balance:0, amount:0, address:'0x0'}
+    }
+
+    componentDidMount() {
+        this.props.contract.methods.balanceOf(this.props.account).call().then((balance)=>{
+            this.setState({balance:balance});
+        })
+
+    }
+
+    transfer(){
+        this.props.contract.methods.transfer(this.state.address, localWeb3.utils.toWei((this.state.amount/10**18).toString())).send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                //TODO:
+
+            })
+            .on('error', console.error);
+    }
+
+    inputChange(e){
+        this.setState({amount:e.target.value*10**18})
+    }
+
+    render(){
+
+        return <>
+            address: <input type='text' name='address' value={this.state.address} onChange={e => this.setState({address:e.target.value})}/>
+            amount to transfer: <input type='number' step="0.1" min="0" name='amount' value={this.state.amount/10**18} onChange={e => this.inputChange(e)}/>
+
+            {this.state.loader?<Loader/>:''}
+
+            <br/>
+            <a class="small-button green right" onClick={()=>this.transfer()}>transfer</a>
+            <br/><br/></>
+
+
+    }
+}
+
+
 class Transfers extends React.Component{
 
     constructor(props) {
@@ -1541,6 +2117,7 @@ class Transfers extends React.Component{
                      hash={product.transactionHash}
             />):'';
         return <><div className={'flex-col'}>{(this.props.contractName=="weth"&&this.state.wethBalance>0)?<a className={"button pointer green right"} onClick={()=>this.convertWeth()}>convert to ETC</a>:''}<b>Your {this.props.contractName.replace(/\b\w/g, l => l.toUpperCase())} transfers</b><p></p><Paginator items={items} perPage={10}/></div>
+            <div><TransferForm contract={this.props.contracts[this.props.contractName]} account={this.props.account}/></div>
         </>;
     }
 }
@@ -1549,7 +2126,7 @@ class Tsc extends React.Component{
     constructor(props) {
         super(props);
         this.initCoinsBuyOut = this.initCoinsBuyOut.bind(this);
-        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'', indicative:'', etherPool:'', tscPool:'', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: ''}
+        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'', indicative:'', etherPool:'', tscPool:'', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0}
     }
     componentDidMount() {
         const {contracts} = this.props;
@@ -1584,8 +2161,11 @@ class Tsc extends React.Component{
             });
         });
 
-    }
+        contracts['stableCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((allowance)=>{
+            this.setState({allowedToAuction: allowance});
+        });
 
+    }
 
     initCoinsBuyOut = ()=>{
         console.log('initCoinsBuyOut')
@@ -1604,6 +2184,40 @@ class Tsc extends React.Component{
             .on('error', console.error);
     }
 
+    initRuleBuyOut = ()=>{
+        this.props.contracts['auction'].methods.initRuleBuyOut().send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                //TODO: route to auction initCoinsBuyOutForStabilization returns uint256 auctionID
+                window.location.reload();
+            })
+            .on('error', console.error);
+    }
+
+    allowSurplusToAuction(){
+        this.props.contracts['cdp'].methods.allowSurplusToAuction().send({from:this.props.account})
+            .on('transactionHash', (hash) => {
+                this.setState({'loader':true})
+            })
+            .on('receipt', (receipt) => {
+                this.setState({'loader':true})
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                this.setState({'loader':false})
+                this.props.contracts['stableCoin'].methods.allowance(this.props.contracts['cdp']._address, this.props.contracts['auction']._address).call().then((allowance)=>{
+                    this.setState({allowedToAuction: allowance});
+                });
+            })
+            .on('error', console.error);
+    }
+
+
     render() {
         return <div align='left'>
             <div align='center'><b>True stable coin</b></div>
@@ -1614,16 +2228,24 @@ class Tsc extends React.Component{
             <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>
 
             <div>N of holders: <b>{this.state.holders}</b></div>
-            {this.props.account!==''?
-                <a className={"button pointer green right"} onClick={()=>this.initCoinsBuyOut()}>init auction to top up stubFund</a>:''}
+            {this.props.account!==''&&this.state.stubFundDemand>0?
+                <a className={"small-button pointer green right"} onClick={()=>this.initCoinsBuyOut()}>init auction to top up stubFund</a>:
+
+                <a className={"small-button pointer green right"} onClick={()=>this.allowSurplusToAuction()}>allow surplus to auction</a>
+            }
             <div>price vs USD (pool): <b>{this.state.pricePool}</b></div>
 
             <div>price vs USD (indicative): <b>{this.state.indicative}</b></div>
+
+            {this.props.account!==''&&this.state.allowedToAuction>0?<a className={"small-button pointer green right"} onClick={()=>this.initRuleBuyOut()}>init Rule buyOut</a>:''
+            }
+
             <div>ETC in pool: <b>{this.state.etherPool}</b></div>
             <div>TSC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button action={'Borrow'} name={"Borrow"}/>:''}</div>
             <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of TSC supply)</b></div>
             <div>stabilization fund: <b>{this.state.stubFund}</b></div>
             <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>
+            <div>allowed to auction: <b>{this.state.allowedToAuction/10**18}</b></div>
 
             <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
@@ -1671,6 +2293,40 @@ class Commodity extends React.Component{
                 this.setState({lastUpdated: dateFromTimestamp(timeStamp)});
             });
         });
+    }
+}
+
+
+class AuctionContract extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {address:''}
+    }
+
+    componentDidMount() {
+
+    }
+
+
+
+    render() {
+        return <div align='left'><b>Rule token</b>
+            <div>total supply:         <b>{this.state.supply}</b></div>
+
+            <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>
+
+            <div>N of holders: <b>{this.state.holders}</b></div>
+
+            <div>price in stableCoins (from pool):</div>
+
+            <div>marketCap:</div>
+
+            <div>pool volume:</div>
+
+            <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
+            <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
+
+        </div>
     }
 }
 
