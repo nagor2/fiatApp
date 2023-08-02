@@ -112,6 +112,7 @@ class MyPanel extends React.Component {
                 case 'makeBidTSCBuyout': return <MakeBidTSCBuyout auction={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'withdrawEther': return <WithdrawEtherCDP position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'INTDAO': return <DAO contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'improveBid': return <ImproveBid contracts={this.props.contracts} account={this.props.account} bid={content[0]} id={content[2]}/>; break;
                 default: return content;break;
             }
         }
@@ -189,11 +190,10 @@ class MyPanel extends React.Component {
                 fromBlock: fromBlock
                 ,toBlock: 'latest'
             }).then((events) => {
-                console.dir (events);
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
-                        let id = event.returnValues.posId;
+                        let id = event.returnValues.posID;
                         contracts['cdp'].methods.positions(id).call().then((position) => {
                             if (!position.liquidated)
                                 products.push({
@@ -459,7 +459,7 @@ class Bid extends React.Component{
                             {localWeb3.utils.fromWei(this.props.bid.returnValues.bidAmount)}
                         </div>
                         <div>
-                            {this.state.yourBid&&!this.state.canceled?<a className={"small-button pointer green"} onClick={()=>this.finalize()}>improve bid</a>:''}
+                            {this.state.yourBid&&!this.state.canceled?<a className={"small-button pointer green"} onClick={()=>eventEmitter.emit('change-state', [this.props.bid,'improveBid',this.props.bid.returnValues.bidId])}>improve bid</a>:''}
                         </div>
                         <div>
                             {this.state.yourBid&&!this.state.canceled&&!this.props.bestBid?<a className={"small-button pointer green"} onClick={()=>this.props.contracts['auction'].methods.cancelBid(this.props.bid.returnValues.bidId).send({from:this.props.account})}>cancel bid</a>:''}
@@ -468,6 +468,34 @@ class Bid extends React.Component{
                     <div className="small-text">{this.props.bid.block==undefined?'':dateFromTimestamp(this.props.bid.block.timestamp)}</div>
                 </div>
             </div>
+    }
+}
+
+class ImproveBid extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {
+            amount: 0,
+            newAmount:0,
+            paymentToken:''
+        }
+    }
+
+    componentDidMount() {
+        const { contracts } = this.props;
+
+    }
+
+
+    render() {
+        return  <div align='left'>
+            <div align='center'><b>Improve bid (id: {this.props.bid.returnValues.bidId})</b></div>
+
+            <div>Bid amount: {this.props.bid.returnValues.bidAmount/10**18}</div>
+
+            <div>Your {this.state.paymentToken} allowance to auction: {this.state.allowanceToAuction/10**18}</div>
+
+        </div>;
     }
 }
 
@@ -502,7 +530,6 @@ class Auction extends React.Component{
                 localWeb3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
                     this.setState({a:true})
-
                     console.log(res[i].auctionID)
                 });
                 contracts['auction'].methods.bids(res[i].returnValues.bidId).call().then((bid)=>{
@@ -538,7 +565,7 @@ class Auction extends React.Component{
             else {
                     contracts['rule'].methods.totalSupply().call().then((ruleSupply)=>{
                         contracts['dao'].methods.params('maxRuleEmissionPercent').call().then((maxRuleEmissionPercent)=> {
-                            this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100});
+                            this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100/10**18});
                         });
                     });
 
@@ -974,7 +1001,7 @@ class DebtPosition extends React.Component{
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:localWeb3.utils.fromWei(position.coinsMinted)});
             this.setState({wethLocked:localWeb3.utils.fromWei(position.wethAmountLocked)});
-            this.setState({feeGeneratedRecorded:localWeb3.utils.fromWei(position.feeGeneratedRecorded)});
+            this.setState({feeGeneratedRecorded:localWeb3.utils.fromWei(position.interestAmountRecorded)});
             contracts['cdp'].methods.getMaxStableCoinsToMint(position.wethAmountLocked).call().then((maxCoins)=>{
                 this.setState({maxStableCoinsToMint:localWeb3.utils.fromWei(maxCoins)});
             })
@@ -996,7 +1023,7 @@ class DebtPosition extends React.Component{
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:localWeb3.utils.fromWei(position.coinsMinted)});
             this.setState({wethLocked:localWeb3.utils.fromWei(position.wethAmountLocked)});
-            this.setState({feeGeneratedRecorded:localWeb3.utils.fromWei(position.feeGeneratedRecorded)});
+            this.setState({feeGeneratedRecorded:localWeb3.utils.fromWei(position.interestAmountRecorded)});
             contracts['cdp'].methods.getMaxStableCoinsToMint(position.wethAmountLocked).call().then((maxCoins)=>{
                 this.setState({maxStableCoinsToMint:localWeb3.utils.fromWei(maxCoins)});
             })

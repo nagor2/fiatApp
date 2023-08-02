@@ -2,7 +2,7 @@ import React from "react";
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0xdC4FC594AC23D071BdD7C7F799036061dCe81aE0';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0xF6346f29c85FFC5eC62fB10E3Ba2bF06711f3128';//'0xdC4FC594AC23D071BdD7C7F799036061dCe81aE0';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
@@ -189,6 +189,20 @@ config.daoABI = [
         "constant": true
     },
     {
+        "inputs": [],
+        "name": "votingID",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -237,6 +251,11 @@ config.daoABI = [
         "stateMutability": "view",
         "type": "function",
         "constant": true
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
     },
     {
         "inputs": [
@@ -325,11 +344,6 @@ config.daoABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "votingId",
-                "type": "uint256"
-            },
-            {
                 "internalType": "bool",
                 "name": "_vote",
                 "type": "bool"
@@ -341,14 +355,15 @@ config.daoABI = [
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "votingId",
-                "type": "uint256"
-            }
-        ],
-        "name": "claimToFinalizeVoting",
+        "inputs": [],
+        "name": "claimToFinalizeCurrentVoting",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "withdraw",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -358,7 +373,7 @@ config.ruleABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "_INTDAOaddress",
                 "type": "address"
             }
@@ -456,6 +471,20 @@ config.ruleABI = [
     },
     {
         "inputs": [],
+        "name": "decimals",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [],
         "name": "name",
         "outputs": [
             {
@@ -481,6 +510,11 @@ config.ruleABI = [
         "stateMutability": "view",
         "type": "function",
         "constant": true
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
     },
     {
         "inputs": [],
@@ -671,7 +705,7 @@ config.stableCoinABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "_INTDAOaddress",
                 "type": "address"
             }
@@ -772,9 +806,9 @@ config.stableCoinABI = [
         "name": "decimals",
         "outputs": [
             {
-                "internalType": "uint8",
+                "internalType": "uint256",
                 "name": "",
-                "type": "uint8"
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -951,6 +985,13 @@ config.stableCoinABI = [
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "withdraw",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "address",
@@ -1003,7 +1044,7 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "INTDAOaddress",
                 "type": "address"
             }
@@ -1110,6 +1151,11 @@ config.depositABI = [
         "stateMutability": "view",
         "type": "function",
         "constant": true
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
     },
     {
         "inputs": [],
@@ -1252,7 +1298,7 @@ config.cdpABI = [
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "posId",
+                "name": "posID",
                 "type": "uint256"
             }
         ],
@@ -1282,6 +1328,25 @@ config.cdpABI = [
             }
         ],
         "name": "PositionUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "posID",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "markOnLiquidationErased",
         "type": "event"
     },
     {
@@ -1344,7 +1409,7 @@ config.cdpABI = [
             },
             {
                 "internalType": "uint256",
-                "name": "feeGeneratedRecorded",
+                "name": "interestAmountRecorded",
                 "type": "uint256"
             },
             {
@@ -1359,12 +1424,12 @@ config.cdpABI = [
             },
             {
                 "internalType": "uint256",
-                "name": "feeRate",
+                "name": "interestRate",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "markedOnLiquidation",
+                "name": "markedOnLiquidationTimestamp",
                 "type": "uint256"
             },
             {
@@ -1381,6 +1446,11 @@ config.cdpABI = [
                 "internalType": "uint256",
                 "name": "liquidationAuctionID",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "restrictInterestWithdrawal",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -1403,7 +1473,7 @@ config.cdpABI = [
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "StableCoinsToMint",
+                "name": "stableCoinsToMint",
                 "type": "uint256"
             }
         ],
@@ -1427,11 +1497,11 @@ config.cdpABI = [
                 "type": "uint256"
             }
         ],
-        "name": "generatedFeeUnrecorded",
+        "name": "interestAmountUnrecorded",
         "outputs": [
             {
                 "internalType": "uint256",
-                "name": "fee",
+                "name": "interestAmount",
                 "type": "uint256"
             }
         ],
@@ -1556,27 +1626,28 @@ config.cdpABI = [
                 "type": "uint256"
             }
         ],
-        "name": "transferFee",
-        "outputs": [
+        "name": "transferInterest",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
             {
-                "internalType": "bool",
-                "name": "success",
-                "type": "bool"
+                "internalType": "uint256",
+                "name": "posID",
+                "type": "uint256"
             }
         ],
+        "name": "switchRestrictInterestWithdrawal",
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
     {
         "inputs": [],
         "name": "allowSurplusToAuction",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "success",
-                "type": "bool"
-            }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
@@ -1634,13 +1705,7 @@ config.cdpABI = [
             }
         ],
         "name": "markToLiquidate",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "success",
-                "type": "bool"
-            }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
@@ -1701,46 +1766,6 @@ config.cdpABI = [
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "posID",
-                "type": "uint256"
-            }
-        ],
-        "name": "wethLocked",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "posID",
-                "type": "uint256"
-            }
-        ],
-        "name": "isOnLiquidation",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "result",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
-    },
-    {
         "inputs": [],
         "name": "burnRule",
         "outputs": [],
@@ -1768,6 +1793,13 @@ config.cdpABI = [
                 "type": "bool"
             }
         ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "withdraw",
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     }
@@ -1823,19 +1855,19 @@ config.wethABI = [
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "from",
+                "name": "src",
                 "type": "address"
             },
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "to",
+                "name": "dst",
                 "type": "address"
             },
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "value",
+                "name": "wad",
                 "type": "uint256"
             }
         ],
@@ -2070,7 +2102,7 @@ config.inflationABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "INTDAOaddress",
                 "type": "address"
             }
@@ -2131,7 +2163,7 @@ config.cartABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "INTDAOaddress",
                 "type": "address"
             }
@@ -2263,6 +2295,11 @@ config.cartABI = [
         "constant": true
     },
     {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
+    },
+    {
         "inputs": [],
         "name": "renewContracts",
         "outputs": [],
@@ -2377,6 +2414,19 @@ config.oracleABI =  [
         "stateMutability": "payable",
         "type": "constructor",
         "payable": true
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+            }
+        ],
+        "name": "highVolatility",
+        "type": "event"
     },
     {
         "anonymous": false,
@@ -2612,6 +2662,11 @@ config.oracleABI =  [
         "constant": true
     },
     {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
+    },
+    {
         "inputs": [
             {
                 "internalType": "address payable",
@@ -2832,7 +2887,7 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "_INTDAOaddress",
                 "type": "address"
             }
@@ -2921,7 +2976,7 @@ config.auctionABI = [
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "liquidateColleteral",
+                "name": "collateral",
                 "type": "uint256"
             }
         ],
@@ -3027,6 +3082,11 @@ config.auctionABI = [
                 "internalType": "uint256",
                 "name": "bestBidId",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "isMarginCall",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -3088,6 +3148,11 @@ config.auctionABI = [
         "constant": true
     },
     {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
+    },
+    {
         "inputs": [],
         "name": "renewContracts",
         "outputs": [],
@@ -3106,26 +3171,6 @@ config.auctionABI = [
         ],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionID",
-                "type": "uint256"
-            }
-        ],
-        "name": "getBestBidAmount",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
     },
     {
         "inputs": [
@@ -3151,6 +3196,11 @@ config.auctionABI = [
             {
                 "internalType": "uint256",
                 "name": "posID",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "collateral",
                 "type": "uint256"
             }
         ],
@@ -3179,7 +3229,13 @@ config.auctionABI = [
             }
         ],
         "name": "makeBid",
-        "outputs": [],
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "bidId",
+                "type": "uint256"
+            }
+        ],
         "stateMutability": "nonpayable",
         "type": "function"
     },
@@ -3218,7 +3274,7 @@ config.auctionABI = [
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "auctionId",
+                "name": "auctionID",
                 "type": "uint256"
             }
         ],
@@ -3230,6 +3286,73 @@ config.auctionABI = [
                 "type": "bool"
             }
         ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "isFinalized",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "finalized",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionID",
+                "type": "uint256"
+            }
+        ],
+        "name": "getPaymentAmount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionID",
+                "type": "uint256"
+            }
+        ],
+        "name": "getBestBidAmount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [],
+        "name": "withdraw",
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     }
@@ -3332,7 +3455,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3345,7 +3469,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3364,7 +3489,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3383,7 +3509,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3402,7 +3529,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3421,7 +3549,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3434,7 +3563,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3453,7 +3583,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3466,7 +3597,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3479,7 +3611,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3492,7 +3625,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3505,11 +3639,13 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "stateMutability": "payable",
-        "type": "receive"
+        "type": "receive",
+        "payable": true
     },
     {
         "inputs": [
@@ -3610,7 +3746,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -3623,7 +3760,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3642,7 +3780,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -3666,7 +3805,8 @@ config.platformABI =  [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
