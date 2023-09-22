@@ -1,5 +1,7 @@
 import './App.css';
 import config from './utils/config'
+import ConnectButton from './components/ConnectButton'
+
 import React, { useState, Component } from 'react';
 import Web3 from 'web3'
 var events = require('events');
@@ -7,34 +9,6 @@ let eventEmitter = new events.EventEmitter();
 const fromBlock = 0;//17000000;
 
 let localWeb3 = config.localWeb3;
-
-class ConnectButton extends React.Component{
-    constructor(props){
-        super(props);
-    }
-
-    async handleStateChange() {
-        const web3 = new Web3(Web3.givenProvider);
-        if(typeof web3 !=='undefined'){
-            const wConnected = await web3.eth.net.isListening();
-            if (wConnected){
-                const accounts = await web3.eth.requestAccounts();
-                this.props.handleStateChange({
-                    walletConnected: wConnected
-                });
-                if (accounts.length>0) {
-                    this.props.handleStateChange({
-                        account: accounts[0]
-                    });
-                }
-            }
-        }
-    }
-
-    render() {
-        return <a className={"button pointer green right"} onClick={()=>this.handleStateChange()}>{this.props.name}</a>;
-    }
-}
 
 class MyPanel extends React.Component {
     constructor(props) {
@@ -153,28 +127,28 @@ class MyPanel extends React.Component {
                 //console.dir (events);
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
-                        let id = event.returnValues.auctionID;
-                        contracts['auction'].methods.auctions(id).call().then((auction) => {
-                            if (auction.finalized == past) {
-                                let title='Liquidate collateral';
-                                let balance = 0;
-                                if (auction.lotToken == contracts['rule']._address){
-                                    title = 'TSC buyout';
-                                    balance = (auction.paymentAmount / 10 ** 18).toFixed(2);
-                                }
-                                if (auction.lotToken == contracts['stableCoin']._address){
-                                    title = 'Rule buyout';
-                                    balance =  (auction.lotAmount / 10 ** 18).toFixed(2);
-                                }
-                                    products.push({
-                                        iconType: 'auction',
-                                        title: title,
-                                        id: id,
-                                        name: dateFromTimestamp(auction.initialized),
-                                        balance: balance
-                                    })
+                    let id = event.returnValues.auctionID;
+                    contracts['auction'].methods.auctions(id).call().then((auction) => {
+                        if (auction.finalized == past) {
+                            let title='Liquidate collateral';
+                            let balance = 0;
+                            if (auction.lotToken == contracts['rule']._address){
+                                title = 'TSC buyout';
+                                balance = (auction.paymentAmount / 10 ** 18).toFixed(2);
                             }
-                        });
+                            if (auction.lotToken == contracts['stableCoin']._address){
+                                title = 'Rule buyout';
+                                balance =  (auction.lotAmount / 10 ** 18).toFixed(2);
+                            }
+                            products.push({
+                                iconType: 'auction',
+                                title: title,
+                                id: id,
+                                name: dateFromTimestamp(auction.initialized),
+                                balance: balance
+                            })
+                        }
+                    });
 
                 }
                 this.setState({products: products});
@@ -295,7 +269,7 @@ class Swap extends React.Component{
                 <br/>
                 <br/>
             </div>
-            <iframe  src="https://swap.ethereumclassic.com/#/swap?outputCurrency=0x05e70011940cc4AfA46ef7c79BEf44E6348c702d"  height="900px"  width="100%" className='swap' />
+            <iframe  src="https://ipfs.io/ipfs/QmSCGpteEcfCDXcQunMyxbaAkBWB5edMFAWnzYXMCqaCKf/#/swap?outputCurrency=0x05e70011940cc4AfA46ef7c79BEf44E6348c702d"  height="900px"  width="100%" className='swap' />
         </div>;
     }
 }
@@ -909,7 +883,6 @@ class DAO extends React.Component{
     }
 
 }
-
 
 class DepositContract extends React.Component{
     constructor(props) {
@@ -2322,7 +2295,6 @@ class Commodity extends React.Component{
         });
     }
 }
-
 
 class AuctionContract extends React.Component{
     constructor(props) {

@@ -2,7 +2,7 @@ import React from "react";
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0xF6346f29c85FFC5eC62fB10E3Ba2bF06711f3128';//'0xdC4FC594AC23D071BdD7C7F799036061dCe81aE0';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0x1DA98C94CDD07A0979fDc9F23453F397D3099a62';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
