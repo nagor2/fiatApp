@@ -1,8 +1,10 @@
 import React from "react";
 
+export const fromBlock = 0;//17000000;
+
 let config={};
 config.localWeb3='';
-config.daoAddress = '0x1DA98C94CDD07A0979fDc9F23453F397D3099a62';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0xd45893e5a134C7B97AEa1A22602a1D543Fd5fAb0';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
@@ -85,7 +87,7 @@ config.daoABI = [
         "name": "addresses",
         "outputs": [
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "",
                 "type": "address"
             }
@@ -102,7 +104,7 @@ config.daoABI = [
                 "type": "address"
             }
         ],
-        "name": "authorized",
+        "name": "isAuthorized",
         "outputs": [
             {
                 "internalType": "bool",
@@ -219,7 +221,7 @@ config.daoABI = [
             },
             {
                 "internalType": "uint256",
-                "name": "voteingType",
+                "name": "votingType",
                 "type": "uint256"
             },
             {
@@ -233,7 +235,7 @@ config.daoABI = [
                 "type": "uint256"
             },
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "addr",
                 "type": "address"
             },
@@ -253,9 +255,11 @@ config.daoABI = [
         "constant": true
     },
     {
-        "stateMutability": "payable",
-        "type": "receive",
-        "payable": true
+        "inputs": [],
+        "name": "renewContracts",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "inputs": [
@@ -265,7 +269,7 @@ config.daoABI = [
                 "type": "string"
             },
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "addr",
                 "type": "address"
             }
@@ -293,24 +297,17 @@ config.daoABI = [
                 "type": "uint256"
             },
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "addr",
                 "type": "address"
             },
             {
                 "internalType": "bool",
-                "name": "_decision",
+                "name": "decision",
                 "type": "bool"
             }
         ],
         "name": "addVoting",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "renewContracts",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -357,13 +354,6 @@ config.daoABI = [
     {
         "inputs": [],
         "name": "claimToFinalizeCurrentVoting",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "withdraw",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1259,7 +1249,7 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "INTDAOaddress",
                 "type": "address"
             }
@@ -1456,11 +1446,6 @@ config.cdpABI = [
         "stateMutability": "view",
         "type": "function",
         "constant": true
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive",
-        "payable": true
     },
     {
         "inputs": [],
@@ -1793,13 +1778,6 @@ config.cdpABI = [
                 "type": "bool"
             }
         ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "withdraw",
-        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     }
