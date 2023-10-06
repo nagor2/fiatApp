@@ -1,17 +1,18 @@
 import React from "react";
 
+
 export const fromBlock = 0;//17000000;
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0xd45893e5a134C7B97AEa1A22602a1D543Fd5fAb0';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0x11D269A94c284CFeDB0EC20bBC1Cf876B985cae5';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "WETH",
-                "type": "address"
+                "internalType": "address[]",
+                "name": "_addresses",
+                "type": "address[]"
             }
         ],
         "stateMutability": "nonpayable",
@@ -257,24 +258,6 @@ config.daoABI = [
     {
         "inputs": [],
         "name": "renewContracts",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "addressName",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "addr",
-                "type": "address"
-            }
-        ],
-        "name": "setAddressOnce",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1262,25 +1245,6 @@ config.cdpABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
-                "name": "posID",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            }
-        ],
-        "name": "OnLiquidation",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
                 "internalType": "address",
                 "name": "owner",
                 "type": "address"
@@ -1300,9 +1264,9 @@ config.cdpABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "indexed": false,
@@ -1325,18 +1289,24 @@ config.cdpABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint32",
+                "name": "auctionID",
+                "type": "uint32"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "timestamp",
+                "name": "collateral",
                 "type": "uint256"
             }
         ],
-        "name": "markOnLiquidationErased",
+        "name": "liquidateCollateral",
         "type": "event"
     },
     {
@@ -1344,18 +1314,18 @@ config.cdpABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
+                "internalType": "uint24",
+                "name": "liquidationStatus",
+                "type": "uint24"
             }
         ],
-        "name": "markedOnLiquidation",
+        "name": "liquidationStatusChanged",
         "type": "event"
     },
     {
@@ -1363,9 +1333,9 @@ config.cdpABI = [
         "name": "numPositions",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "view",
@@ -1375,72 +1345,67 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "positions",
         "outputs": [
             {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
+                "internalType": "uint128",
                 "name": "coinsMinted",
-                "type": "uint256"
+                "type": "uint128"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint128",
                 "name": "wethAmountLocked",
-                "type": "uint256"
+                "type": "uint128"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint128",
                 "name": "interestAmountRecorded",
-                "type": "uint256"
+                "type": "uint128"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "timeOpened",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "lastTimeUpdated",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint24",
                 "name": "interestRate",
-                "type": "uint256"
+                "type": "uint24"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "markedOnLiquidationTimestamp",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
-                "internalType": "bool",
-                "name": "onLiquidation",
-                "type": "bool"
+                "internalType": "uint24",
+                "name": "liquidationStatus",
+                "type": "uint24"
             },
             {
-                "internalType": "bool",
-                "name": "liquidated",
-                "type": "bool"
-            },
-            {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "liquidationAuctionID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "internalType": "bool",
                 "name": "restrictInterestWithdrawal",
                 "type": "bool"
+            },
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -1466,7 +1431,7 @@ config.cdpABI = [
         "outputs": [
             {
                 "internalType": "uint256",
-                "name": "posID",
+                "name": "",
                 "type": "uint256"
             }
         ],
@@ -1477,9 +1442,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "interestAmountUnrecorded",
@@ -1497,9 +1462,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "totalCurrentFee",
@@ -1537,9 +1502,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "getMaxStableCoinsToMintForPos",
@@ -1593,9 +1558,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "closeCDP",
@@ -1606,9 +1571,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "transferInterest",
@@ -1619,9 +1584,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "switchRestrictInterestWithdrawal",
@@ -1639,31 +1604,12 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "claimMarginCall",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "posID",
-                "type": "uint256"
-            }
-        ],
-        "name": "startCoinsBuyOut",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1671,9 +1617,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "finishMarginCall",
@@ -1684,9 +1630,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "markToLiquidate",
@@ -1697,9 +1643,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "eraseMarkToLiquidate",
@@ -1710,9 +1656,9 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "internalType": "uint256",
@@ -1735,14 +1681,14 @@ config.cdpABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "posID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint128",
                 "name": "etherToWithdraw",
-                "type": "uint256"
+                "type": "uint128"
             }
         ],
         "name": "withdrawEther",

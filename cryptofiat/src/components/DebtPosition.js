@@ -15,7 +15,8 @@ export default class DebtPosition extends React.Component{
             coinsMinted: 0,
             wethLocked:0,
             feeGeneratedRecorded:0,
-            interestRate:0
+            interestRate:0,
+            liquidationStatus:0
         };
 //TODO: implement and test
         this.closeCDP = this.closeCDP.bind(this);
@@ -29,11 +30,14 @@ export default class DebtPosition extends React.Component{
         this.setState({id:this.state.id})
         contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
             this.setState({position:position});
+            this.setState({liquidationStatus:position.liquidationStatus});
             this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
             this.setState({wethLocked:this.props.web3.utils.fromWei(position.wethAmountLocked)});
             this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
+
+
             contracts['cdp'].methods.getMaxStableCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
                 this.setState({maxStableCoinsToMint:this.props.web3.utils.fromWei(maxCoins)});
             })
@@ -51,6 +55,7 @@ export default class DebtPosition extends React.Component{
         const { contracts } = this.props;
         contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
             this.setState({position:position});
+            this.setState({liquidationStatus:position.liquidationStatus});
             this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
@@ -95,6 +100,7 @@ export default class DebtPosition extends React.Component{
             <Button emitter={this.props.emitter} action={'closeCDP'} id={this.props.id} name={"Close position"} item={this.state.position}/>
             <div>recorded fee: <b>{this.state.feeGeneratedRecorded}</b></div>
             <div>accumulated interest: <b>{this.state.fee}</b></div>
+            <div>liquidationStatus: <b>{this.state.liquidationStatus}</b></div>
             <br/>
             <Button emitter={this.props.emitter} action={'withdrawEther'} id={this.props.id} name={"withdraw ether"} item={this.state.position}/>
 
