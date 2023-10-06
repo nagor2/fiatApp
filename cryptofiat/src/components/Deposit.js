@@ -99,6 +99,7 @@ export default class Deposit extends React.Component{
             <input className={'green'} type='button' value='claim interest' onClick={this.claimInterest}/>
             <input className={'green'} type='button' value='close' onClick={this.close}/>
             {this.state.loader?<Loader/>:''}
+
         </div>;
     }
 }

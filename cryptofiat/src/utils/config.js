@@ -5,7 +5,7 @@ export const fromBlock = 0;//17000000;
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0x11D269A94c284CFeDB0EC20bBC1Cf876B985cae5';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0x4Bd7cb2e8C50285ce629aD3DC7EBdA7DeE2351A9';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
@@ -2811,7 +2811,7 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "_INTDAOaddress",
                 "type": "address"
             }
@@ -2824,8 +2824,33 @@ config.auctionABI = [
         "inputs": [
             {
                 "indexed": false,
+                "internalType": "uint32",
+                "name": "auctionID",
+                "type": "uint32"
+            },
+            {
+                "indexed": false,
                 "internalType": "uint256",
-                "name": "bidId",
+                "name": "lotAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint32",
+                "name": "bestBidID",
+                "type": "uint32"
+            }
+        ],
+        "name": "auctionFinished",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "bidID",
                 "type": "uint256"
             }
         ],
@@ -2837,34 +2862,9 @@ config.auctionABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "lotAmount",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "bestBid",
-                "type": "uint256"
-            }
-        ],
-        "name": "buyOutFinished",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "indexed": false,
@@ -2877,9 +2877,15 @@ config.auctionABI = [
                 "internalType": "address",
                 "name": "lotAddress",
                 "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "paymentAmount",
+                "type": "uint256"
             }
         ],
-        "name": "buyOutInit",
+        "name": "newAuction",
         "type": "event"
     },
     {
@@ -2887,40 +2893,15 @@ config.auctionABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
-                "name": "posID",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "collateral",
-                "type": "uint256"
-            }
-        ],
-        "name": "liquidateCollateral",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "auctionID",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "bidId",
-                "type": "uint256"
+                "internalType": "uint32",
+                "name": "bidID",
+                "type": "uint32"
             },
             {
                 "indexed": false,
@@ -2943,9 +2924,9 @@ config.auctionABI = [
         "name": "auctionNum",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "view",
@@ -2955,9 +2936,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "auctions",
@@ -3003,14 +2984,9 @@ config.auctionABI = [
                 "type": "uint256"
             },
             {
-                "internalType": "uint256",
-                "name": "bestBidId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "isMarginCall",
-                "type": "bool"
+                "internalType": "uint32",
+                "name": "bestBidID",
+                "type": "uint32"
             }
         ],
         "stateMutability": "view",
@@ -3020,9 +2996,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "bids",
@@ -3033,9 +3009,9 @@ config.auctionABI = [
                 "type": "address"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "internalType": "uint256",
@@ -3062,19 +3038,14 @@ config.auctionABI = [
         "name": "bidsNum",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "view",
         "type": "function",
         "constant": true
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive",
-        "payable": true
     },
     {
         "inputs": [],
@@ -3088,9 +3059,9 @@ config.auctionABI = [
         "name": "initRuleBuyOut",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "nonpayable",
@@ -3107,9 +3078,9 @@ config.auctionABI = [
         "name": "initCoinsBuyOutForStabilization",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "nonpayable",
@@ -3118,22 +3089,17 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "posID",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
+                "internalType": "uint128",
                 "name": "collateral",
-                "type": "uint256"
+                "type": "uint128"
             }
         ],
         "name": "initCoinsBuyOut",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "nonpayable",
@@ -3142,9 +3108,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
+                "internalType": "uint32",
+                "name": "auctionID",
+                "type": "uint32"
             },
             {
                 "internalType": "uint256",
@@ -3155,9 +3121,9 @@ config.auctionABI = [
         "name": "makeBid",
         "outputs": [
             {
-                "internalType": "uint256",
-                "name": "bidId",
-                "type": "uint256"
+                "internalType": "uint32",
+                "name": "bidID",
+                "type": "uint32"
             }
         ],
         "stateMutability": "nonpayable",
@@ -3166,9 +3132,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "bidId",
-                "type": "uint256"
+                "internalType": "uint32",
+                "name": "bidID",
+                "type": "uint32"
             },
             {
                 "internalType": "uint256",
@@ -3184,9 +3150,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "bidId",
-                "type": "uint256"
+                "internalType": "uint32",
+                "name": "bidID",
+                "type": "uint32"
             }
         ],
         "name": "cancelBid",
@@ -3197,9 +3163,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "claimToFinalizeAuction",
@@ -3216,9 +3182,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
+                "internalType": "uint32",
+                "name": "auctionID",
+                "type": "uint32"
             }
         ],
         "name": "isFinalized",
@@ -3236,9 +3202,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "getPaymentAmount",
@@ -3256,9 +3222,9 @@ config.auctionABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "auctionID",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "getBestBidAmount",
@@ -3272,13 +3238,6 @@ config.auctionABI = [
         "stateMutability": "view",
         "type": "function",
         "constant": true
-    },
-    {
-        "inputs": [],
-        "name": "withdraw",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
     }
 ];
 config.platformABI =  [

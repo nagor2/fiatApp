@@ -136,13 +136,14 @@ export default class MyPanel extends React.Component {
         const{contracts} = this.props;
         let products=[];
         if (contracts['auction']!==undefined)
-            contracts['auction'].getPastEvents('buyOutInit', {
+            contracts['auction'].getPastEvents('newAuction', {
                 fromBlock: fromBlock
                 ,toBlock: 'latest'
             }).then((events) => {
                 //console.dir (events);
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
+                    //if (event.returnValues.lotAddress == contracts['dao'].addresses())
                     let id = event.returnValues.auctionID;
                     contracts['auction'].methods.auctions(id).call().then((auction) => {
                         if (auction.finalized == past) {
@@ -184,7 +185,6 @@ export default class MyPanel extends React.Component {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
                         let id = event.returnValues.posID;
-                        console.log("PositionOpened: "+event.returnValues.posID)
                         contracts['cdp'].methods.positions(id).call().then((position) => {
                             if (position.liquidationStatus<2)
                                 products.push({

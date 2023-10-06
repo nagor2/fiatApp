@@ -69,6 +69,8 @@ export default class Auction extends React.Component{
             else {
                 contracts['rule'].methods.totalSupply().call().then((ruleSupply)=>{
                     contracts['dao'].methods.params('maxRuleEmissionPercent').call().then((maxRuleEmissionPercent)=> {
+                        console.log('Rule supply: '+ruleSupply/10**18);
+                        console.log('maxRuleEmissionPercent: '+maxRuleEmissionPercent);
                         this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100/10**18});
                     });
                 });
