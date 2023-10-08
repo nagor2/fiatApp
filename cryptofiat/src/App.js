@@ -4,8 +4,31 @@ import config from './utils/config'
 import ConnectButton from './components/ConnectButton'
 import MyPanel from "./components/MyPanel";
 
+import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react'
+
+import { WagmiConfig } from 'wagmi'
+import { localhost, classic } from 'wagmi/chains'
+
 import React from 'react';
 import Web3 from 'web3'
+
+// 1. Get projectId
+const projectId = '91330a25042ee96db0fa1ec2ecbf936c'
+
+// 2. Create wagmiConfig
+const metadata = {
+    name: 'Web3Modal',
+    description: 'Web3Modal Example',
+    url: 'https://web3modal.com',
+    icons: ['https://avatars.githubusercontent.com/u/37784886']
+}
+
+const chains = [localhost, classic]
+const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata })
+
+// 3. Create modal
+createWeb3Modal({ wagmiConfig, projectId, chains })
+
 
 var events = require('events');
 let eventEmitter = new events.EventEmitter();
@@ -126,13 +149,15 @@ class App extends React.Component{
     }
 
     render(){
-        return <div className="App">
+        return <WagmiConfig config={wagmiConfig}>
+        <div className="App">
 
                 <div className="App-header">
-
+                    <w3m-button />
                     <ETC etcPrice={this.state.etcPrice}/>
                     <h2 align="center" className="pointer" onClick={this.Click}>TrueStableCoin</h2>
                     {this.state.walletConnected ? <Address account={this.state.account}/>:<ConnectButton handleStateChange={this.handleStateChange} name='connect wallet'/>}
+
                 </div>
                 <div className="content">
                     <div className="region_left">
@@ -158,7 +183,7 @@ class App extends React.Component{
 
                 </div>
 
-            </div>;
+            </div>;</WagmiConfig>
     }
 }
 

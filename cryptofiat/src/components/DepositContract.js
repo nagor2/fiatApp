@@ -46,7 +46,7 @@ export default class DepositContract extends React.Component{
     render() {
         return  <div align='left'>
             <div align='center'><b>Deposit contract</b></div>
-            {this.props.account!==''?<Button action={'openDeposit'} name={"Open deposit"}/>:''}
+            {this.props.account!==''?<a className={"button pointer green right"} onClick={()=>this.props.emitter.emit('change-state', [,'openDeposit',])}>Open deposit</a>:''}
             {this.props.account!==''?<div>your stable coin allowance to Deposit contract: <b>{this.state.allowanceToDeposit}</b></div>:''}
             {this.props.account!==''?<div>you are approved to withdraw from CDP: <b>{this.state.approvedFromCDP}</b></div>:''}
             {this.state.approvedFromCDP>0 && this.props.account!=''?<input type='button' value='transferFrom' onClick={this.transferFrom}/>:''}

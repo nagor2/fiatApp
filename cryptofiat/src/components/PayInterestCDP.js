@@ -5,7 +5,7 @@ export default class PayInterestCDP extends React.Component{
     constructor(props) {
         super(props);
         this.state = {debt:0, days: 0, allowance:0, needed:0, loader:false, fee:0}
-        console.log(this.props.position)
+        //console.log(this.props.position)
         this.allow=this.allow.bind(this);
         this.payInterest=this.payInterest.bind(this);
     }

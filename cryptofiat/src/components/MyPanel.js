@@ -94,7 +94,7 @@ export default class MyPanel extends React.Component {
                 case 'CDP': return <CDP emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
                 case 'debt position': return <DebtPosition emitter={this.props.emitter} web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'deposit': return <Deposit web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'Deposit': return <DepositContract contracts={this.props.contracts} account={this.props.account}/>; break;
+                case 'Deposit': return <DepositContract emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'openDeposit': return <OpenDeposit web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'withdrawFromDeposit': return <WithDrawDeposit web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'payInterest': return <PayInterestCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
@@ -114,7 +114,7 @@ export default class MyPanel extends React.Component {
         if (contracts['cart']!==undefined)
             contracts['cart'].methods.itemsCount().call().then((result) => {
                 this.setState({itemsCount: result});
-                for (let i = 0; i < result; i++) {
+                for (let i = 1; i <= result; i++) {
                     contracts['cart'].methods.items(i).call().then((result) => {
                         contracts['cart'].methods.getPrice(result['symbol']).call().then((price) => {
                             prod.push({

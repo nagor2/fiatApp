@@ -10,42 +10,60 @@ export default class Auction extends React.Component{
             id: 0,
             allowanceToAuction: 0,
             auction: 0,
-            payment: 0,
-            stableBalance: 0,
+            paymentToken: '',
+            paymentBalance: 0,
             bestBid:0,
             nextBid:0,
+            paymentTokenContract:'',
             block:0,
             timeLeft:0,
             bids:[],
-            a: true
+            move:1,
+            a: true,
+            type:'',
+            lot:''
         };
     }
 
     componentDidMount() {
         const { contracts } = this.props;
-        this.setState({address:contracts['auction']._address});
-
         let bids = [];
-
-        contracts['auction'].getPastEvents('newBid', {filter: { auctionID: this.props.id }, fromBlock: fromBlock}).then((res)=> {
+        contracts['auction'].getPastEvents('newBid', {filter: {auctionID:this.props.id}, fromBlock: fromBlock}).then((res)=> {
             bids.push.apply(bids,res);
-            //console.log(res);
             for (let i=0; i<res.length; i++) {
                 this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
                     this.setState({a:true})
-                    console.log(res[i].auctionID)
+                    console.log(res[i].returnValues.auctionID)
                 });
-                contracts['auction'].methods.bids(res[i].returnValues.bidId).call().then((bid)=>{
+                contracts['auction'].methods.bids(res[i].returnValues.bidID).call().then((bid)=>{
                     res[i].bid = bid;
                     this.setState({a:true})
                 })
             }
             this.setState({bids:bids})
+            this.setState({address:contracts['auction']._address});
         })
 
         contracts['auction'].methods.auctions(this.props.id).call().then((auction)=>{
             this.setState({auction:auction});
+
+            let paymentContract = (auction.paymentToken==this.props.contracts['stableCoin']._address)?this.props.contracts['stableCoin']:this.props.contracts['rule'];
+            this.setState({paymentTokenContract: paymentContract})
+
+
+            paymentContract.methods.allowance(this.props.account,contracts['auction']._address).call().then((result) => {
+                    this.setState({allowanceToAuction:result});
+                });
+            paymentContract.methods.balanceOf(this.props.account).call().then((result)=>{
+                    this.setState({paymentBalance:result});
+                });
+
+            switch (auction.lotToken){
+                case this.props.contracts['rule']._address: this.setState({lot:'Rule', type:'TSC', move:-1, paymentToken: 'TSC'});break;
+                case this.props.contracts['stableCoin']._address: this.setState({lot:'TSC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
+                case this.props.contracts['weth']._address: this.setState({lot: 'WETH', type:'TSC', move:1, paymentToken: 'TSC'}); break;
+            }
 
             this.props.web3.eth.getBlock('latest').then((block)=>{
                 this.setState({block:block})
@@ -54,46 +72,40 @@ export default class Auction extends React.Component{
                 });
             });
 
-            if (auction.bestBidId!=0){
-                contracts['auction'].methods.bids(auction.bestBidId).call().then((bestBid)=>{
+            if (auction.bestBidID!=0){
+                contracts['auction'].methods.bids(auction.bestBidID).call().then((bestBid)=>{
                     this.setState({bestBid:bestBid})
 
                     contracts['dao'].methods.params('minAuctionPriceMove').call().then((minAuctionPriceMove)=> {
-                        let nextBid = ((bestBid.bidAmount/100 * (100 - minAuctionPriceMove))/10**18).toFixed();
+                        console.log(minAuctionPriceMove);
+                        let nextBid = this.props.web3.utils.fromWei((bestBid.bidAmount * (100 +this.state.move*minAuctionPriceMove)/100).toString());
                         this.setState({nextBid:nextBid})
+                        console.log('nextBid:'+this.state.nextBid);
                     });
-
                 });
-
             }
             else {
-                contracts['rule'].methods.totalSupply().call().then((ruleSupply)=>{
-                    contracts['dao'].methods.params('maxRuleEmissionPercent').call().then((maxRuleEmissionPercent)=> {
-                        console.log('Rule supply: '+ruleSupply/10**18);
-                        console.log('maxRuleEmissionPercent: '+maxRuleEmissionPercent);
-                        this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100/10**18});
-                    });
-                });
+                switch (auction.lotToken){
+                    case this.props.contracts['rule']._address:
+                        contracts['rule'].methods.totalSupply().call().then((ruleSupply)=>{
+                        contracts['dao'].methods.params('maxRuleEmissionPercent').call().then((maxRuleEmissionPercent)=> {
+                            this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100/10**18});
+                        });
+                    }); break;
+                    case this.props.contracts['stableCoin']._address: this.setState({nextBid:0.1}); break;
+                    case this.props.contracts['weth']._address: this.setState({nextBid:0.1}); break;
 
+                }
             }
 
-            if (auction.lotToken== this.props.contracts['rule']._address)
-                this.setState({payment:auction.paymentAmount});
         });
 
-        if (this.props.account){
-            contracts['stableCoin'].methods.allowance(this.props.account,contracts['auction']._address).call().then((result) => {
-                this.setState({allowanceToAuction:result});
-            });
 
-            {this.props.contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((result)=>{
-                this.setState({stableBalance:result});
-            })}
-        }
     }
 
-    allowStables(){
-        this.props.contracts['stableCoin'].methods.approve(this.props.contracts['auction']._address,this.state.payment).send({from:this.props.account})
+    allowPayment(contract){
+        console.log(contract.methods)
+        contract.methods.approve(this.props.contracts['auction']._address,this.props.web3.utils.toWei(this.state.nextBid.toString())).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -102,12 +114,11 @@ export default class Auction extends React.Component{
             })
             .on('confirmation', (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
-                this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['auction']._address).call().then((res)=>{
+                contract.methods.allowance(this.props.account, this.props.contracts['auction']._address).call().then((res)=>{
                     this.setState({allowanceToAuction:(res)})
                 })
             })
             .on('error', console.error);
-
     }
 
     makeBid(){
@@ -144,26 +155,24 @@ export default class Auction extends React.Component{
 
     render() {
         return  <div align='left'>
-            <div align='center'><b>Auction {(this.state.auction.lotToken== this.props.contracts['rule']._address)?'TSC buyout':''} (id: {this.props.id})</b></div>
+            <div align='center'><b>Auction ({this.state.type} buyout) (id: {this.props.id})</b></div>
             {(this.state.timeLeft<=0)?<a className={"small-button pointer green right"} onClick={()=>this.finalize()}>claim to finalize</a>:<div className="small-button address right" alt={'you have to wait until you may claim to finalize auction'}>
                 {'claim to finalize auction in '+Math.floor(this.state.timeLeft / 3600)+':'+Math.floor(this.state.timeLeft / 60)+':'+this.state.timeLeft % 60}</div>}
 
-            <div>TSC buyout amount: {this.state.payment/10**18}</div>
+            <div>the amount of {this.state.lot} you'll recieve: {this.state.auction.lotToken==this.props.contracts['rule']._address?this.state.nextBid:this.state.auction.lotAmount/10**18}</div>
+            <div>payment amount: {this.state.auction.paymentAmount/10**18}</div>
 
-            <div>your TSC allowance to auction: {this.state.allowanceToAuction/10**18}</div>
+            <div>your {this.state.paymentToken} allowance to auction: {this.state.allowanceToAuction/10**18}</div>
 
-            {(this.state.stableBalance>=this.state.payment)?<a className={"small-button pointer green right"} onClick={()=>this.allowStables()}>Allow {this.state.auction.paymentAmount/10**18} TSC</a>:<div className="small-button address right">
-                {'not enough TSC to participate in this auction'}</div>}
-            <div>the amount of Rule you'll recieve: {this.state.nextBid}</div>
+            {(this.state.paymentBalance>=this.state.auction.paymentAmount)?<a className={"small-button pointer green right"}
+                                                                              onClick={()=>this.allowPayment(this.state.paymentTokenContract)}>Allow {this.state.nextBid} {this.state.paymentToken}</a>:<div className="small-button address right">
+                {'not enough '+this.state.paymentToken+' to participate in this auction'}</div>}
 
             <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
-            {(this.state.allowanceToAuction>=this.state.payment)?
-                <a className={"small-button pointer green right"} onClick={()=>this.makeBid()}>Make a bid (get {this.state.nextBid} Rule for {this.state.auction.paymentAmount/10**18} TSC)</a>:
+            {(this.state.allowanceToAuction>=this.state.nextBid)?
+                <a className={"small-button pointer green right"} onClick={()=>this.makeBid()}>Make a bid (get {this.state.nextBid} {this.state.paymentToken} for {this.state.auction.lotAmount/10**18} TSC)</a>:
                 <div className="small-button address right">{'insufficient allowance to bid'}</div>}
             <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
-
-
-
 
             {this.state.loader?<Loader/>:''}
 

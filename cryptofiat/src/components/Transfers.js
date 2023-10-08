@@ -168,7 +168,7 @@ class TransferForm extends React.Component{
             {this.state.loader?<Loader/>:''}
 
             <br/>
-            <a class="small-button green right" onClick={()=>this.transfer()}>transfer</a>
+            <a className="small-button green right pointer" onClick={()=>this.transfer()}>transfer</a>
             <br/><br/></>
 
 

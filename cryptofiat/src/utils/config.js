@@ -5,7 +5,7 @@ export const fromBlock = 0;//17000000;
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0x4Bd7cb2e8C50285ce629aD3DC7EBdA7DeE2351A9';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0x89a356Ff12C4E13535eeFc673D36443fcAB93142';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
@@ -22,13 +22,13 @@ config.daoABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
-                "internalType": "uint256",
+                "indexed": true,
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "string",
                 "name": "name",
                 "type": "string"
@@ -41,10 +41,10 @@ config.daoABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
-                "internalType": "uint256",
+                "indexed": true,
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "VotingFailed",
@@ -54,10 +54,10 @@ config.daoABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
-                "internalType": "uint256",
+                "indexed": true,
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "VotingSucceed",
@@ -196,9 +196,9 @@ config.daoABI = [
         "name": "votingID",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "view",
@@ -208,9 +208,9 @@ config.daoABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "votings",
@@ -221,9 +221,9 @@ config.daoABI = [
                 "type": "uint256"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "votingType",
-                "type": "uint256"
+                "type": "uint8"
             },
             {
                 "internalType": "string",
@@ -265,9 +265,9 @@ config.daoABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "votingType",
-                "type": "uint256"
+                "type": "uint8"
             },
             {
                 "internalType": "string",
@@ -1017,8 +1017,8 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "address payable",
-                "name": "INTDAOaddress",
+                "internalType": "address",
+                "name": "_INTDAOaddress",
                 "type": "address"
             }
         ],
@@ -1029,10 +1029,10 @@ config.depositABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
-                "internalType": "uint256",
+                "indexed": true,
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "indexed": false,
@@ -1047,7 +1047,7 @@ config.depositABI = [
                 "type": "uint256"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address",
                 "name": "owner",
                 "type": "address"
@@ -1061,9 +1061,9 @@ config.depositABI = [
         "name": "counter",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "stateMutability": "view",
@@ -1073,9 +1073,9 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "deposits",
@@ -1126,11 +1126,6 @@ config.depositABI = [
         "constant": true
     },
     {
-        "stateMutability": "payable",
-        "type": "receive",
-        "payable": true
-    },
-    {
         "inputs": [],
         "name": "renewContracts",
         "outputs": [],
@@ -1147,9 +1142,9 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "internalType": "uint256",
@@ -1165,9 +1160,9 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "topUp",
@@ -1178,9 +1173,9 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "overallInterest",
@@ -1198,9 +1193,9 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "updateInterest",
@@ -1217,9 +1212,9 @@ config.depositABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint32",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "name": "claimInterest",
@@ -1244,13 +1239,13 @@ config.cdpABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address",
                 "name": "owner",
                 "type": "address"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint256",
                 "name": "posID",
                 "type": "uint256"
@@ -1263,7 +1258,7 @@ config.cdpABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "posID",
                 "type": "uint32"
@@ -1288,13 +1283,13 @@ config.cdpABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "auctionID",
                 "type": "uint32"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "posID",
                 "type": "uint32"
@@ -1313,7 +1308,7 @@ config.cdpABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "posID",
                 "type": "uint32"
@@ -2088,7 +2083,7 @@ config.cartABI = [
         "inputs": [
             {
                 "internalType": "address payable",
-                "name": "INTDAOaddress",
+                "name": "_INTDAOaddress",
                 "type": "address"
             }
         ],
@@ -2100,9 +2095,9 @@ config.cartABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "name": "instrumentAdded",
@@ -2113,9 +2108,9 @@ config.cartABI = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "name": "shareChanged",
@@ -2126,9 +2121,9 @@ config.cartABI = [
         "name": "decimals",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "stateMutability": "view",
@@ -2146,9 +2141,9 @@ config.cartABI = [
         "name": "dictionary",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "stateMutability": "view",
@@ -2158,27 +2153,22 @@ config.cartABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "name": "items",
         "outputs": [
-            {
-                "internalType": "bool",
-                "name": "exists",
-                "type": "bool"
-            },
             {
                 "internalType": "string",
                 "name": "symbol",
                 "type": "string"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "share",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "internalType": "uint256",
@@ -2195,9 +2185,9 @@ config.cartABI = [
         "name": "itemsCount",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "stateMutability": "view",
@@ -2209,19 +2199,14 @@ config.cartABI = [
         "name": "sharesCount",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "stateMutability": "view",
         "type": "function",
         "constant": true
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive",
-        "payable": true
     },
     {
         "inputs": [],
@@ -2238,9 +2223,9 @@ config.cartABI = [
                 "type": "string"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "share",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "internalType": "uint256",
@@ -2256,14 +2241,14 @@ config.cartABI = [
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "id",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint16",
                 "name": "share",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "name": "setShare",
@@ -2316,9 +2301,9 @@ config.cartABI = [
         "name": "getDecimals",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "_decimals",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "stateMutability": "view",
@@ -2823,7 +2808,7 @@ config.auctionABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "auctionID",
                 "type": "uint32"
@@ -2848,7 +2833,7 @@ config.auctionABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint256",
                 "name": "bidID",
                 "type": "uint256"
@@ -2861,7 +2846,7 @@ config.auctionABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "auctionID",
                 "type": "uint32"
@@ -2892,13 +2877,13 @@ config.auctionABI = [
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "auctionID",
                 "type": "uint32"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32",
                 "name": "bidID",
                 "type": "uint32"
