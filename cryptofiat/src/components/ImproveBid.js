@@ -15,7 +15,6 @@ export default class ImproveBid extends React.Component{
 
     }
 
-
     render() {
         return  <div align='left'>
             <div align='center'><b>Improve bid (id: {this.props.bid.returnValues.bidID})</b></div>

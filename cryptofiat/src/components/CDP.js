@@ -16,7 +16,8 @@ export default class CDP extends React.Component{
             userAllowence:'',
             interestRate:'',
             tscSupply:'',
-            collateral:''
+            collateral:'',
+            RuleBalanceOfCDP:0
         }
         this.allowSurplusToAuction = this.allowSurplusToAuction.bind(this);
         this.initRuleBuyOut = this.initRuleBuyOut.bind(this);
@@ -38,6 +39,10 @@ export default class CDP extends React.Component{
 
                 this.setState({stubFund: (stubFund/10**18).toFixed(2)});
             });
+        });
+
+        this.props.contracts['rule'].methods.balanceOf(contracts['cdp']._address).call().then((ruleBalance)=>{
+            this.setState({RuleBalanceOfCDP: (ruleBalance/10**18).toFixed(2)});
         });
 
         contracts['stableCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((result) => {
@@ -100,6 +105,7 @@ export default class CDP extends React.Component{
             {this.props.account!==''? <div>your stable coin allowance from CDP: <b>{this.state.userAllowence} TSC</b></div>:''}
             <div>total coins minted: <b>{this.state.tscSupply} TSC</b></div>
             <div>WETC balance of contract: <b>{this.state.wethBalance} ({this.state.collateral} USD)</b></div>
+            {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['cdp'].methods.burnRule().send({from:this.props.account})}>burn Rule ({this.state.RuleBalanceOfCDP}) from CDP</a>}
             <div>positions count: <b>{this.state.positionsCount}</b></div>
             <div>overall fee earned: <b>{this.state.feeEarned}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Open dept position"}/>:''}</div>
 

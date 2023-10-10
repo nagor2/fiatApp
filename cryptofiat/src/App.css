@@ -12,6 +12,13 @@
   max-height: 900px;
 }
 
+.bid{
+  display: flex;
+  max-width: 100%;
+  width: available;
+  justify-content: space-evenly;
+}
+
 .swap{
   border: 0;
   margin: 0 auto;
@@ -109,6 +116,11 @@
   align-items: center;
   justify-content: center;
   vertical-align:middle;
+}
+
+.small-input {
+  width: 70px;
+  align:left;
 }
 
 .plus-icon{
