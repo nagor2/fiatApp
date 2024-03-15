@@ -1,11 +1,11 @@
 import React from "react";
 
 
-export const fromBlock = 0;//17000000;
+export const fromBlock = 17000000;//18532910;//0;//17000000;
 
 let config={};
 config.localWeb3='';
-config.daoAddress = '0x3e84ba2897b978297F6d887CB6edB829446ba51B';//'0xd1c5A469191E45a4D06D725681F2B73a402737b4';
+config.daoAddress = '0xd1c5A469191E45a4D06D725681F2B73a402737b4';
 config.daoABI = [
     {
         "inputs": [
