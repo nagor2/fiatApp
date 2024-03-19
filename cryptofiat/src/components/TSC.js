@@ -25,9 +25,9 @@ export default class Tsc extends React.Component{
         getTransfers(contracts['stableCoin']).then((result)=>{this.setState({transfers: result.length})});
         getHolders(contracts['stableCoin']).then((result)=>{this.setState({holders: result.length})});
         contracts['pool'].methods.getReserves().call().then((reserve)=>{
-            this.setState({pricePool: (reserve[1]*this.props.etcPrice/reserve[0]).toFixed(4)});
-            this.setState({etherPool: (reserve[1]/10**18).toFixed(4)});
-            this.setState({tscPool: (reserve[0]/10**18).toFixed(2)});
+            this.setState({pricePool: (reserve[0]*this.props.etcPrice/reserve[1]).toFixed(4)});
+            this.setState({etherPool: (reserve[0]/10**18).toFixed(4)});
+            this.setState({tscPool: (reserve[1]/10**18).toFixed(2)});
         });
         this.setState({address: contracts['stableCoin']._address});
         contracts['weth'].methods.balanceOf(contracts['cdp']._address).call().then((cdpWethBalance)=>{
