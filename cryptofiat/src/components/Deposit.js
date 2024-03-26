@@ -19,7 +19,6 @@ export default class Deposit extends React.Component{
     }
 
     componentDidMount() {
-        window.history.replaceState(null, "", "/Deposit/"+this.props.id)
         const { contracts } = this.props;
         this.setState({id:this.state.id})
         contracts['deposit'].methods.deposits(this.props.id).call().then((deposit)=>{

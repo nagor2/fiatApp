@@ -29,7 +29,6 @@ export default class DebtPosition extends React.Component{
     componentDidMount() {
         const { contracts } = this.props;
         this.setState({id:this.state.id})
-        window.history.replaceState(null, "", '/DebtPosition/'+this.state.id)
         contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
             this.setState({position:position});
             this.setState({liquidationStatus:position.liquidationStatus});

@@ -18,7 +18,6 @@ export default class Commodity extends React.Component{
     }
 
     componentDidMount() {
-        window.history.replaceState(null, "", "/Commodity/"+this.props.title)
         const {contracts} = this.props;
         contracts['cart'].methods.items(this.props.id).call().then((item)=>{
             this.setState({initialPrice: parseFloat(item['initialPrice']/10**6).toFixed(5)});
@@ -32,7 +31,6 @@ export default class Commodity extends React.Component{
     }
 
     componentDidUpdate() {
-        window.history.replaceState(null, "", "/Commodity/"+this.props.title)
         const {contracts} = this.props;
         contracts['cart'].methods.items(this.props.id).call().then((item)=>{
             this.setState({initialPrice: parseFloat(item['initialPrice']/10**6).toFixed(5)});
