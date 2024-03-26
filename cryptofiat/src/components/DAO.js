@@ -9,7 +9,7 @@ export default class DAO extends React.Component{
             votingDiv:false, addVotingDiv:false, voteDiv:false, loader:false, amount:0, userDecision:false,
             addVoting: {votingType:'1',name:'name', address:'0x0000000000000000000000000000000000000000', value:0, decision:false},
             currentVoitng:[]};
-
+        window.history.replaceState(null, "", "/contracts/INTDAO")
         this.toggle = this.toggle.bind(this);
     }
 

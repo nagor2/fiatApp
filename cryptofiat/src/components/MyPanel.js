@@ -24,7 +24,8 @@ import {fromBlock} from "../utils/config";
 import {dateFromTimestamp} from "../utils/utils";
 import Product from "./Product";
 import Plus from "./Plus";
-
+import SwapRLE from  "./SwapRLE";
+import config from "../utils/config";
 
 
 export default class MyPanel extends React.Component {
@@ -34,7 +35,8 @@ export default class MyPanel extends React.Component {
             open: false,
             itemsCount:'',
             products:this.props.products,
-            contracts:''
+            contracts:'',
+            content: config.about
         };
 
         this.renderSwitch = this.renderSwitch.bind(this);
@@ -88,6 +90,8 @@ export default class MyPanel extends React.Component {
                 case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
                 case 'TSC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'stableCoin'} account={this.props.account} contracts={this.props.contracts}/>: <Tsc emitter={this.props.emitter} account={this.props.account} contracts={this.props.contracts} name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
+                case 'TrueStableCoin':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
+                case 'Rule token swap':return <SwapRLE name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'WETH':return <Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'weth'} account={this.props.account} contracts={this.props.contracts}/>; break;
                 case 'Borrow': return <Borrow web3={this.props.web3} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'updateCDP': return <UpdateCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
@@ -103,7 +107,7 @@ export default class MyPanel extends React.Component {
                 case 'withdrawEther': return <WithdrawEtherCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'INTDAO': return <DAO web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'improveBid': return <ImproveBid contracts={this.props.contracts} account={this.props.account} bid={content[0]} id={content[2]}/>; break;
-                default: return content;break;
+                default: return content['text'];break;
             }
         }
     }

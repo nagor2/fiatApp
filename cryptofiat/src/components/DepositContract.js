@@ -16,6 +16,7 @@ export default class DepositContract extends React.Component{
     }
 
     componentDidMount() {
+        window.history.replaceState(null, "", "/contracts/Deposit")
         const { contracts } = this.props;
         this.setState({address:contracts['deposit']._address});
 

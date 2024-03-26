@@ -24,6 +24,7 @@ export default class CDP extends React.Component{
     }
 
     componentDidMount() {
+        window.history.replaceState(null, "", "/contracts/CDP")
         const { contracts } = this.props;
         if (this.props.account) this.setState({account:this.props.account});
 

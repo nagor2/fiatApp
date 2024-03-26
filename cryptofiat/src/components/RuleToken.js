@@ -14,6 +14,7 @@ export default class RuleToken extends React.Component{
         this.setState({address: this.props.contract._address});
     }
     componentDidMount() {
+        window.history.replaceState(null, "", "/contracts/Rule")
         this.props.contract.methods.totalSupply().call().then((supply)=>{this.setState({supply: (supply/10**18).toFixed(2)});});
         getTransfers(this.props.contract).then((result)=>{this.setState({transfers: result.length})});
         getHolders(this.props.contract).then((result)=>{this.setState({holders: result.length})});

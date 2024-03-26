@@ -4626,7 +4626,7 @@ config.balances = [
 
 config.pools = [
     { title: 'TrueStableCoin', name:'TSC/ETC', id: 1, iconType: 'pool' },
-    { title: 'Rule token', name:'RLE/TSC', id: 2, iconType: 'pool' },
+    { title: 'Rule token swap', name:'RLE/TSC', id: 2, iconType: 'pool' },
     { title: 'Gold', name:'Gold/TSC', id: 3, iconType: 'pool' },
 ];
 
@@ -4650,39 +4650,50 @@ config.contractsList = [
 
 config.about = {
     subtitle: 'About True Stable Coin',
-    text: <div>
-        <p>We are pleased to present to you TSC - True Stable Coin. TSC is a
-            reliable and stable stablecoin that provides users with the ability to
-            store their savings in a stable form and use it as a means of payment.</p>
-
-        <p>The problem with the dollar and fiat money in general is their
-            unlimited issuance, lack of backing, and centralization - accounts can
-            be blocked, money seized, and transfers restricted. In addition, the
-            dollar is subject to significant inflation, and income is taxed.
-            Cryptocurrencies became an alternative at some point, but their
-            exchange rate is unstable and can fluctuate by dozens of percent
-            during the day. Stablecoins (USDT, DAI, USDC) became a solution at
-            some point, but the backing of the most popular ones is questionable,
-            and the dollar accounts holding their reserves can also be blocked,
-            with their issuance being uncontrolled. The reality of the risk of
-            stablecoin rate decline was demonstrated by the situation with the
-            Silicon Valley Bank's collapse and the subsequent brief 10% drop in
-            the USDC rate, and the dollar inflation also affects stablecoin
-            holders.</p>
-
-        <p>An alternative could be the collateralized stablecoin TSC, tied not to
-            the dollar exchange rate, but to a weighted basket of commodities
-            (oil, gas, rice, copper, aluminum, etc.).</p>
-
-        <p>At the moment, a working prototype of a smart contract system has been
-            created, implementing basic functionality that is ready to be
-            demonstrated. Funds are needed for development, code audit, and the
-            system's own capital. In return, the investor receives a share in the
-            business with a projected annual return of 15% in dollars for the
-            first year and an option to reclaim it. We are ready to demonstrate
-            the functionality, answer questions, and listen to counterproposals in
-            the Telegram group </p>
-    </div>
+    text: <div align="left">
+        <p align="right"><em>&ldquo;Only&nbsp;when&nbsp;the&nbsp;last&nbsp;tree&nbsp;has&nbsp;died&nbsp;and&nbsp;the&nbsp;last&nbsp;river&nbsp;been&nbsp;poisoned&nbsp;and&nbsp;the&nbsp;last&nbsp;fish&nbsp;been caught will we realise we cannot eat money&rdquo; <br />&mdash; Cree Indian Proverb.</em></p>
+            <h2>What is TrueStableCoin?</h2>
+            <p>TrueStableCoin is a collateralized stablecoin with permanent purchasing power. &nbsp;</p>
+            <h2>How can I use it?</h2>
+            <p>You can use TrueStableCoin to transfer value in Blockchain, protect your savings from inflation and earn interest.&nbsp;</p>
+            <h2>Introduction</h2>
+            <p>Originally, Blockchain was a way to avoid control on value transfers and possession, but native crypto, like Bitcoin and Ethereum are volatile. Today&rsquo;s stablecoins has several severe weak points: non-transparent collateral if any, ability to block your assets, inflation of indicative currency and tight interconnection with traditional financial system and banks. Sounds inconvenient if not frightening, isn&rsquo;t it?</p>
+            <h2>How TSC works?</h2>
+            <p>TrueStableCoin is a fully collateralized and fully decentralized coin, which is pegged to commodities index with the help of cross-courses, so its value stays stable to an average commodity price, such as silver, gold, copper, orange juice, coffee, corn, wheat, cotton, rice, lumber, oil, gas, cattle and so on, let us say &ndash; a weighted cart of vital products.</p>
+            <p>TrueStableCoin (TSC) uses credit emission, so each coin is minted through a smart-contract (Collateral Debt Position or simply CDP) to a user, who provided sufficient collateral in native crypto, according to current commodities cart price and ETC/USD quotes. If price of ETC rises against commodities, each coin stays fully collateralized. If not, the system forces user to increase collateral and if it does not happen &ndash; sells the collateral through auction to cover emission, made by particular user.</p>
+            <p>At the very start, the price of each TSC settled equal to US dollar, but as USD suffers inflation, which causes price growth of commodities, TSC saves purchasing power and grows against USD as an average commodity. From time to time, TSC can even be cheaper, that US Dollar, as commodities become cheaper. You can always check indicative price on this page.</p>
+            <p>All of the terms are coded in the smart-contracts, so there is no organization or group of people, who can affect your balance. The only weak point for now is centralized commodities quotes translation to the blockchain, but we will make it decentralized in a year. For now, all quotes are parsed from https://www.investing.com/commodities/real-time-futures</p>
+            <h2>Advantages</h2>
+            <ul>
+                <li><strong>Fully-collateralized</strong> &ndash; each coin minted is backed by crypto, placed on smart-contract&rsquo;s balance</li>
+                <li><strong>Fully-decentralized</strong> &shy;&ndash; system is controlled by smart-contracts with open code</li>
+                <li><strong>Totally transparent</strong> &ndash; all balances, terms, quotes, transactions and collaterals can be viewed on Blockchain</li>
+                <li><strong>Not suffering inflation </strong>&ndash; so you can buy the same amount of pork in fifty ears, if you keep your value in TSC</li>
+            </ul>
+            <h2>System</h2>
+            <p>In progress</p>
+            <h2>Tokenomics</h2>
+            <p>The main governance and profit receiving token is Rule token (RLE). Initial supply is 1&rsquo;000&rsquo;000 RLE.</p>
+            <ul>
+                <li>Pre-seed= 50&nbsp;000 RLE</li>
+                <li>Advisers=50&nbsp;000 RLE</li>
+                <li>Pre-sales= 240 000 RLE</li>
+                <li>IDO= 360&nbsp;000 RLE</li>
+                <li>Liquidity=100&nbsp;000 RLE</li>
+                <li>TSC team = 200 000 RLE</li>
+            </ul>
+            <p>All profits for pre-seed and pre-sales round will go to development and marketing.</p>
+            <p><strong>Meaning </strong><strong>of RLE</strong></p>
+            <p>Rule is a governance and voting token of the TSC ecosystem. All crucial parameters of the system after initial setting may be changed through voting process. Each RLE counts as one vote.</p>
+            <p><strong>Burning</strong></p>
+            <p>True stable coin ecosystem has it&rsquo;s stability fund, placed on CDP contract address. You may always check its presence on the blockchain. Fund should be 5% from total emission of TSC. As the interest on credits or margin-call fee are paid, it comes directly to stability fund and as it overflows, automatic auction to buy back RLE can be initiated by any user. All RLE tokens, obtained by the system through buy-back auction are disposed. Thus, the price of RLE should go up.</p>
+            <p><strong>Additional RLE emmision</strong></p>
+            <p>If stability fund (TSC balance of CDP contract) is lack of TSC (less, than 5% of total supply), anyone can initiate auction to obtain TSC from market. Winner of this auction will be rewarded with additionally supplied RLE. So, RLE holders are not interested in additional emission and are likely to provide TSC themselves.</p>
+            <h2>Conclusion</h2>
+            <p>In progress.</p>
+            <p>If you have any suggestions, you can contact me through e-mail <a href="mailto:nagor@academ.org">nagor@academ.org</a> or better loan some TSC (or buy them from pool with ETC) and buy RLE tokens from pool)</p>
+            <p>All the smart-contracts&rsquo; code is verified, so you can check all the logic and realize, there is no trick.</p>
+</div>
 };
 
 export default config;

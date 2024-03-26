@@ -4,6 +4,7 @@ import config from './utils/config'
 import ConnectButton from './components/ConnectButton'
 import MyPanel from "./components/MyPanel";
 
+import { getAccount } from '@wagmi/core'
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react'
 
 import { WagmiConfig } from 'wagmi'
@@ -11,29 +12,31 @@ import { localhost, classic } from 'wagmi/chains'
 
 import React from 'react';
 import Web3 from 'web3'
+import { EthereumProvider } from '@walletconnect/ethereum-provider'
 
 // 1. Get projectId
 const projectId = '91330a25042ee96db0fa1ec2ecbf936c'
 
 // 2. Create wagmiConfig
 const metadata = {
-    name: 'Web3Modal',
-    description: 'Web3Modal Example',
-    url: 'https://web3modal.com',
+    name: 'TrueStableCoin',
+    description: 'TrueStableCoin',
+    url: 'https://TrueStableCoin.ru',
     icons: ['https://avatars.githubusercontent.com/u/37784886']
 }
 
-const chains = [localhost, classic]
+const chains = [classic, localhost]
 const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata })
 
 // 3. Create modal
-createWeb3Modal({ wagmiConfig, projectId, chains })
-
+let walletConnect = createWeb3Modal({ wagmiConfig, projectId, chains })
 
 var events = require('events');
 let eventEmitter = new events.EventEmitter();
 
 let localWeb3 = config.localWeb3;
+
+
 
 
 class App extends React.Component{
@@ -50,7 +53,32 @@ class App extends React.Component{
         };
     }
 
-    componentDidMount() {
+    async componentDidMount() {
+        walletConnect.setThemeMode('light')
+        const account = getAccount(wagmiConfig)
+
+        if (account.address.length>0){
+
+
+            const provider = await EthereumProvider.init({
+                projectId: '91330a25042ee96db0fa1ec2ecbf936c',
+                metadata: metadata,
+                showQrModal: true,
+                optionalChains: [classic],
+            })
+
+            this.setState({walletConnected:true, account:account.address});
+            localWeb3 = new Web3(provider);
+            this.setState({contracts: this.initContracts()});
+            console.log ('using walletConnect')
+            console.dir (walletConnect)
+
+        }
+        else  {
+            this.setState({walletConnected:false})
+        }
+
+
         if (window.ethereum){
             localWeb3 = new Web3(window.ethereum);
             this.setState({contracts: this.initContracts()});
@@ -60,15 +88,6 @@ class App extends React.Component{
                     this.setState({account:accounts[0]})
                 } else {
                     this.setState({account:'', walletConnected:false})
-                }
-            })
-
-            window.ethereum.request({ method: 'eth_accounts' }).then(async (accounts)=>{
-                if (accounts.length>0){
-                        this.setState({walletConnected:true, account:accounts[0]});
-                }
-                else {
-                    this.setState({walletConnected:false})
                 }
             })
         }
@@ -153,7 +172,7 @@ class App extends React.Component{
         <div className="App">
 
                 <div className="App-header">
-                    <w3m-button />
+                    <w3m-button balance="hide"/>
                     <ETC etcPrice={this.state.etcPrice}/>
                     <h2 align="center" className="pointer" onClick={this.Click}>TrueStableCoin</h2>
                     {this.state.walletConnected ? <Address account={this.state.account}/>:<ConnectButton handleStateChange={this.handleStateChange} name='connect wallet'/>}
@@ -161,20 +180,17 @@ class App extends React.Component{
                 </div>
                 <div className="content">
                     <div className="region_left">
-
                         {this.state.walletConnected ? <><MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={config.Balances} products={config.balances}/>
                                 <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={config.Credits}/>
                                 <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={config.Deposits}/></>
                             :''}
                         <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Auctions} products={config.auctions}/>
                         <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Pools} products={config.pools}/>
-
                     </div>
 
                     <div className="region_middle">
                         <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} displayContent = {true} content={config.about} account={this.state.account} etcPrice={this.state.etcPrice}/>
                     </div>
-
 
                     <div className="region_left">
                         <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Contracts} products={config.contractsList}/>

@@ -9,6 +9,7 @@ export default class Tsc extends React.Component{
         this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'', indicative:'', etherPool:'', tscPool:'', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0}
     }
     componentDidMount() {
+        window.history.replaceState(null, "", "/contracts/TSC")
         const {contracts} = this.props;
 
         contracts['stableCoin'].methods.totalSupply().call().then((supply)=>{

@@ -12,6 +12,7 @@ export default class Transfers extends React.Component{
 
     componentDidMount() {
 
+        window.history.replaceState(null, "", '/Transfers/'+this.props.contractName.replace(/\b\w/g, l => l.toUpperCase()))
         if (this.props.contractName=="weth"){
             this.props.contracts['weth'].methods.balanceOf(this.props.account).call().then((result)=>{
                 this.setState({wethBalance:result})
@@ -44,6 +45,7 @@ export default class Transfers extends React.Component{
     }
 
     componentDidUpdate(nextProps, nextContext) {
+        window.history.replaceState(null, "", '/Transfers/'+this.props.contractName.replace(/\b\w/g, l => l.toUpperCase()))
         if (nextProps.contractName==this.props.contractName) return;
         const {contracts} = this.props;
         let txs = [];
