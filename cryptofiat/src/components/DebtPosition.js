@@ -60,7 +60,7 @@ export default class DebtPosition extends React.Component{
             this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
-            this.setState({wethLocked:this.props.web3.utils.fromWei(position.wethAmountLocked)});
+            this.setState({wethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked)});
             this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
             contracts['cdp'].methods.getMaxStableCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
                 this.setState({maxStableCoinsToMint:this.props.web3.utils.fromWei(maxCoins)});

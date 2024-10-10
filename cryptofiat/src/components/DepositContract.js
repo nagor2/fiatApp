@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "./Button";
+import config from "../utils/config";
 
 export default class DepositContract extends React.Component{
     constructor(props) {
@@ -19,7 +20,7 @@ export default class DepositContract extends React.Component{
         const { contracts } = this.props;
         this.setState({address:contracts['deposit']._address});
 
-        contracts['deposit'].methods.counter().call().then((result)=>{
+        contracts['deposit'].methods.depositsCounter().call().then((result)=>{
             this.setState({depositsCount:result});
         });
 
@@ -55,8 +56,8 @@ export default class DepositContract extends React.Component{
             <div>overall fee payed: <b>{this.state.overallFee}</b></div>
             <div>interest rate: <b>{this.state.depositRate}%</b></div>
             {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['deposit'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
-            <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
-            <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
+            <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
+            <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>
         </div>;
     }
 }

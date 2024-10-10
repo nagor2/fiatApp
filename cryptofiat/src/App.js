@@ -164,7 +164,7 @@ class App extends React.Component{
                     </div>
 
                     <div className="region_middle">
-                        <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF" contracts={this.state.contracts} displayContent = {true} content={config.about} account={this.state.account} etcPrice={this.state.etcPrice}/>
+                        <MyPanel emitter={eventEmitter} web3={localWeb3} bgColor="#FFFFFF"  explorer={config.explorer} contracts={this.state.contracts} displayContent = {true} content={config.about} account={this.state.account} etcPrice={this.state.etcPrice}/>
                     </div>
 
                     <div className="region_left">

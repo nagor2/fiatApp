@@ -2860,7 +2860,7 @@ config.poolABI = [{"inputs":[],"payable":false,"stateMutability":"nonpayable","t
 config.stablePoolAddress = "0x718626E8c94DFdB24e7BD6d5F6da22035BCF47F7";
 
 config.rpc = "https://holesky.rpc.rivet.cloud/6f4e0413c2dd468ebd08f54a5c9c5b82"
-
+config.explorer = "https://holesky.etherscan.io/";
 
 config.Balances = {
     title: 'Balances',
@@ -2943,8 +2943,7 @@ config.contractsList = [
     { title: 'RLE', name:'Rule token', id: 4, balance: ''  , iconType: 'contract' },
     { title: 'Auction', name:'Auction', id: 5, balance: ''  , iconType: 'contract' },
     { title: 'INTDAO', name:'Interest DAO', id: 6, balance: ''  , iconType: 'contract' },
-    { title: 'Inflation', name:'Inflation', id: 7, balance: ''  , iconType: 'contract' },
-    { title: 'Cart', name:'Cart', id: 8, balance: ''  , iconType: 'contract' },
+    { title: 'Basket', name:'Basket', id: 8, balance: ''  , iconType: 'contract' },
     { title: 'ExchangeRateContract', name:'ExchangeRateContract', id: 9, balance: ''  , iconType: 'contract' },
 ];
 

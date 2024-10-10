@@ -61,15 +61,15 @@ export default class Product extends React.Component{
         const{contracts} = this.props;
 
         if (this.props.section == 'Balances'){
-            if (contracts['stableCoin']!==undefined && contracts['rule']!==undefined && contracts['weth']!==undefined )
+            if (contracts['stableCoin']!==undefined && contracts['rule']!==undefined )
                 switch (this.props.title) {
-                    case 'ETC':
+                    case 'ETH':
                         this.props.web3.eth.getBalance(this.props.account).then((result) => {
                             this.setState({balance: ((result / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
                         });
 
                         break;
-                    case 'TSC':
+                    case 'DFC':
                         contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((result) => {
                             this.setState({balance: (result / 10 ** 18).toFixed(2)});
                         });
@@ -78,16 +78,11 @@ export default class Product extends React.Component{
                         this.setState({balance: (result / 10 ** 18).toFixed(2)});
                     });
                         break;
-                    case 'WETH':
-                        contracts['weth'].methods.balanceOf(this.props.account).call().then((result) => {
-                            this.setState({balance: (result / 10 ** 18).toFixed(4)});
-                        });
-                        break;
                     default:
-                        console.log ('here: '+this.props.balance)
                         this.setState({balance: this.props.balance});
                         break;
                 }
+
 
         }
 

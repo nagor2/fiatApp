@@ -87,7 +87,7 @@ export default class MyPanel extends React.Component {
             }
 
             switch (content[1]){
-                case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
+                case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
                 case 'DFC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'stableCoin'} account={this.props.account} contracts={this.props.contracts}/>: <Tsc emitter={this.props.emitter} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'TrueStableCoin':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
@@ -95,17 +95,17 @@ export default class MyPanel extends React.Component {
                 case 'WETH':return <Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'weth'} account={this.props.account} contracts={this.props.contracts}/>; break;
                 case 'Borrow': return <Borrow web3={this.props.web3} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'updateCDP': return <UpdateCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'CDP': return <CDP web3={this.props.web3}  emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
+                case 'CDP': return <CDP web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
                 case 'debt position': return <DebtPosition emitter={this.props.emitter} web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'deposit': return <Deposit web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'Deposit': return <DepositContract emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}/>; break;
+                case 'Deposit': return <DepositContract emitter={this.props.emitter}  explorer={this.props.explorer} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'openDeposit': return <OpenDeposit web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'withdrawFromDeposit': return <WithDrawDeposit web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'payInterest': return <PayInterestCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'closeCDP': return <CloseCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'makeBidTSCBuyout': return <MakeBidTSCBuyout web3={this.props.web3} auction={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'withdrawEther': return <WithdrawEtherCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'INTDAO': return <DAO web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'INTDAO': return <DAO web3={this.props.web3} contracts={this.props.contracts} explorer={this.props.explorer} account={this.props.account} id={content[2]}/>; break;
                 case 'improveBid': return <ImproveBid contracts={this.props.contracts} account={this.props.account} bid={content[0]} id={content[2]}/>; break;
                 default: return content['text'];break;
             }
@@ -115,12 +115,12 @@ export default class MyPanel extends React.Component {
     getCommodities(){
         const{contracts} = this.props;
         let prod = [];
-        if (contracts['cart']!==undefined)
-            contracts['cart'].methods.itemsCount().call().then((result) => {
+        if (contracts['basket']!==undefined)
+            contracts['basket'].methods.itemsCount().call().then((result) => {
                 this.setState({itemsCount: result});
                 for (let i = 1; i <= result; i++) {
-                    contracts['cart'].methods.items(i).call().then((result) => {
-                        contracts['cart'].methods.getPrice(result['symbol']).call().then((price) => {
+                    contracts['basket'].methods.items(i).call().then((result) => {
+                        contracts['basket'].methods.getPrice(result['symbol']).call().then((price) => {
                             prod.push({
                                 title: result['symbol'],
                                 name: 'initial price: ' + parseFloat((result['initialPrice'] / 10 ** 6).toFixed(5)),

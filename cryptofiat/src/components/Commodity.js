@@ -19,10 +19,10 @@ export default class Commodity extends React.Component{
 
     componentDidMount() {
         const {contracts} = this.props;
-        contracts['cart'].methods.items(this.props.id).call().then((item)=>{
+        contracts['basket'].methods.items(this.props.id).call().then((item)=>{
             this.setState({initialPrice: parseFloat(item['initialPrice']/10**6).toFixed(5)});
             this.setState({share: item['share']});
-            contracts['cart'].methods.getPrice(item['symbol']).call().then((price)=>{
+            contracts['basket'].methods.getPrice(item['symbol']).call().then((price)=>{
                 this.setState({price: parseFloat(price/10**6).toFixed(5)});});
             contracts['oracle'].methods.timeStamp(item['symbol']).call().then((timeStamp)=>{
                 this.setState({lastUpdated: dateFromTimestamp(timeStamp)});
@@ -32,10 +32,10 @@ export default class Commodity extends React.Component{
 
     componentDidUpdate() {
         const {contracts} = this.props;
-        contracts['cart'].methods.items(this.props.id).call().then((item)=>{
+        contracts['basket'].methods.items(this.props.id).call().then((item)=>{
             this.setState({initialPrice: parseFloat(item['initialPrice']/10**6).toFixed(5)});
             this.setState({share: item['share']});
-            contracts['cart'].methods.getPrice(item['symbol']).call().then((price)=>{
+            contracts['basket'].methods.getPrice(item['symbol']).call().then((price)=>{
                 this.setState({price: parseFloat(price/10**6).toFixed(5)});});
             contracts['oracle'].methods.timeStamp(item['symbol']).call().then((timeStamp)=>{
                 this.setState({lastUpdated: dateFromTimestamp(timeStamp)});
