@@ -50,7 +50,7 @@ export class ETC extends React.Component {
 
     render() {
         return <div className="button address left">
-            {'ETC price: '+this.props.etcPrice}
+            {'ETH price: '+this.props.etcPrice}
         </div>;
     }
 }

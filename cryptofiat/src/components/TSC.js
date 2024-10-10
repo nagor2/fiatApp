@@ -24,16 +24,19 @@ export default class Tsc extends React.Component{
         });
         getTransfers(contracts['stableCoin']).then((result)=>{this.setState({transfers: result.length})});
         getHolders(contracts['stableCoin']).then((result)=>{this.setState({holders: result.length})});
+        /*
         contracts['pool'].methods.getReserves().call().then((reserve)=>{
             this.setState({pricePool: (reserve[0]*this.props.etcPrice/reserve[1]).toFixed(4)});
             this.setState({etherPool: (reserve[0]/10**18).toFixed(4)});
             this.setState({tscPool: (reserve[1]/10**18).toFixed(2)});
-        });
+        });*/
         this.setState({address: contracts['stableCoin']._address});
-        contracts['weth'].methods.balanceOf(contracts['cdp']._address).call().then((cdpWethBalance)=>{
-            this.setState({collateral:((cdpWethBalance/10**18).toFixed(3)*this.props.etcPrice).toFixed(3)})
+
+        this.props.web3.eth.getBalance(contracts['cdp']._address).then((result) => {
+            this.setState({collateral: ((result/10**18).toFixed(3)*this.props.etcPrice).toFixed(3)});
         });
-        contracts['cart'].methods.getCurrentSharePrice().call().then((sharePrice)=>{
+
+        contracts['basket'].methods.getCurrentSharePriceChange().call().then((sharePrice)=>{
             this.setState({indicative: (sharePrice/10**6).toFixed(4)});
             contracts['stableCoin'].methods.totalSupply().call().then((supply) => {
                 const percent = parseFloat(100*this.state.collateral/this.state.supply/this.state.indicative).toFixed(2);

@@ -54,7 +54,8 @@ export default class CDP extends React.Component{
                 this.setState({userAllowence: (result/10**18).toFixed(10)});
             });
 
-        contracts['weth'].methods.balanceOf(contracts['cdp']._address).call().then((result) => {
+
+        this.props.web3.eth.getBalance(contracts['cdp']._address).then((result) => {
             this.setState({wethBalance: (result/10**18).toFixed(2)});
             this.setState({collateral:((result/10**18).toFixed(3)*this.props.etcPrice).toFixed(3)})
         });
@@ -104,7 +105,7 @@ export default class CDP extends React.Component{
 
             {this.props.account!==''? <div>your stable coin allowance from CDP: <b>{this.state.userAllowence} TSC</b></div>:''}
             <div>total coins minted: <b>{this.state.tscSupply} TSC</b></div>
-            <div>WETC balance of contract: <b>{this.state.wethBalance} ({this.state.collateral} USD)</b></div>
+            <div>ETH balance of contract: <b>{this.state.wethBalance} ({this.state.collateral} USD)</b></div>
             {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['cdp'].methods.burnRule().send({from:this.props.account})}>burn Rule ({this.state.RuleBalanceOfCDP}) from CDP</a>}
             <div>positions count: <b>{this.state.positionsCount}</b></div>
             <div>overall fee earned: <b>{this.state.feeEarned}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Open dept position"}/>:''}</div>

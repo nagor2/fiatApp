@@ -88,14 +88,14 @@ export default class MyPanel extends React.Component {
 
             switch (content[1]){
                 case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
-                case 'TSC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'stableCoin'} account={this.props.account} contracts={this.props.contracts}/>: <Tsc emitter={this.props.emitter} account={this.props.account} contracts={this.props.contracts} name={content} etcPrice={this.props.etcPrice}/>; break;
+                case 'DFC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'stableCoin'} account={this.props.account} contracts={this.props.contracts}/>: <Tsc emitter={this.props.emitter} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'TrueStableCoin':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'Rule token swap':return <SwapRLE name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'WETH':return <Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'weth'} account={this.props.account} contracts={this.props.contracts}/>; break;
                 case 'Borrow': return <Borrow web3={this.props.web3} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'updateCDP': return <UpdateCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'CDP': return <CDP emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
+                case 'CDP': return <CDP web3={this.props.web3}  emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
                 case 'debt position': return <DebtPosition emitter={this.props.emitter} web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'deposit': return <Deposit web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'Deposit': return <DepositContract emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}/>; break;

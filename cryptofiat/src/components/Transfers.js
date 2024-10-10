@@ -12,12 +12,6 @@ export default class Transfers extends React.Component{
 
     componentDidMount() {
 
-        if (this.props.contractName=="weth"){
-            this.props.contracts['weth'].methods.balanceOf(this.props.account).call().then((result)=>{
-                this.setState({wethBalance:result})
-            })
-        }
-
         const {contracts} = this.props;
         let txs = [];
         this.setState({txs:txs})
@@ -68,10 +62,6 @@ export default class Transfers extends React.Component{
             txs.push.apply(txs,res);
             this.setState({txs:txs})
         })
-    }
-
-    convertWeth(){
-        this.props.contracts['weth'].methods.withdraw(this.state.wethBalance).send({from:this.props.account})
     }
 
     render(){

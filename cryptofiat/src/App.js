@@ -4,32 +4,32 @@ import config from './utils/config'
 import ConnectButton from './components/ConnectButton'
 import MyPanel from "./components/MyPanel";
 
-import { getAccount } from '@wagmi/core'
-import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react'
+//import { getAccount } from '@wagmi/core'
+//import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react'
 
-import { WagmiConfig } from 'wagmi'
-import { localhost, classic } from 'wagmi/chains'
+//import { WagmiConfig } from 'wagmi'
+//import { localhost, classic } from 'wagmi/chains'
 
 import React from 'react';
 import Web3 from 'web3'
-import { EthereumProvider } from '@walletconnect/ethereum-provider'
+//import { EthereumProvider } from '@walletconnect/ethereum-provider'
 
 // 1. Get projectId
-const projectId = '91330a25042ee96db0fa1ec2ecbf936c'
+//const projectId = '91330a25042ee96db0fa1ec2ecbf936c'
 
 // 2. Create wagmiConfig
-const metadata = {
+/*const metadata = {
     name: 'TrueStableCoin',
     description: 'TrueStableCoin',
     url: 'https://TrueStableCoin.ru',
     icons: ['https://avatars.githubusercontent.com/u/37784886']
-}
+}*/
 
-const chains = [classic, localhost]
-const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata })
+//const chains = [classic, localhost]
+//const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata })
 
 // 3. Create modal
-let walletConnect = createWeb3Modal({ wagmiConfig, projectId, chains })
+//let walletConnect = createWeb3Modal({ wagmiConfig, projectId, chains })
 
 var events = require('events');
 let eventEmitter = new events.EventEmitter();
@@ -54,45 +54,27 @@ class App extends React.Component{
     }
 
     async componentDidMount() {
-        walletConnect.setThemeMode('light')
-        const account = getAccount(wagmiConfig)
-
-        if (account.address.length>0){
-
-
-            const provider = await EthereumProvider.init({
-                projectId: '91330a25042ee96db0fa1ec2ecbf936c',
-                metadata: metadata,
-                showQrModal: true,
-                optionalChains: [classic],
-            })
-
-            this.setState({walletConnected:true, account:account.address});
-            localWeb3 = new Web3(provider);
-            this.setState({contracts: this.initContracts()});
-            console.log ('using walletConnect')
-            console.dir (walletConnect)
-
-        }
-        else  {
-            this.setState({walletConnected:false})
-        }
-
 
         if (window.ethereum){
             localWeb3 = new Web3(window.ethereum);
             this.setState({contracts: this.initContracts()});
             console.log ('using window web3')
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+            if (accounts.length > 0) {
+                this.setState({account:accounts[0], walletConnected: true})
+            }
             window.ethereum.on("accountsChanged", (accounts) => {
                 if (accounts.length > 0) {
-                    this.setState({account:accounts[0]})
-                } else {
+                    this.setState({account:accounts[0], walletConnected: true})
+                }
+                else {
                     this.setState({account:'', walletConnected:false})
                 }
             })
         }
         else {
-            localWeb3 = new Web3('https://etc.rpc.rivet.cloud/0f8dc4341fbd4f2d802c64fd49459d59');
+            localWeb3 = new Web3(config.rpc);
             this.setState({contracts: this.initContracts()});
             console.log ('using rivet')
         }
@@ -111,43 +93,37 @@ class App extends React.Component{
         let contracts = {};
         let dao = new localWeb3.eth.Contract(config.daoABI,config.daoAddress);
         contracts['dao'] = dao;
+
         dao.methods.addresses('rule').call().then((result)=>{
             contracts['rule'] = new localWeb3.eth.Contract(config.ruleABI, result);
         });
-        dao.methods.addresses('oracle').call().then((result) =>{
-            contracts['oracle']  = new localWeb3.eth.Contract(config.oracleABI, result);
-            contracts['oracle'].methods.getPrice('etc').call().then((price)=>{
-                this.setState({etcPrice:(price/10**6).toFixed(2)});
-            })
-        });
+
         dao.methods.addresses("stableCoin").call().then((result)=>{
             contracts['stableCoin'] = new localWeb3.eth.Contract(config.stableCoinABI,result);
         });
-        dao.methods.addresses("weth").call().then((result)=>{
-            contracts['weth'] = new localWeb3.eth.Contract(config.wethABI,result);
+
+        dao.methods.addresses('oracle').call().then((result) =>{
+            contracts['oracle']  = new localWeb3.eth.Contract(config.oracleABI, result);
+            contracts['oracle'].methods.getPrice('eth').call().then((price)=>{
+                console.log("price: "+price)
+                this.setState({etcPrice:(price/10**6).toFixed(2)});
+            })
         });
+
         dao.methods.addresses("deposit").call().then((result)=>{
             contracts['deposit'] = new localWeb3.eth.Contract(config.depositABI,result);
         });
         dao.methods.addresses("cdp").call().then((result) => {
             contracts['cdp'] = new localWeb3.eth.Contract(config.cdpABI,result);
         });
-        dao.methods.addresses("inflation").call().then((result) => {
-            contracts['inflation'] = new localWeb3.eth.Contract(config.inflationABI,result);
-        });
-        dao.methods.addresses("cart").call().then((result) => {
-            contracts['cart'] = new localWeb3.eth.Contract(config.cartABI,result);
+        dao.methods.addresses("basket").call().then((result) => {
+            contracts['basket'] = new localWeb3.eth.Contract(config.cartABI,result);
         });
         dao.methods.addresses("auction").call().then((result) => {
             contracts['auction'] = new localWeb3.eth.Contract(config.auctionABI,result);
         });
-        dao.methods.addresses("platform").call().then((result) => {
-            contracts['platform'] = new localWeb3.eth.Contract(config.platformABI,result);
-        });
-        dao.methods.addresses("tokenTemplate").call().then((result) => {
-            contracts['tokenTemplate'] = new localWeb3.eth.Contract(config.tokenTemplateABI,result);
-        });
-        contracts['pool'] = new localWeb3.eth.Contract(config.poolABI,config.stablePoolAddress);
+
+        //contracts['pool'] = new localWeb3.eth.Contract(config.poolABI,config.stablePoolAddress);
 
 
         try{
@@ -168,13 +144,12 @@ class App extends React.Component{
     }
 
     render(){
-        return <WagmiConfig config={wagmiConfig}>
-        <div className="App">
+        return <div className="App">
 
                 <div className="App-header">
                     <w3m-button balance="hide"/>
                     <ETC etcPrice={this.state.etcPrice}/>
-                    <h2 align="center" className="pointer" onClick={this.Click}>TrueStableCoin</h2>
+                    <h2 align="center" className="pointer" onClick={this.Click}>DotFlat</h2>
                     {this.state.walletConnected ? <Address account={this.state.account}/>:<ConnectButton handleStateChange={this.handleStateChange} name='connect wallet'/>}
 
                 </div>
@@ -199,7 +174,7 @@ class App extends React.Component{
 
                 </div>
 
-            </div>;</WagmiConfig>
+            </div>;
     }
 }
 
