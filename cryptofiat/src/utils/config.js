@@ -2925,7 +2925,7 @@ config.balances = [
 ];
 
 config.pools = [
-    { title: 'TrueStableCoin', name:'DFC/ETC', id: 1, iconType: 'pool' },
+    { title: 'Dotflat', name:'DFC/ETC', id: 1, iconType: 'pool' },
     { title: 'Rule token swap', name:'RLE/DFC', id: 2, iconType: 'pool' },
     { title: 'Gold', name:'Gold/DFC', id: 3, iconType: 'pool' },
 ];
