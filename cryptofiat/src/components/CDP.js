@@ -96,15 +96,15 @@ export default class CDP extends React.Component{
     render() {
         return  <div align='left'>
             <div align='center'><b>CDP</b></div>
-            <div>stubFund: <b>{this.state.stubFund} TSC</b></div>
-            <div>stubFund exceed: <b>{this.state.exceed} TSC</b></div>
+            <div>stubFund: <b>{this.state.stubFund} DFC</b></div>
+            <div>stubFund exceed: <b>{this.state.exceed} DFC</b></div>
             {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['cdp'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
             {this.props.account!==''?<div><input type='button' value='allow surplus to auction' onClick={this.allowSurplusToAuction}/></div>:''}
-            <div>allowed to auction: <b>{this.state.toAuction} TSC</b></div>
+            <div>allowed to auction: <b>{this.state.toAuction} DFC</b></div>
             {this.props.account!==''?<div><input type='button' value='initRuleBuyOut' onClick={this.initRuleBuyOut}/></div>:''}
 
-            {this.props.account!==''? <div>your stable coin allowance from CDP: <b>{this.state.userAllowence} TSC</b></div>:''}
-            <div>total coins minted: <b>{this.state.tscSupply} TSC</b></div>
+            {this.props.account!==''? <div>your stable coin allowance from CDP: <b>{this.state.userAllowence} DFC</b></div>:''}
+            <div>total coins minted: <b>{this.state.tscSupply} DFC</b></div>
             <div>ETH balance of contract: <b>{this.state.wethBalance} ({this.state.collateral} USD)</b></div>
             {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['cdp'].methods.burnRule().send({from:this.props.account})}>burn Rule ({this.state.RuleBalanceOfCDP}) from CDP</a>}
             <div>positions count: <b>{this.state.positionsCount}</b></div>
