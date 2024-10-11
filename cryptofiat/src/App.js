@@ -152,7 +152,7 @@ class App extends React.Component{
                 <div className="App-header">
                     <w3m-button balance="hide"/>
                     <ETC etcPrice={this.state.etcPrice}/>
-                    <h2 align="center" className="pointer" onClick={this.Click}>DotFlat</h2>
+                    <img src='img/logo.png'/>&nbsp;<h2 align="center" className="pointer" onClick={this.Click}>DotFlat</h2>
                     {this.state.walletConnected ? <Address account={this.state.account}/>:<ConnectButton handleStateChange={this.handleStateChange} name='connect wallet'/>}
 
                 </div>

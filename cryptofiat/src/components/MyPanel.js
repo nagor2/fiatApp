@@ -164,13 +164,17 @@ export default class MyPanel extends React.Component {
                                 title = 'Rule buyout';
                                 balance =  (auction.lotAmount / 10 ** 18).toFixed(2);
                             }
-                            products.push({
+
+                            let auc = {
                                 iconType: 'auction',
                                 title: title,
                                 id: id,
                                 name: dateFromTimestamp(auction.initialized),
                                 balance: balance
-                            })
+                            }
+
+                            if (!products.find(a=>a.id==auc.id))
+                            products.push(auc)
                         }
                     });
 
