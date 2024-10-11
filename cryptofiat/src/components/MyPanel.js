@@ -2,6 +2,7 @@ import React from "react";
 import Commodity from "./Commodity";
 import Transaction from "./Transaction";
 import Auction from "./Auction";
+import Basket from "./Basket";
 import Transfers from "./Transfers";
 import RuleToken from "./RuleToken";
 import Tsc from "./TSC";
@@ -26,6 +27,7 @@ import Product from "./Product";
 import Plus from "./Plus";
 import SwapRLE from  "./SwapRLE";
 import config from "../utils/config";
+import AuctionContract from "./AuctionContract";
 
 
 export default class MyPanel extends React.Component {
@@ -92,7 +94,8 @@ export default class MyPanel extends React.Component {
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'TrueStableCoin':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'Rule token swap':return <SwapRLE name={content} etcPrice={this.props.etcPrice}/>; break;
-                case 'WETH':return <Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'weth'} account={this.props.account} contracts={this.props.contracts}/>; break;
+                case 'Basket':return <Basket web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
+                case 'Auction':return <AuctionContract web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
                 case 'Borrow': return <Borrow web3={this.props.web3} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'updateCDP': return <UpdateCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'CDP': return <CDP web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
@@ -211,19 +214,23 @@ export default class MyPanel extends React.Component {
         let products=[];
         if (contracts['deposit']!==undefined)
             contracts['deposit'].getPastEvents('DepositOpened', {fromBlock: fromBlock,toBlock: 'latest'}).then((events)=>{
+                //console.log(events)
                 for (let i =0; i<events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase()==this.props.account.toLowerCase()){
                         let id = event.returnValues.id;
                         contracts['deposit'].methods.deposits(id).call().then((deposit)=> {
-                            if (!deposit.closed)
-                                products.push({
+                            if (!deposit.closed){
+                                let dep = {
                                     iconType: 'deposit',
                                     title: 'deposit',
                                     id: id,
                                     name: dateFromTimestamp(deposit.timeOpened),
                                     balance: (deposit.coinsDeposited/10**18).toFixed(2)
-                                })
+                                }
+                                if (!products.find(a=>a.id==dep.id))
+                                    products.push(dep);
+                            }
                         });
                     }
                 }

@@ -3,30 +3,34 @@ import React from "react";
 export default class AuctionContract extends React.Component{
     constructor(props) {
         super(props);
-        this.state = {address:''}
+        this.state = {address:'', auctionNum:'', bidsNum:'', ruleBuyOut:''}
     }
 
     componentDidMount() {
+        const { contracts } = this.props;
 
+        contracts['auction'].methods.auctionNum().call().then((result)=>{
+            this.setState({auctionNum: result});
+        });
+
+        contracts['auction'].methods.bidsNum().call().then((result)=>{
+            this.setState({bidsNum: result});
+        });
+
+        this.setState({address: contracts['auction']._address});
     }
 
     render() {
-        return <div align='left'><b>Rule token</b>
-            <div>total supply:         <b>{this.state.supply}</b></div>
+        return <div align='center'><b>Auction contract</b><div/>
+        <div align='left'>
+            <div>auctionNum:         <b>{this.state.auctionNum}</b></div>
 
-            <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>
+            <div>bidsNum: <b>{this.state.bidsNum}</b></div>
 
-            <div>N of holders: <b>{this.state.holders}</b></div>
 
-            <div>price in stableCoins (from pool):</div>
-
-            <div>marketCap:</div>
-
-            <div>pool volume:</div>
-
-            <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
-            <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
-
+            <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
+            <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>
         </div>
+            </div>
     }
 }

@@ -2417,7 +2417,7 @@ config.oracleABI = [
         "constant": true
     }
 ];
-config.auctionABI = [
+config.auctionABI =[
     {
         "inputs": [
             {

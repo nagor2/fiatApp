@@ -23,7 +23,8 @@ export default class RuleToken extends React.Component{
 
 
     render() {
-        return <div align='left'><b>Rule token</b>
+        return <div align='left'>
+            <div align='center'><b>Rule token</b></div>
             <div>total supply:         <b>{this.state.supply}</b></div>
 
             <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>

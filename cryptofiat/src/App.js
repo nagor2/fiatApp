@@ -33,6 +33,7 @@ import Web3 from 'web3'
 
 var events = require('events');
 let eventEmitter = new events.EventEmitter();
+eventEmitter.setMaxListeners(12);
 
 let localWeb3 = config.localWeb3;
 
@@ -102,6 +103,10 @@ class App extends React.Component{
             contracts['stableCoin'] = new localWeb3.eth.Contract(config.stableCoinABI,result);
         });
 
+        dao.methods.addresses("cdp").call().then((result) => {
+            contracts['cdp'] = new localWeb3.eth.Contract(config.cdpABI,result);
+        });
+
         dao.methods.addresses('oracle').call().then((result) =>{
             contracts['oracle']  = new localWeb3.eth.Contract(config.oracleABI, result);
             contracts['oracle'].methods.getPrice('eth').call().then((price)=>{
@@ -113,9 +118,7 @@ class App extends React.Component{
         dao.methods.addresses("deposit").call().then((result)=>{
             contracts['deposit'] = new localWeb3.eth.Contract(config.depositABI,result);
         });
-        dao.methods.addresses("cdp").call().then((result) => {
-            contracts['cdp'] = new localWeb3.eth.Contract(config.cdpABI,result);
-        });
+
         dao.methods.addresses("basket").call().then((result) => {
             contracts['basket'] = new localWeb3.eth.Contract(config.cartABI,result);
         });

@@ -14,7 +14,7 @@ export default class DebtPosition extends React.Component{
             timeOpened:0,
             lastTimeUpdated:0,
             coinsMinted: 0,
-            wethLocked:0,
+            ethLocked:0,
             feeGeneratedRecorded:0,
             interestRate:0,
             liquidationStatus:0
@@ -35,7 +35,7 @@ export default class DebtPosition extends React.Component{
             this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
-            this.setState({wethLocked:this.props.web3.utils.fromWei(position.wethAmountLocked)});
+            this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked)});
             this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
 
 
@@ -60,7 +60,7 @@ export default class DebtPosition extends React.Component{
             this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
-            this.setState({wethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked)});
+            this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked)});
             this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
             contracts['cdp'].methods.getMaxStableCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
                 this.setState({maxStableCoinsToMint:this.props.web3.utils.fromWei(maxCoins)});
@@ -96,7 +96,7 @@ export default class DebtPosition extends React.Component{
             <div>coinsMinted (red/yellow/green): <b>{this.state.coinsMinted}</b></div>
             <Button emitter={this.props.emitter} action={'updateCDP'} id={this.props.id} name={"Update position"} item={this.state.position}/>
             <div>interest rate: <b>{this.state.interestRate}%</b></div>
-            <div>wethLocked: <b>{this.state.wethLocked}</b></div>
+            <div>wethLocked: <b>{this.state.ethLocked}</b></div>
             <div>maxCoinsToMint : <b>{this.state.maxStableCoinsToMint}</b></div>
             <Button emitter={this.props.emitter} action={'closeCDP'} id={this.props.id} name={"Close position"} item={this.state.position}/>
             <div>recorded fee: <b>{this.state.feeGeneratedRecorded}</b></div>
