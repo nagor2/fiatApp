@@ -103,7 +103,7 @@ export default class Tsc extends React.Component{
 
     render() {
         return <div align='left'>
-            <div align='center'><b>True stable coin</b></div>
+            <div align='center'><b>Dotflat coin</b></div>
             {this.props.account!==''?<Button emitter={this.props.emitter} action={'buyStable'} name={"Buy"}/>:''}
 
             <div>total supply:         <b>{this.state.supply} TSC</b></div>
@@ -130,8 +130,8 @@ export default class Tsc extends React.Component{
             <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>
             <div>allowed to auction: <b>{this.state.allowedToAuction/10**18}</b></div>
 
-            <div>address:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
-            <div>code:         <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address+'/contracts#address-tabs'}>view code</a></div>
+            <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
+            <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>
         </div>
     }
 }
