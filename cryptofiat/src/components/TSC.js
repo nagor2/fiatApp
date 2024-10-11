@@ -106,7 +106,7 @@ export default class Tsc extends React.Component{
             <div align='center'><b>Dotflat coin</b></div>
             {this.props.account!==''?<Button emitter={this.props.emitter} action={'buyStable'} name={"Buy"}/>:''}
 
-            <div>total supply:         <b>{this.state.supply} TSC</b></div>
+            <div>total supply:         <b>{this.state.supply} DFC</b></div>
 
             <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>
 
@@ -125,7 +125,7 @@ export default class Tsc extends React.Component{
 
             <div>ETC in pool: <b>{this.state.etherPool}</b></div>
             <div>TSC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Borrow"}/>:''}</div>
-            <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of TSC supply)</b></div>
+            <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of DFC supply)</b></div>
             <div>stabilization fund: <b>{this.state.stubFund}</b></div>
             <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>
             <div>allowed to auction: <b>{this.state.allowedToAuction/10**18}</b></div>
