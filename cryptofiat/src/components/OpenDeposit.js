@@ -13,7 +13,7 @@ export default class OpenDeposit extends React.Component{
 
     allowStables(){
         if (this.state.toAllow<=this.state.tscBalance && this.props.contracts['deposit'] !== undefined){
-            this.props.contracts['stableCoin'].methods.approve(this.props.contracts['deposit']._address,this.props.web3.utils.toWei(this.state.toAllow.toString())).send({from:this.props.account})
+            this.props.contracts['flatCoin'].methods.approve(this.props.contracts['deposit']._address,this.props.web3.utils.toWei(this.state.toAllow.toString())).send({from:this.props.account})
                 .on('transactionHash', (hash) => {
                     this.setState({'loader':true})
                 })
@@ -22,7 +22,7 @@ export default class OpenDeposit extends React.Component{
                 })
                 .on('confirmation', (confirmationNumber, receipt) => {
                     this.setState({'loader':false})
-                    this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['deposit']._address).call().then((res)=>{
+                    this.props.contracts['flatCoin'].methods.allowance(this.props.account, this.props.contracts['deposit']._address).call().then((res)=>{
                         this.setState({allowed:(res/10**18)})
                     })
                 })
@@ -70,12 +70,12 @@ export default class OpenDeposit extends React.Component{
 
     componentDidMount() {
         if (this.props.account)
-            this.props.contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((res)=>{
+            this.props.contracts['flatCoin'].methods.balanceOf(this.props.account).call().then((res)=>{
                 this.setState({tscBalance:(res/10**18)})
             })
 
         if (this.props.account)
-            this.props.contracts['stableCoin'].methods.allowance(this.props.account, this.props.contracts['deposit']._address).call().then((res)=>{
+            this.props.contracts['flatCoin'].methods.allowance(this.props.account, this.props.contracts['deposit']._address).call().then((res)=>{
                 this.setState({allowed:(res/10**18)})
             })
 

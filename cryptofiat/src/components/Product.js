@@ -31,7 +31,7 @@ export default class Product extends React.Component{
         const{contracts} = this.props;
 
         if (this.props.section == 'Balances' || this.props.section == 'Loans' || this.props.section == 'Auctions' ||this.props.section == 'Deposits' ||this.props.section == 'Transfers' ){
-            if (contracts['stableCoin']!==undefined && contracts['rule']!==undefined)
+            if (contracts['flatCoin']!==undefined && contracts['rule']!==undefined)
                 switch (this.props.title) {
                     case 'ETH':
                         this.props.web3.eth.getBalance(this.props.account).then((result) => {
@@ -40,7 +40,7 @@ export default class Product extends React.Component{
 
                         break;
                     case 'DFC':
-                        contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((result) => {
+                        contracts['flatCoin'].methods.balanceOf(this.props.account).call().then((result) => {
                             this.setState({balance: (result / 10 ** 18).toFixed(2)});
                         });
                         break;
@@ -61,7 +61,7 @@ export default class Product extends React.Component{
         const{contracts} = this.props;
 
         if (this.props.section == 'Balances'){
-            if (contracts['stableCoin']!==undefined && contracts['rule']!==undefined )
+            if (contracts['flatCoin']!==undefined && contracts['rule']!==undefined )
                 switch (this.props.title) {
                     case 'ETH':
                         this.props.web3.eth.getBalance(this.props.account).then((result) => {
@@ -70,7 +70,7 @@ export default class Product extends React.Component{
 
                         break;
                     case 'DFC':
-                        contracts['stableCoin'].methods.balanceOf(this.props.account).call().then((result) => {
+                        contracts['flatCoin'].methods.balanceOf(this.props.account).call().then((result) => {
                             this.setState({balance: (result / 10 ** 18).toFixed(2)});
                         });
                         break;

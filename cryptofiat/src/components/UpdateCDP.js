@@ -29,7 +29,7 @@ export default class UpdateCDP extends React.Component{
             this.setState({balance: result});
         })
 
-        this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(this.props.position.ethAmountLocked).call().then((result)=>{
+        this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.position.ethAmountLocked).call().then((result)=>{
             this.setState({maxCoins : this.props.web3.utils.fromWei(result)})
         });
 
@@ -41,7 +41,7 @@ export default class UpdateCDP extends React.Component{
             return;
         }
         if (e.target.name=='amount'){
-            this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(this.props.web3.utils.toWei(this.state.collateral.toString())).call().then((result)=>{
+            this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(this.state.collateral.toString())).call().then((result)=>{
                 this.setState({maxCoins : this.props.web3.utils.fromWei(result)});
                 (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<(this.state.balance+this.props.position.ethAmountLocked)/10**18)?this.setState({buttonIsActive:true}):this.setState({buttonIsActive:false});
             });
@@ -52,7 +52,7 @@ export default class UpdateCDP extends React.Component{
                 this.setState({amount : 1.1})
         }
         else {
-            this.props.contracts['cdp'].methods.getMaxStableCoinsToMint(this.props.web3.utils.toWei(e.target.value)).call().then((result)=>{
+            this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(e.target.value)).call().then((result)=>{
                 this.setState({maxCoins : this.props.web3.utils.fromWei(result)})
                 this.setState({amount : this.props.web3.utils.fromWei(result)})
             });

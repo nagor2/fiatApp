@@ -99,8 +99,8 @@ class App extends React.Component{
             contracts['rule'] = new localWeb3.eth.Contract(config.ruleABI, result);
         });
 
-        dao.methods.addresses("stableCoin").call().then((result)=>{
-            contracts['stableCoin'] = new localWeb3.eth.Contract(config.stableCoinABI,result);
+        dao.methods.addresses("flatCoin").call().then((result)=>{
+            contracts['flatCoin'] = new localWeb3.eth.Contract(config.stableCoinABI,result);
         });
 
         dao.methods.addresses("cdp").call().then((result) => {

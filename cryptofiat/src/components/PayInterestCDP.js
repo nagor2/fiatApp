@@ -12,7 +12,7 @@ export default class PayInterestCDP extends React.Component{
 
     allow(){
         const {contracts} = this.props;
-        contracts['stableCoin'].methods.approve(contracts['cdp']._address,this.props.web3.utils.toWei(this.state.needed.toFixed(18).toString())).send({from:this.props.account})
+        contracts['flatCoin'].methods.approve(contracts['cdp']._address,this.props.web3.utils.toWei(this.state.needed.toFixed(18).toString())).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -52,7 +52,7 @@ export default class PayInterestCDP extends React.Component{
             this.setState({fee:this.props.web3.utils.fromWei(fee)});
         })
 
-        contracts['stableCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
+        contracts['flatCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
             this.setState({allowance:this.props.web3.utils.fromWei(allowed)});
         })
 
@@ -69,7 +69,7 @@ export default class PayInterestCDP extends React.Component{
             this.setState({fee:this.props.web3.utils.fromWei(fee)});
         })
 
-        contracts['stableCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
+        contracts['flatCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
             this.setState({allowance:this.props.web3.utils.fromWei(allowed)});
         })
 

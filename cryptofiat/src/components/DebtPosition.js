@@ -17,6 +17,7 @@ export default class DebtPosition extends React.Component{
             ethLocked:0,
             feeGeneratedRecorded:0,
             interestRate:0,
+            //externalData: null,
             liquidationStatus:0
         };
 //TODO: implement and test
@@ -39,7 +40,7 @@ export default class DebtPosition extends React.Component{
             this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
 
 
-            contracts['cdp'].methods.getMaxStableCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
+            contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
                 this.setState({maxStableCoinsToMint:this.props.web3.utils.fromWei(maxCoins)});
             })
         })
@@ -52,27 +53,43 @@ export default class DebtPosition extends React.Component{
         })
     }
 
-    componentDidUpdate() {
-        const { contracts } = this.props;
-        contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
-            this.setState({position:position});
-            this.setState({liquidationStatus:position.liquidationStatus});
-            this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
-            this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
-            this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
-            this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked)});
-            this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
-            contracts['cdp'].methods.getMaxStableCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
-                this.setState({maxStableCoinsToMint:this.props.web3.utils.fromWei(maxCoins)});
-            })
-        })
-        contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:this.props.web3.utils.fromWei(fee)});
-        })
+    static getDerivedStateFromProps(props, state) {
+        // Store prevId in state so we can compare when props change.
+        // Clear out previously-loaded data (so we don't render stale stuff).
+        if (props.id !== state.prevId) {
+            return {
+                externalData: null,
+                prevId: props.id,
+            };
+        }
+        // No state update necessary
+        return null;
+    }
 
-        contracts['dao'].methods.params('interestRate').call().then((interest)=>{
-            this.setState({interestRate:interest});
-        })
+    componentDidUpdate(prevProps, prevState) {
+        if (prevProps !== this.props) {
+            const { contracts } = this.props;
+            contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
+                this.setState({position:position});
+                this.setState({liquidationStatus:position.liquidationStatus});
+                this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
+                this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
+                this.setState({coinsMinted:this.props.web3.utils.fromWei(position.coinsMinted)});
+                this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked)});
+                this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded)});
+                contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
+                    this.setState({maxStableCoinsToMint:this.props.web3.utils.fromWei(maxCoins)});
+                })
+            })
+            contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
+                this.setState({fee:this.props.web3.utils.fromWei(fee)});
+            })
+
+            contracts['dao'].methods.params('interestRate').call().then((interest)=>{
+                this.setState({interestRate:interest});
+            })
+        }
+
     }
 
     closeCDP(){

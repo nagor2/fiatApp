@@ -25,16 +25,16 @@ export default class DepositContract extends React.Component{
         });
 
         if (this.props.account){
-            contracts['stableCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
+            contracts['flatCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
                 this.setState({allowanceToDeposit:(result/10**18).toFixed(5)});
             });
-            contracts['stableCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
+            contracts['flatCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
                 this.setState({approvedFromCDP:(result/10**18).toFixed(5)});
             });
         }
 
 
-        contracts['stableCoin'].methods.balanceOf(contracts['deposit']._address).call().then((result) => {
+        contracts['flatCoin'].methods.balanceOf(contracts['deposit']._address).call().then((result) => {
             this.setState({overallVolume:(result/10**18).toFixed(2)});
         });
 

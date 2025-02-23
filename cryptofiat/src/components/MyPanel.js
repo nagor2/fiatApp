@@ -38,6 +38,7 @@ export default class MyPanel extends React.Component {
             itemsCount:'',
             products:this.props.products,
             contracts:'',
+            //externalData: null,
             content: config.about
         };
 
@@ -51,13 +52,28 @@ export default class MyPanel extends React.Component {
     }
 
     componentDidMount() {
-        this.renderSwitch();
-        this.getItems(this.props.content.title);
+        //this.renderSwitch();
+        //this.getItems(this.props.content.title);
     }
 
-    componentWillReceiveProps () {
-        this.renderSwitch();
-        this.getItems(this.props.content.title);
+    static getDerivedStateFromProps(props, state) {
+        // Store prevId in state so we can compare when props change.
+        // Clear out previously-loaded data (so we don't render stale stuff).
+        if (props.id !== state.prevId) {
+            return {
+                externalData: null,
+                prevId: props.id,
+            };
+        }
+        // No state update necessary
+        return null;
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props !== prevProps) {
+            this.renderSwitch();
+            this.getItems(this.props.content.title);
+        }
     }
 
     toggleChildMenu() {
@@ -90,7 +106,7 @@ export default class MyPanel extends React.Component {
 
             switch (content[1]){
                 case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
-                case 'DFC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'stableCoin'} account={this.props.account} contracts={this.props.contracts}/>: <Tsc emitter={this.props.emitter} explorer={this.props.explorer} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} etcPrice={this.props.etcPrice}/>; break;
+                case 'DFC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'flatCoin'} account={this.props.account} contracts={this.props.contracts}/>: <Tsc emitter={this.props.emitter} explorer={this.props.explorer} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'Dotflat':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
                 case 'Gold':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
@@ -161,7 +177,7 @@ export default class MyPanel extends React.Component {
                                 title = 'TSC buyout';
                                 balance = (auction.paymentAmount / 10 ** 18).toFixed(2);
                             }
-                            if (auction.lotToken == contracts['stableCoin']._address){
+                            if (auction.lotToken == contracts['flatCoin']._address){
                                 title = 'Rule buyout';
                                 balance =  (auction.lotAmount / 10 ** 18).toFixed(2);
                             }
@@ -193,6 +209,7 @@ export default class MyPanel extends React.Component {
                 fromBlock: fromBlock
                 ,toBlock: 'latest'
             }).then((events) => {
+                console.log(events)
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {

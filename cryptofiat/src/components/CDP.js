@@ -27,9 +27,9 @@ export default class CDP extends React.Component{
         const { contracts } = this.props;
         if (this.props.account) this.setState({account:this.props.account});
 
-        this.props.contracts['stableCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stubFund)=>{
+        this.props.contracts['flatCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stubFund)=>{
             this.setState({stubFund: (stubFund/10**18).toFixed(8)});
-            contracts['stableCoin'].methods.totalSupply().call().then((supply)=>{
+            contracts['flatCoin'].methods.totalSupply().call().then((supply)=>{
 
                 contracts['dao'].methods.params('stabilizationFundPercent').call().then((percent)=>{
                     const coinsExceed =  stubFund - supply*percent/100;
@@ -45,12 +45,12 @@ export default class CDP extends React.Component{
             this.setState({RuleBalanceOfCDP: (ruleBalance/10**18).toFixed(2)});
         });
 
-        contracts['stableCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((result) => {
+        contracts['flatCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((result) => {
             this.setState({toAuction: (result/10**18).toFixed(2)});
         });
 
         if (this.props.account!=='')
-            contracts['stableCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
+            contracts['flatCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
                 this.setState({userAllowence: (result/10**18).toFixed(10)});
             });
 
@@ -72,7 +72,7 @@ export default class CDP extends React.Component{
             this.setState({interestRate: result+'%'});
         });
 
-        contracts['stableCoin'].methods.totalSupply().call().then((result)=>{
+        contracts['flatCoin'].methods.totalSupply().call().then((result)=>{
             this.setState({tscSupply: (result/10**18).toFixed(4)});
         });
 

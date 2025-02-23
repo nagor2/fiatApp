@@ -51,7 +51,7 @@ export default class Auction extends React.Component{
         contracts['auction'].methods.auctions(this.props.id).call().then((auction)=>{
             this.setState({auction:auction});
 
-            let paymentContract = (auction.paymentToken==this.props.contracts['stableCoin']._address)?this.props.contracts['stableCoin']:this.props.contracts['rule'];
+            let paymentContract = (auction.paymentToken==this.props.contracts['flatCoin']._address)?this.props.contracts['flatCoin']:this.props.contracts['rule'];
             this.setState({paymentTokenContract: paymentContract})
 
 
@@ -64,7 +64,7 @@ export default class Auction extends React.Component{
 
             switch (auction.lotToken){
                 case this.props.contracts['rule']._address: this.setState({lot:'Rule', type:'TSC', move:-1, paymentToken: 'TSC'});break;
-                case this.props.contracts['stableCoin']._address: this.setState({lot:'TSC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
+                case this.props.contracts['flatCoin']._address: this.setState({lot:'TSC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
                 case this.props.contracts['weth']._address: this.setState({lot: 'WETH', type:'TSC', move:1, paymentToken: 'TSC'}); break;
             }
 
@@ -92,7 +92,7 @@ export default class Auction extends React.Component{
                             this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100/10**18-1});
                         });
                     }); break;
-                    case this.props.contracts['stableCoin']._address: this.setState({nextBid:0.1}); break;
+                    case this.props.contracts['flatCoin']._address: this.setState({nextBid:0.1}); break;
                     case this.props.contracts['weth']._address: this.setState({nextBid:0.1}); break;
                 }
             }
