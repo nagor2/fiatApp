@@ -14,7 +14,7 @@ export default class RuleToken extends React.Component{
         this.setState({address: this.props.contract._address});
     }
     componentDidMount() {
-        this.props.contract.methods.totalSupply().call().then((supply)=>{this.setState({supply: (supply/10**18).toFixed(2)});});
+        this.props.contract.methods.totalSupply().call().then((supply)=>{this.setState({supply: (parseFloat(supply)/10**18).toFixed(2)});});
         getTransfers(this.props.contract).then((result)=>{this.setState({transfers: result.length})});
         getHolders(this.props.contract).then((result)=>{this.setState({holders: result.length})});
         this.setState({address: this.props.contract._address});
@@ -31,11 +31,11 @@ export default class RuleToken extends React.Component{
 
             <div>N of holders: <b>{this.state.holders}</b></div>
 
-            <div>price in stableCoins (from pool):</div>
+            <div>price in stableCoins (from pool): <b>coming soon</b></div>
 
-            <div>marketCap:</div>
+            <div>marketCap:  <b>coming soon</b></div>
 
-            <div>pool volume:</div>
+            <div>pool volume:  <b>coming soon</b></div>
 
             <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>

@@ -57,7 +57,7 @@ export default class CDP extends React.Component{
 
         this.props.web3.eth.getBalance(contracts['cdp']._address).then((result) => {
             this.setState({wethBalance: (parseFloat(result)/10**18).toFixed(2)});
-            this.setState({collateral:((parseFloat(result)/10**18).toFixed(3)*this.props.etcPrice).toFixed(3)})
+            this.setState({collateral:((parseFloat(result)/10**18).toFixed(3)*this.props.ethPrice).toFixed(3)})
         });
 
         contracts['cdp'].methods.numPositions().call().then((result)=>{

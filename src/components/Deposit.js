@@ -28,7 +28,7 @@ export default class Deposit extends React.Component{
         })
 
         contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{
-            this.setState({accumulatedInterest:this.props.web3.utils.fromWei(interest)});
+            this.setState({accumulatedInterest:parseFloat(interest)/10**18});
         })
 
         contracts['dao'].methods.params('depositRate').call().then((interest)=>{
@@ -45,7 +45,7 @@ export default class Deposit extends React.Component{
         })
 
         contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{
-            this.setState({accumulatedInterest:this.props.web3.utils.fromWei(interest)});
+            this.setState({accumulatedInterest:parseFloat(interest)/10**18});
         })
 
         contracts['dao'].methods.params('depositRate').call().then((interest)=>{

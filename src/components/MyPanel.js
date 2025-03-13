@@ -108,15 +108,15 @@ export default class MyPanel extends React.Component {
             switch (content[1]){
                 case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
                 case 'DFC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'flatCoin'} account={this.props.account} contracts={this.props.contracts}/>: <DFC emitter={this.props.emitter} explorer={this.props.explorer} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} ethPrice={this.props.ethPrice}/>; break;
-                case 'buyStable':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
-                case 'Dotflat':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
-                case 'Gold':return <Swap name={content} etcPrice={this.props.etcPrice}/>; break;
-                case 'Rule token swap':return <SwapRLE name={content} etcPrice={this.props.etcPrice}/>; break;
-                case 'Basket':return <Basket web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
-                case 'Auction':return <AuctionContract web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
+                case 'buyStable':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'Dotflat':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'Gold':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'Rule token swap':return <SwapRLE name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'Basket':return <Basket web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  ethPrice={this.props.ethPrice}/>; break;
+                case 'Auction':return <AuctionContract web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  ethPrice={this.props.ethPrice}/>; break;
                 case 'Borrow': return <Borrow web3={this.props.web3} contracts={this.props.contracts} account={this.props.account}/>; break;
                 case 'updateCDP': return <UpdateCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'CDP': return <CDP web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  etcPrice={this.props.etcPrice}/>; break;
+                case 'CDP': return <CDP web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  ethPrice={this.props.ethPrice}/>; break;
                 case 'debt position': return <DebtPosition emitter={this.props.emitter} web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'deposit': return <Deposit web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'Deposit': return <DepositContract emitter={this.props.emitter}  explorer={this.props.explorer} contracts={this.props.contracts} account={this.props.account}/>; break;
@@ -205,13 +205,11 @@ export default class MyPanel extends React.Component {
     getLoans(){
         const{contracts} = this.props;
         let products=[];
-        console.log('getLoans')
         if (contracts['cdp']!==undefined)
                 contracts['cdp'].getPastEvents('PositionOpened', {
                 fromBlock: fromBlock
                 ,toBlock: 'latest'
             }).then((events) => {
-                console.log(events)
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {

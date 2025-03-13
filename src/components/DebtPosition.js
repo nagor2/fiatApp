@@ -31,7 +31,7 @@ export default class DebtPosition extends React.Component{
         this.setState({id:this.state.id})
         contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
 
-            console.log(position)
+            //console.log(position)
 
             this.setState({position:position});
             this.setState({liquidationStatus:position.liquidationStatus});

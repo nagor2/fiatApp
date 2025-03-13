@@ -65,7 +65,7 @@ export default class Transfers extends React.Component{
     }
 
     render(){
-        let items = (this.state.txs!==undefined)?this.state.txs.sort((a,b)=>(b.blockNumber - a.blockNumber)).map(product =>
+        let items = (this.state.txs!==undefined)?this.state.txs.sort((a,b)=>(Number(b.blockNumber) - Number(a.blockNumber))).map(product =>
             <Product emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account?this.props.account:''} section={'Transfers'} key={product.id} id={product.id}
                      iconType={(product.returnValues.to.toLowerCase() == this.props.account.toLowerCase())? 'in' : 'out'}
                      title={(product.returnValues.to.toLowerCase() == this.props.account.toLowerCase() ? product.returnValues.from : product.returnValues.to)}

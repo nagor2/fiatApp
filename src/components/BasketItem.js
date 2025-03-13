@@ -23,7 +23,7 @@ export default class BasketItem extends React.Component{
                             {this.props.share}
                         </div>
                     </div>
-                    <div className="small-text">initial price: {this.props.initialPrice/10**6}</div>
+                    <div className="small-text">initial price: {parseFloat(this.props.initialPrice)/10**6}</div>
                 </div>
             </div>
         </div>

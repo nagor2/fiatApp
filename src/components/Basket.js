@@ -12,12 +12,12 @@ export default class Basket extends React.Component{
         let items=[];
 
         contracts['basket'].methods.sharesCount().call().then((result)=>{
-             this.setState({sharesCount: result});
+             this.setState({sharesCount: parseInt(result)});
             //console.log(items);
         });
 
         contracts['basket'].methods.itemsCount().call().then((count)=>{
-            this.setState({itemsCount: count});
+            this.setState({itemsCount: parseInt(count)});
 
             for (var i=1; i<=count; i++){
                 contracts['basket'].methods.items(i).call().then((item)=>{
@@ -39,7 +39,7 @@ export default class Basket extends React.Component{
 
         contracts['basket'].methods.itemsCount().call().then((count)=>{
             let items=[];
-            this.setState({itemsCount: count});
+            this.setState({itemsCount: parseInt(count)});
 
             for (var i=1; i<=count; i++){
                 contracts['basket'].methods.items(i).call().then((item)=>{

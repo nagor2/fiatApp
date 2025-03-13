@@ -7,7 +7,7 @@ export default class DAO extends React.Component{
         super(props);
         this.state = {address:'', isActiveVoting:false, votingID:0, allowed:0, ruleBalanceOfDAO:0, totalPooled:0, userPooled:0,
             votingDiv:false, addVotingDiv:false, voteDiv:false, loader:false, amount:0, userDecision:false,
-            addVoting: {votingType:'1',name:'name', address:'0x0000000000000000000000000000000000000000', value:0, decision:false},
+            addVoting: {votingType:'1',name:'name', value:0, decision:false},
             currentVoitng:[]};
         //window.history.replaceState(null, "", "/contracts/INTDAO")
         this.toggle = this.toggle.bind(this);
@@ -19,34 +19,37 @@ export default class DAO extends React.Component{
         this.props.contracts['dao'].methods.activeVoting().call().then((is)=>{
             this.setState({isActiveVoting:is})});
 
-        this.props.contracts['dao'].methods.pooled(this.props.account).call().then((res)=>{
-            this.setState({userPooled:res})})
+
+
+        if (this.props.account!='') this.props.contracts['dao'].methods.pooled(this.props.account).call().then((res)=>{
+            this.setState({userPooled:res})});
 
         this.props.contracts['rule'].methods.balanceOf(this.props.contracts['dao']._address).call().then((res)=>{
             this.setState({totalPooled:res})});
 
+        if (this.props.account!='')
         this.props.contracts['rule'].methods.allowance(this.props.account, this.props.contracts['dao']._address).call().then((res)=>{
             this.setState({allowed:res})});
-
 
         let events=[];
 
         this.props.contracts['dao'].getPastEvents('NewVoting', {fromBlock: fromBlock,toBlock: 'latest'}).then((res)=>{
-            events.push.apply(events,res);
-            let id = events[events.length-1].returnValues.id;
-            this.setState({votingID:id})
-            this.props.contracts['dao'].methods.votings(id).call().then((res)=> {
-                this.setState({currentVoitng:res});
+            if (events.length>0) {
+                events.push.apply(events, res);
+                let id = parseFloat(events[events.length - 1].returnValues.id);
+                this.setState({votingID: id})
+                this.props.contracts['dao'].methods.votings(id).call().then((res) => {
+                    this.setState({currentVoitng: res});
 
-            })
+                })
+            }
         })
-
-
 
     }
 
+
     allowRLE(){
-        this.props.contracts['rule'].methods.approve(this.props.contracts['dao']._address, this.props.web3.utils.toWei((this.state.amount/10**18).toString())).send({from:this.props.account})
+        this.props.contracts['rule'].methods.approve(this.props.contracts['dao']._address, this.state.amount).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -114,7 +117,6 @@ export default class DAO extends React.Component{
             .on('error', console.error);
     }
 
-
     toggle(name){
         this.setState({[name]: !this.state[name]});
     }
@@ -159,21 +161,23 @@ export default class DAO extends React.Component{
         return  <div align='left'>
             <div align='center'><b>DAO</b></div>
             {this.state.amount>0?<a className={"small-button pointer green right"} onClick={()=>this.allowRLE()}>allow Rule tokens</a>:''}
-            <div>ruleBalanceOf DAO: <b>{(this.state.ruleBalanceOfDAO/10**18).toFixed(2)}</b></div>
-            <div>Total pooled tokens: <b>{(this.state.totalPooled/10**18).toFixed(2)}</b></div>
+            <div>ruleBalanceOf DAO: <b>{(parseFloat(this.state.ruleBalanceOfDAO)/10**18).toFixed(2)}</b></div>
+            <div>Total pooled tokens: <b>{(parseFloat(this.state.totalPooled)/10**18).toFixed(2)}</b></div>
+
             {this.state.allowed>0?<a className={"small-button pointer green right"} onClick={()=>this.poolRLE()}>pool tokens</a>:''}
-            <div>Your allowed tokens: <b>{(this.state.allowed/10**18).toFixed(2)}</b></div>
-            <div>Your pooled tokens: <b>{(this.state.userPooled/10**18).toFixed(2)}</b></div>
+            {this.props.account!=''?<div>Your allowed tokens: <b>{(parseFloat(this.state.allowed)/10**18).toFixed(2)}</b></div>:''}
+            {this.props.account!=''?<div>Your pooled tokens: <b>{(parseFloat(this.state.userPooled)/10**18).toFixed(2)}</b></div>:''}
 
             {this.state.loader?<Loader/>:''}
 
 
             {this.state.userPooled>0?<a className={"small-button pointer green right"} onClick={()=>this.returnRLE()}>return tokens</a>:''}
-            <input type='number' step="10000" min="0" name='amount' value={(this.state.amount/10**18).toFixed()} onChange={e => this.setState({amount:e.target.value*10**18})}/>
+            {this.props.account!=''?<input type='number' step="10000" min="0" name='amount' value={(this.state.amount/10**18).toFixed()} onChange={e => this.setState({amount:e.target.value*10**18})}/>:''}
 
             <div>is active voting: <b>{this.state.isActiveVoting?'true':'false'}</b></div>
 
-            {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['dao'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
+            {
+                this.props.account!=''?<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['dao'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>:''}
             <a className={'pointer link'} onClick={()=>this.toggle('votingDiv')}>{this.state.isActiveVoting?'current':'last'} voting</a>
             <div className={"collapsed" + (this.state.votingDiv ? ' in' : '')}>
                 <div>votingID: <b>{this.state.votingID}</b></div>
@@ -233,8 +237,6 @@ export default class DAO extends React.Component{
 
             <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>
-
-
         </div>;
     }
 
