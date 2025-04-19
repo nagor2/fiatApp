@@ -63,9 +63,9 @@ export default class Auction extends React.Component{
                 });
 
             switch (auction.lotToken){
-                case this.props.contracts['rule']._address: this.setState({lot:'Rule', type:'TSC', move:-1, paymentToken: 'TSC'});break;
-                case this.props.contracts['flatCoin']._address: this.setState({lot:'TSC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
-                case this.props.contracts['weth']._address: this.setState({lot: 'WETH', type:'TSC', move:1, paymentToken: 'TSC'}); break;
+                case this.props.contracts['rule']._address: this.setState({lot:'Rule', type:'DFC', move:-1, paymentToken: 'DFC'});break;
+                case this.props.contracts['flatCoin']._address: this.setState({lot:'DFC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
+                case this.props.contracts['weth']._address: this.setState({lot: 'WETH', type:'DFC', move:1, paymentToken: 'DFC'}); break;
             }
 
             this.props.web3.eth.getBlock('latest').then((block)=>{
@@ -78,7 +78,7 @@ export default class Auction extends React.Component{
                 contracts['auction'].methods.bids(auction.bestBidID).call().then((bestBid)=>{
                     this.setState({bestBid:bestBid})
                     contracts['dao'].methods.params('minAuctionPriceMove').call().then((minAuctionPriceMove)=> {
-                        let nextBid = parseFloat(bestBid.bidAmount/10**18 * (100 + this.state.move*minAuctionPriceMove)/100);
+                        let nextBid = parseFloat(this.props.web3.utils.fromWei(bestBid.bidAmount,'ether') * (100 + this.state.move*minAuctionPriceMove)/100);
                         this.setState({nextBid:nextBid})
                         //console.log('nextBid:'+this.state.nextBid);
                     });

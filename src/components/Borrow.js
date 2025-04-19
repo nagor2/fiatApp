@@ -1,6 +1,7 @@
 import React from "react";
 import {Loader} from "../utils/utils";
 
+
 export default class Borrow extends React.Component{
 
     constructor(props){
@@ -10,7 +11,7 @@ export default class Borrow extends React.Component{
     }
 
     openCDP(){
-        this.props.contracts['cdp'].methods.openCDP(this.props.web3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: this.props.web3.utils.toWei(this.state.collateral.toString())})
+        this.props.contracts['cdp'].methods.openCDP(this.props.web3.utils.toWei(this.state.amount.toString(),'ether')).send({from:this.props.account, value: this.props.web3.utils.toWei(this.state.collateral.toString(),'ether')})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -21,7 +22,8 @@ export default class Borrow extends React.Component{
                 this.setState({'loader':false})
                 window.location.reload();
             })
-            .on('error', console.error);
+            .on('error', console.error)
+            .catch(e=>console.error);
     }
 
     componentDidMount() {
@@ -31,12 +33,12 @@ export default class Borrow extends React.Component{
     }
 
     changeProportions(e) {
-        if (!Number(e.target.value)||e.target.value>10000000||e.target.value<0) {
+        if (!Number(e.target.value)||e.target.value<0||e.target.value =='undefined') {
             return;
         }
         if (e.target.name=='amount'){
-            this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(this.state.collateral)).call().then((result)=>{
-                (e.target.value<(result/10**18)&&this.state.amount>1&&this.state.collateral<this.state.balance/10**18)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
+            this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(this.state.collateral,'ether')).call().then((result)=>{
+                e.target.value<=this.props.web3.utils.fromWei(result,'ether')&&this.state.amount>1&&this.state.collateral<=this.props.web3.utils.fromWei(this.state.balance,'ether')?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
             });
 
             if (e.target.value>=1)
@@ -45,30 +47,33 @@ export default class Borrow extends React.Component{
                 this.setState({amount : 1.1})
         }
         else {
-            this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(e.target.value)).call().then((result)=>{
-                this.setState({amount : this.props.web3.utils.fromWei(result)})
-            });
-            (e.target.value<(this.state.balance/10**18)&&this.state.amount>=1)?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
-
             this.setState({collateral : e.target.value})
+                this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(e.target.value, 'ether')).call().then((result)=>{
+                this.setState({amount : this.props.web3.utils.fromWei(result,'ether')})
+            });
+            (e.target.value<=this.props.web3.utils.fromWei(this.state.balance,'ether')
+                &&this.state.amount>=1)?
+                this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
+
+
         }
         return;
     }
 
     setMax(){
-        const max = this.state.balance/10**18-0.01;
+        const max = this.props.web3.utils.fromWei(this.state.balance,'ether')-0.01;
         this.setState({collateral: max})
         this.changeProportions({target:{name:'collateral', value:max.toString()}});
     }
 
     render() {
         return <form>
-            <div align='center'><b>Borrow stablecoins</b></div>
+            <div align='center'><b>Borrow DotFlat</b></div>
             <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
-            ETC collateral you provide: <input type='number' step="0.1" min="0" max="10000" name='collateral' value={this.state.collateral} onChange={e => this.changeProportions(e)}/>
-            stable coins you'll get <input type='number' min="1.1" name='amount' value={this.state.amount} onChange={e => this.changeProportions(e)}/>
+            ETH collateral you provide: <input type='number' step="0.1" min="0" max="10000" name='collateral' value={this.state.collateral} onChange={e => this.changeProportions(e)}/>
+            DotFlat coins you will get <input type='number' min="1.1" name='amount' value={this.state.amount} onChange={e => this.changeProportions(e)}/>
             {this.state.buttonInactive?<a className={"button pointer green right"} onClick={this.openCDP}>Borrow</a>:<div className="button address right">
-                {'Insufficient ETC '}</div>}
+                {'Insufficient ETH '}</div>}
             {this.state.loader?<Loader/>:''}
             <br></br><br></br><br></br><br></br><br></br>
         </form>;

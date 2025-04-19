@@ -82,17 +82,17 @@ export default class MakeBidTSCBuyout extends React.Component{
     render(){
         return <div align={'left'}><div align={'center'}><b>Close CDP {this.props.id==undefined || this.props.id == ''?'':'(id: '+this.props.id+')'}</b></div>
             {(parseFloat(this.state.toAllow)<=this.state.tscBalance)?<a className={"button pointer green right"} onClick={()=>this.allowStables()}>Allow</a>:<div className="button address right">
-                {'not enough TSC'}</div>}
+                {'not enough DFC'}</div>}
 
-            TSC to allow: <input type='number' step="0.1" min="0" max={this.state.tscBalance} name='amount' value={this.state.toAllow} onChange={e => this.changeToAllow(e)}/>
+            DFC to allow: <input type='number' step="0.1" min="0" max={this.state.tscBalance} name='amount' value={this.state.toAllow} onChange={e => this.changeToAllow(e)}/>
             Your bid (Rule tokens you'll recieve): <input type='number' step="0.1" min="0" max={this.state.tscBalance} name='amount' value={this.state.toAllow} onChange={e => this.changeToAllow(e)}/>
 
-            <div>Your TSC allowance to Auction contract: {this.state.allowed}</div><br></br>
+            <div>Your DFC allowance to Auction contract: {this.state.allowed}</div><br></br>
             <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
 
 
             {(this.state.allowed>0)?<a className={"button pointer green right"} onClick={this.close}>Make a bid</a>:<div className="button address right">
-                {'you need to allow '+this.state.needed+' TSC to close this position'}</div>}
+                {'you need to allow '+this.state.needed+' DFC to close this position'}</div>}
             <br></br>
             <br></br>
             <br></br>

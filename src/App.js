@@ -7,7 +7,7 @@ import React from 'react';
 import Web3 from 'web3'
 var events = require('events');
 let eventEmitter = new events.EventEmitter();
-eventEmitter.setMaxListeners(12);
+eventEmitter.setMaxListeners(13);
 /* global BigInt */
 
 let web3 = config.localWeb3;
@@ -25,7 +25,8 @@ class App extends React.Component{
       networkConnected: false,
       account:'',
       ethPrice: '',
-      contracts:{}
+      contracts:{},
+      web3:''
     };
   }
 
@@ -33,6 +34,7 @@ class App extends React.Component{
     if (window.ethereum && Number(await window.ethereum.request({ method: "eth_chainId" })) ===1){
       web3 = new Web3(window.ethereum);
       console.log ('using window web3')
+      this.state.web3 = web3;
     }
     else {
       web3 = new Web3(config.rpc);
@@ -132,8 +134,8 @@ class App extends React.Component{
                 <MyPanel emitter    ={eventEmitter} web3={web3} bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={config.Credits}/>
                 <MyPanel emitter={eventEmitter} web3={web3} bgColor="#FFFFFF" contracts={this.state.contracts} account={this.state.account} content={config.Deposits}/></>
               :''}
-          <MyPanel emitter={eventEmitter} web3={web3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Auctions} products={config.auctions}/>
-          <MyPanel emitter={eventEmitter} web3={web3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Pools} products={config.pools}/>
+          <MyPanel emitter={eventEmitter} web3={this.state.web3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Auctions} products={config.auctions}/>
+          <MyPanel emitter={eventEmitter} web3={this.state.web3} bgColor="#FFFFFF" contracts={this.state.contracts} content={config.Pools} products={config.pools}/>
         </div>
 
         <div className="region_middle">

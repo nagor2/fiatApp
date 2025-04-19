@@ -2941,13 +2941,13 @@ config.balances = [
 ];
 
 config.pools = [
-    { title: 'Dotflat', name:'DFC/ETC', id: 1, iconType: 'pool' },
-    { title: 'Rule token swap', name:'RLE/DFC', id: 2, iconType: 'pool' },
+    { title: 'Dotflat/ETH swap', name:'DFC/ETH', id: 1, iconType: 'pool' },
+    { title: 'Rule/Dotflat swap', name:'RLE/DFC', id: 2, iconType: 'pool' },
     { title: 'Gold', name:'Gold/DFC', id: 3, iconType: 'pool' },
 ];
 
 config.auctions = [
-    { title: 'DFC buyout', name:'True stable coin', id: 1, iconType: 'auction' },
+    { title: 'DFC buyout', name:'DotFlatcoin', id: 1, iconType: 'auction' },
     { title: 'Rule buyout', name:'Rule tokens buyout', id: 2, iconType: 'auction' },
     { title: 'Liquidate collateral', name:'Liquidate collateral', id: 3, iconType: 'auction' },
 ];

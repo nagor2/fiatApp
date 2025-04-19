@@ -45,7 +45,7 @@ export default class Deposit extends React.Component{
         })
 
         contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{
-            this.setState({accumulatedInterest:parseFloat(interest)/10**18});
+            this.setState({accumulatedInterest:this.props.web3.utils.fromWei(interest,'ether')});
         })
 
         contracts['dao'].methods.params('depositRate').call().then((interest)=>{
@@ -66,7 +66,8 @@ export default class Deposit extends React.Component{
                     this.setState({'loader':false})
                     window.location.reload();
                 })
-                .on('error', console.error);
+                .on('error', console.error)
+                .catch(e=>console.error);
         });
 
     }
@@ -83,7 +84,8 @@ export default class Deposit extends React.Component{
                 this.setState({'loader':false})
                 window.location.reload();
             })
-            .on('error', console.error);
+            .on('error', console.error)
+            .catch(e=>console.error);
     }
 
     render() {

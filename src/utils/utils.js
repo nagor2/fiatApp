@@ -29,7 +29,7 @@ export function dateFromTimestamp(timeStamp){
 
 export class Loader extends React.Component{
     render(){
-        return <div><img className={'loader abs-centered'} src='/img/loading.png' width={'50'} height={'50'}/></div>;
+        return <div><img className={'loader abs-centered'} src='/img/loading.png' width={'50'} height={'50'} alt={'loader'}/></div>;
     }
 }
 

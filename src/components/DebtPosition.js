@@ -43,9 +43,9 @@ export default class DebtPosition extends React.Component{
                 this.setState({coinsMinted:parseFloat(position.coinsMinted)/10**18});
 
             if (position.ethAmountLocked!=undefined)
-                this.setState({ethLocked:parseFloat(position.ethAmountLocked)/10**18});
+                this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked,'ether')});
             if (position.interestAmountRecorded!=undefined)
-                this.setState({feeGeneratedRecorded:parseFloat(position.interestAmountRecorded)/10**18});
+                this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded,'ether')});
 
 
             contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{

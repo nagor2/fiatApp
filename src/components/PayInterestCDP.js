@@ -24,7 +24,8 @@ export default class PayInterestCDP extends React.Component{
                 this.setState({'loader':false});
                 //window.location.reload();
             })
-            .on('error', console.error);
+            .on('error', console.error)
+            .catch(e=>console.error);
     }
 
     payInterest(){

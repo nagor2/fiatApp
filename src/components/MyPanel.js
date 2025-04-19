@@ -94,24 +94,23 @@ export default class MyPanel extends React.Component {
 
     renderContent(content){
         if (content){
-            if (content[0]=='Commodities'){
+            if (content[0]==='Commodities'){
                 return <Commodity contracts={this.props.contracts} title={content[1]} id={content[2]}/>;
             }
 
-            if (content[0]=='Transfers'){
+            if (content[0]==='Transfers'){
                 return <Transaction tx={content[3]}/>;
             }
-            if (content[0]=='Auctions'){
+            if (content[0]==='Auctions'){
                 return <Auction web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>;
             }
 
             switch (content[1]){
-                case 'RLE':return (content[0]=='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
-                case 'DFC': return (content[0]=='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'flatCoin'} account={this.props.account} contracts={this.props.contracts}/>: <DFC emitter={this.props.emitter} explorer={this.props.explorer} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} ethPrice={this.props.ethPrice}/>; break;
-                case 'buyStable':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;
-                case 'Dotflat':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'RLE':return (content[0]==='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
+                case 'DFC': return (content[0]==='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'flatCoin'} account={this.props.account} contracts={this.props.contracts}/>: <DFC emitter={this.props.emitter} explorer={this.props.explorer} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'Dotflat/ETH swap':return <Swap name={content} link={'https://app.uniswap.org/explore/tokens/ethereum/0x1f709cfa0c409e158c68edcd32453809c9eb69ee'}/>; break;
                 case 'Gold':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;
-                case 'Rule token swap':return <SwapRLE name={content} ethPrice={this.props.ethPrice}/>; break;
+                case 'Rule/Dotflat swap':return <Swap name={content} link={'https://app.uniswap.org/explore/pools/ethereum/0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044'}/>; break;
                 case 'Basket':return <Basket web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  ethPrice={this.props.ethPrice}/>; break;
                 case 'Auction':return <AuctionContract web3={this.props.web3}  explorer={this.props.explorer} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account}  ethPrice={this.props.ethPrice}/>; break;
                 case 'Borrow': return <Borrow web3={this.props.web3} contracts={this.props.contracts} account={this.props.account}/>; break;

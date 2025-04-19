@@ -7,7 +7,7 @@ export default class DFC extends React.Component{
     constructor(props) {
         super(props);
         this.initCoinsBuyOut = this.initCoinsBuyOut.bind(this);
-        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'', indicative:'', etherPool:'', tscPool:'', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0}
+        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'coming soon', indicative:'', etherPool:'coming soon', tscPool:'coming soon', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0}
     }
     componentDidMount() {
         const {contracts} = this.props;
@@ -105,7 +105,7 @@ export default class DFC extends React.Component{
     render() {
         return <div align='left'>
             <div align='center'><b>Dotflat coin</b></div>
-            {this.props.account!==''?<Button emitter={this.props.emitter} action={'buyStable'} name={"Buy"}/>:''}
+            {this.props.account!==''?<Button emitter={this.props.emitter} action={'Dotflat/ETH swap'} name={"Buy"}/>:''}
 
             <div>total supply:         <b>{this.state.supply} DFC</b></div>
 
@@ -113,9 +113,11 @@ export default class DFC extends React.Component{
 
             <div>N of holders: <b>{this.state.holders}</b></div>
             {this.props.account!==''&&this.state.stubFundDemand>0?
-                <a className={"small-button pointer green right"} onClick={()=>this.initCoinsBuyOut()}>init auction to top up stubFund</a>:
+                <a className={"small-button pointer green right"} onClick={()=>this.initCoinsBuyOut()}>init auction to top up stubFund</a>: ''
+            }
 
-                <a className={"small-button pointer green right"} onClick={()=>this.allowSurplusToAuction()}>allow surplus to auction</a>
+            {this.props.account!==''&&this.state.stubFundDemand<0?
+                <a className={"small-button pointer green right"} onClick={()=>this.allowSurplusToAuction()}>allow surplus to auction</a>:''
             }
             <div>price vs USD (pool): <b>{this.state.pricePool}</b></div>
 
@@ -124,8 +126,8 @@ export default class DFC extends React.Component{
             {this.props.account!==''&&this.state.allowedToAuction>0?<a className={"small-button pointer green right"} onClick={()=>this.initRuleBuyOut()}>init Rule buyOut</a>:''
             }
 
-            <div>ETC in pool: <b>{this.state.etherPool}</b></div>
-            <div>TSC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Borrow"}/>:''}</div>
+            <div>ETH in pool: <b>{this.state.etherPool}</b></div>
+            <div>DFC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Borrow"}/>:''}</div>
             <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of DFC supply)</b></div>
             <div>stabilization fund: <b>{this.state.stubFund}</b></div>
             <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>

@@ -15,7 +15,7 @@ export default class WithDrawDeposit extends React.Component{
     }
 
     withdraw(){
-        this.props.contracts['deposit'].methods.withdraw(this.props.depositId,this.props.web3.utils.toWei(this.state.toWithdraw)).send({from:this.props.account})
+        this.props.contracts['deposit'].methods.withdraw(this.props.depositId,this.props.web3.utils.toWei(this.state.toWithdraw,'ether')).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -26,7 +26,9 @@ export default class WithDrawDeposit extends React.Component{
                 this.setState({'loader':false})
                 window.location.reload();
             })
-            .on('error', console.error);
+            .on('error', console.error)
+            .catch(e=>console.error);
+
     }
 
     changeToWithdraw(e){
@@ -35,12 +37,12 @@ export default class WithDrawDeposit extends React.Component{
 
     componentDidMount() {
         this.props.contracts['deposit'].methods.deposits(this.props.depositId).call().then((deposit)=>{
-            this.setState({coinsDeposited:(deposit.coinsDeposited/10**18).toFixed(2)});
+            this.setState({coinsDeposited:this.props.web3.utils.fromWei(deposit.coinsDeposited,'ether')});
         })
     }
 
     render(){
-        return <div align={'left'}><div align={'center'}><b>Withdraw from deposit {this.props.depositId==undefined?'':'('+this.props.depositId+')'}</b></div>
+        return <div align={'left'}><div align={'center'}><b>Withdraw from deposit {this.props.depositId==undefined?'':'(id: '+this.props.depositId+')'}</b></div>
             {this.props.depositId==undefined?'':<div>already deposited: {this.state.coinsDeposited}</div>}
             Amount to withdraw: <input type='number' step="0.1" min="0" max={this.state.coinsDeposited} name='amount' value={this.state.toWithdraw} onChange={e => this.changeToWithdraw(e)}/>
             <br></br>
@@ -48,9 +50,9 @@ export default class WithDrawDeposit extends React.Component{
 
 
             {(parseFloat(this.state.toWithdraw)<=this.state.coinsDeposited)?
-                <a className={"button pointer green right"} onClick={this.withdraw}>Withdraw {this.state.toWithdraw +' TSC'}</a>:<div className="button address right">
+                <a className={"button pointer green right"} onClick={this.withdraw}>Withdraw {this.state.toWithdraw +' DFC'}</a>:<div className="button address right">
 
-                    {'not enough TSC on deposit'}</div>}
+                    {'not enough DFC on deposit'}</div>}
             <br></br>
             <br></br>
             <br></br>
