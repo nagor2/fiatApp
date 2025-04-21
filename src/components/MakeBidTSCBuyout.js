@@ -92,7 +92,7 @@ export default class MakeBidTSCBuyout extends React.Component{
 
 
             {(this.state.allowed>0)?<a className={"button pointer green right"} onClick={this.close}>Make a bid</a>:<div className="button address right">
-                {'you need to allow '+this.state.needed+' DFC to close this position'}</div>}
+                {'you need to allow '+this.state.needed+' DFC'}</div>}
             <br></br>
             <br></br>
             <br></br>
