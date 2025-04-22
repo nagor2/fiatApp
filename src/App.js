@@ -124,7 +124,7 @@ class App extends React.Component{
         <w3m-button balance="hide"/>
         <ETH ethPrice={this.state.ethPrice}/>
 
-        <img src='img/logo.png'/>&nbsp;<h2 align="center" className="pointer" onClick={this.Click}>DotFlat</h2>
+        <img src='%PUBLIC_URL%/img/logo.png'/>&nbsp;<h2 align="center" className="pointer" onClick={this.Click}>DotFlat</h2>
         {this.state.walletConnected ? <Address account={this.state.account}/>:<ConnectButton getAccount={this.getAccount} name='connect wallet'/>}
 
       </div>
