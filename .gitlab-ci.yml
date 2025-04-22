@@ -1,0 +1,71 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  SERVICE: app-dotflat
+  NAMESPACE: app-dotflat
+  SERVICE_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+
+.build:image:
+  stage: build
+  image: 
+    name: ${BUILD_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - cp "${DOCKER_AUTH_CONFIG}" /kaniko/.docker/config.json
+  script:
+    - >- 
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${SERVICE_IMAGE}"
+  tags:
+    - docker
+
+.deploy:image:
+  stage: deploy
+  image: 
+    name: ${DEPLOY_IMAGE}
+    entrypoint: [""] 
+  before_script:
+    - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
+  script:
+    - kubectl set image -n ${NAMESPACE} deployment/${SERVICE} ${SERVICE}=${SERVICE_IMAGE}
+  tags:
+    - docker
+
+build:image:develop:
+  extends: .build:image
+  environment: develop
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"
+
+build:image:prod:
+  extends: .build:image
+  environment: prod
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+
+deploy:image:develop:
+  stage: deploy
+  extends: .deploy:image
+  environment: develop
+  variables:
+    K3S_CONFIG: "${K3SDEVCONFIG}"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"
+  needs:
+    - build:image:develop
+
+deploy:image:prod:
+  stage: deploy
+  extends: .deploy:image
+  environment: prod
+  variables:
+    K3S_CONFIG: "${K3SPRODCONFIG}"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+  needs:
+    - build:image:prod
