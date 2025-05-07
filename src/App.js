@@ -72,7 +72,10 @@ class App extends React.Component{
       this.setState({account:accounts[0], walletConnected: true})
     }
     }
-    else console.log('no window ethereum')
+    else {
+      console.log('no window ethereum')
+      console.log('try to connect to walletConnect');
+    }
   }
 
 

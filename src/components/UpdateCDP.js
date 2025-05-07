@@ -1,5 +1,6 @@
 import React from "react";
 import {Loader} from "../utils/utils";
+/* global BigInt */
 
 export default class UpdateCDP extends React.Component{
     constructor(props){
@@ -11,7 +12,11 @@ export default class UpdateCDP extends React.Component{
 
     updateCDP(){
         //console.log(this.state.collateral*10**18-this.props.position.wethAmountLocked);
-        this.props.contracts['cdp'].methods.updateCDP(this.props.id, this.props.web3.utils.toWei(this.state.amount.toString())).send({from:this.props.account, value: this.props.web3.utils.toWei(this.state.collateral,'ether')-this.props.position.ethAmountLocked})
+        let amount = this.props.web3.utils.toWei(this.state.amount,'ether');
+        let collateral = this.props.web3.utils.toWei(this.state.collateral,'ether');
+        let locked = this.props.position.ethAmountLocked;
+
+        this.props.contracts['cdp'].methods.updateCDP(this.props.id, amount).send({from:this.props.account, value: BigInt(collateral)-BigInt(locked)})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
