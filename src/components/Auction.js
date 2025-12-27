@@ -159,11 +159,11 @@ export default class Auction extends React.Component{
             {(this.state.timeLeft<=0)?<a className={"small-button pointer green right"} onClick={()=>this.finalize()}>claim to finalize</a>:<div className="small-button address right" alt={'you have to wait until you may claim to finalize auction'}>
                 {'claim to finalize auction in '+Math.floor(this.state.timeLeft / 3600)+':'+Math.floor(this.state.timeLeft / 60)+':'+this.state.timeLeft % 60}</div>}
 
-            <div>the amount of {this.state.lot} you'll recieve: {this.state.auction.lotToken==this.props.contracts['rule']._address?this.state.nextBid:this.state.auction.lotAmount/10**18}</div>
-            <div>payment amount: {this.state.auction.paymentAmount/10**18}</div>
+            <div>the amount of {this.state.lot} you'll recieve: {this.state.auction.lotToken==this.props.contracts['rule']._address?this.state.nextBid:parseFloat(this.state.auction.lotAmount)/10**18}</div>
+            <div>payment amount: {parseFloat(this.state.auction.paymentAmount)/10**18}</div>
 
-            <div>your {this.state.paymentToken} allowance to auction: {this.state.allowanceToAuction/10**18}</div>
-<div>paymentBalance: {this.state.paymentBalance/10**18}, paymentAmount: {this.state.auction.paymentAmount/10**18}, bool: {(this.state.paymentBalance>=this.state.auction.paymentAmount)}</div>
+            <div>your {this.state.paymentToken} allowance to auction: {parseFloat(this.state.allowanceToAuction)/10**18}</div>
+<div>paymentBalance: {parseFloat(this.state.paymentBalance)/10**18}, paymentAmount: {parseFloat(this.state.auction.paymentAmount)/10**18}, bool: {(this.state.paymentBalance>=this.state.auction.paymentAmount)}</div>
             {(parseFloat(this.state.paymentBalance)>=parseFloat(this.state.auction.paymentAmount))?<a className={"small-button pointer green right"}
                                                                               onClick={()=>this.allowPayment()}>Allow {parseFloat(this.state.auction.paymentAmount)>0?this.state.auction.paymentAmount/10**18:this.state.nextBid} {this.state.paymentToken}</a>:<div className="small-button address right">
                 {'not enough '+this.state.paymentToken+' to participate in this auction'}</div>}
@@ -175,7 +175,7 @@ export default class Auction extends React.Component{
 
 
             {(this.state.allowanceToAuction>=this.state.nextBid)?
-                <a className={"small-button pointer green right"} onClick={()=>this.makeBid()}>Make a bid ({this.state.type=='Rule'?'pay':'get'} {this.state.nextBid} {this.state.auction.paymentAmount>0?this.state.lot:this.state.paymentToken} for {this.state.auction.paymentAmount>0?parseFloat(this.state.auction.paymentAmount/10**18).toFixed(2):this.state.auction.lotAmount/10**18} {this.state.auction.paymentAmount>0?this.state.paymentToken:this.state.lot})</a>:
+                <a className={"small-button pointer green right"} onClick={()=>this.makeBid()}>Make a bid ({this.state.type=='Rule'?'pay':'get'} {this.state.nextBid} {this.state.auction.paymentAmount>0?this.state.lot:this.state.paymentToken} for {this.state.auction.paymentAmount>0?parseFloat(this.state.auction.paymentAmount/10**18).toFixed(2):parseFloat(this.state.auction.lotAmount)/10**18} {this.state.auction.paymentAmount>0?this.state.paymentToken:this.state.lot})</a>:
                 <div className="small-button address right">{'insufficient allowance to bid'}</div>}
 
             {this.state.loader?<Loader/>:''}

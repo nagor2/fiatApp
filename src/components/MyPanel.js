@@ -167,23 +167,21 @@ export default class MyPanel extends React.Component {
                 //console.dir (events);
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
-                    console.log(event);
+
                     //if (event.returnValues.lotAddress == contracts['dao'].addresses())
                     let id = event.returnValues.auctionID;
                     contracts['auction'].methods.auctions(id).call().then((auction) => {
+                        console.log("initialized: "+dateFromTimestamp(auction.initialized)+" " +auction.initialized);
                         if (auction.finalized == past) {
                             let title='Liquidate collateral';
                             let balance = 0;
                             if (auction.lotToken == contracts['rule']._address){
                                 title = 'DFC buyout';
-                                balance = this.props.web3.utils.fromWei(auction.paymentAmount,'ether');
-                                    //(auction.paymentAmount / 10 ** 18).toFixed(2);
+                                balance = (parseFloat(auction.paymentAmount) / 10 ** 18).toFixed(2);
                             }
                             if (auction.lotToken == contracts['flatCoin']._address){
                                 title = 'Rule buyout';
-                                balance =  this.props.web3.utils.fromWei(auction.lotAmount,'ether');
-
-                                    //(auction.lotAmount / 10 ** 18).toFixed(2);
+                                balance =  (parseFloat(auction.lotAmount) / 10 ** 18).toFixed(2);
                             }
 
                             let auc = {
