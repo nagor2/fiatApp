@@ -176,11 +176,14 @@ export default class MyPanel extends React.Component {
                             let balance = 0;
                             if (auction.lotToken == contracts['rule']._address){
                                 title = 'DFC buyout';
-                                balance = (auction.paymentAmount / 10 ** 18).toFixed(2);
+                                balance = this.props.web3.utils.fromWei(auction.paymentAmount,'ether');
+                                    //(auction.paymentAmount / 10 ** 18).toFixed(2);
                             }
                             if (auction.lotToken == contracts['flatCoin']._address){
                                 title = 'Rule buyout';
-                                balance =  (auction.lotAmount / 10 ** 18).toFixed(2);
+                                balance =  this.props.web3.utils.fromWei(auction.lotAmount,'ether');
+
+                                    //(auction.lotAmount / 10 ** 18).toFixed(2);
                             }
 
                             let auc = {
