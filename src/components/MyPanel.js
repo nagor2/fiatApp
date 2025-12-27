@@ -167,6 +167,7 @@ export default class MyPanel extends React.Component {
                 //console.dir (events);
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
+                    console.log(event);
                     //if (event.returnValues.lotAddress == contracts['dao'].addresses())
                     let id = event.returnValues.auctionID;
                     contracts['auction'].methods.auctions(id).call().then((auction) => {
