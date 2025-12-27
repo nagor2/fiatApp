@@ -63,6 +63,8 @@ export default class Auction extends React.Component{
                     this.setState({paymentBalance:result});
                 });
 
+            console.log("auction.lotToken: "+auction.lotToken);
+
             switch (auction.lotToken){
                 case this.props.contracts['rule']._address: this.setState({lot:'Rule', type:'DFC', move:-1, paymentToken: 'DFC'});break;
                 case this.props.contracts['flatCoin']._address: this.setState({lot:'DFC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
@@ -165,9 +167,9 @@ export default class Auction extends React.Component{
 
             <div>your {this.state.paymentToken} allowance to auction: {parseFloat(this.state.allowanceToAuction)/10**18}</div>
 <div>paymentBalance: {parseFloat(this.state.paymentBalance)/10**18}, paymentAmount: {parseFloat(this.state.auction.paymentAmount)/10**18}, bool: {(this.state.paymentBalance>=this.state.auction.paymentAmount)}</div>
-            {(parseFloat(this.state.paymentBalance)>=parseFloat(this.state.auction.paymentAmount))?<input type='number' step="0.1" min={this.state.nextBid} max="10000" name='allowance' onChange={e => this.state.toAllow = this.props.web3.utils.toWei(e.target.value)}/><a className={"small-button pointer green right"}
-                   onClick={() => this.allowPayment()}>Allow {parseFloat(this.state.toAllow)/10**18} {this.state.paymentToken}</a>:<div className="small-button address right">
-            {'not enough '+this.state.paymentToken+' to participate in this auction'}</div>
+            {(parseFloat(this.state.paymentBalance)>=parseFloat(this.state.auction.paymentAmount))?<input type='number' step="0.1" min={this.state.nextBid} max="10000" name='allowance' onChange={e => this.state.toAllow = this.props.web3.utils.toWei(e.target.value)}/>
+                <a className={"small-button pointer green right"} onClick={() => this.allowPayment()}>Allow {parseFloat(this.state.toAllow)/10**18} {this.state.paymentToken}</a>
+                <div className="small-button address right">{'not enough '+this.state.paymentToken+' to participate in this auction'}</div>
     }
 
         <div>address: <a target='_blank' href={'https://blockscout.com/etc/mainnet/address/'+this.state.address}>{this.state.address}</a></div>
