@@ -33,8 +33,10 @@ class Bid extends React.Component{
     }
 
     improveBid(){
+
+        console.log("this.state.myBid: "+this.state.myBid)
         this.props.contracts['auction'].methods.improveBid(this.props.bid.returnValues.bidID,
-            this.props.web3.utils.toWei((this.state.myBid).toString())).send({from:this.props.account})
+            this.state.myBid*10**18).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
             })
@@ -66,7 +68,7 @@ class Bid extends React.Component{
                         {this.state.canceled?'canceled':'active'}
                     </div>
                     <div>
-                        {parseFloat(this.props.bid.returnValues.bidAmount/10**18).toFixed(2)}
+                        {(parseFloat(this.props.bid.returnValues.bidAmount)/10**18).toFixed(2)}
                     </div>
                     <div>
                         {this.state.yourBid&&!this.state.canceled?<>

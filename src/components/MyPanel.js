@@ -102,7 +102,7 @@ export default class MyPanel extends React.Component {
                 return <Transaction tx={content[3]}/>;
             }
             if (content[0]==='Auctions'){
-                return <Auction web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>;
+                return <Auction  explorer={this.props.explorer} web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>;
             }
 
             switch (content[1]){
@@ -123,10 +123,10 @@ export default class MyPanel extends React.Component {
                 case 'withdrawFromDeposit': return <WithDrawDeposit web3={this.props.web3} contracts={this.props.contracts} account={this.props.account} depositId={content[2]}/>; break;
                 case 'payInterest': return <PayInterestCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'closeCDP': return <CloseCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
-                case 'makeBidTSCBuyout': return <MakeBidTSCBuyout web3={this.props.web3} auction={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
+                case 'makeBidTSCBuyout': return <MakeBidTSCBuyout explorer={this.props.explorer} web3={this.props.web3} auction={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'withdrawEther': return <WithdrawEtherCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'INTDAO': return <DAO web3={this.props.web3} contracts={this.props.contracts} explorer={this.props.explorer} account={this.props.account} id={content[2]}/>; break;
-                case 'improveBid': return <ImproveBid contracts={this.props.contracts} account={this.props.account} bid={content[0]} id={content[2]}/>; break;
+                case 'improveBid': return <ImproveBid  explorer={this.props.explorer} contracts={this.props.contracts} account={this.props.account} bid={content[0]} id={content[2]}/>; break;
                 default: return content['text'];break;
             }
         }
@@ -171,7 +171,7 @@ export default class MyPanel extends React.Component {
                     //if (event.returnValues.lotAddress == contracts['dao'].addresses())
                     let id = event.returnValues.auctionID;
                     contracts['auction'].methods.auctions(id).call().then((auction) => {
-                        console.log("initialized: "+dateFromTimestamp(auction.initialized)+" " +auction.initialized);
+
                         if (auction.finalized == past) {
                             let title='Liquidate collateral';
                             let balance = 0;
@@ -188,7 +188,7 @@ export default class MyPanel extends React.Component {
                                 iconType: 'auction',
                                 title: title,
                                 id: id,
-                                name: dateFromTimestamp(auction.initialized),
+                                name: dateFromTimestamp(auction.initTime),
                                 balance: balance
                             }
 
