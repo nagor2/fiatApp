@@ -1,0 +1,31 @@
+<script>
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    let address = '';
+    if (token==='DFC')
+        address = '0x1F709Cfa0C409E158C68EdcD32453809c9Eb69EE';
+    if (token==='RLE')
+        address = '0x3Dfa45997ddB7980Eb4D73CBfCf0E024F05b08a3';
+    let supply = '';
+
+
+    //console.log(myParam)
+
+    const apiUrl = "https://api.etherscan.io/v2/api?chainid=1&module=stats&action=tokensupply&contractaddress="+address+"&apikey=YOUR_ETHERSCAN_API_KEY";
+    fetch(apiUrl) .then((response) => {
+        return response.json();
+    }) .then((data) => {
+        console.log("Данные успешно получены:");
+        if (data.message==="OK")
+        document.write(data.result/10**18);
+    }) .catch((error) => {
+        console.error("Ошибка при получении данных:", error);
+    });
+
+
+
+
+
+</script>
