@@ -1,6 +1,7 @@
 import React from "react";
 import {fromBlock} from "../utils/config";
 import {dateFromTimestamp, Loader} from "../utils/utils";
+import {getPastEventsCached} from "../utils/cacheApi";
 
 export default class Pool extends React.Component{
     constructor(props) {
@@ -31,7 +32,12 @@ export default class Pool extends React.Component{
 
         let events=[];
 
-        this.props.contracts['dao'].getPastEvents('NewVoting', {fromBlock: fromBlock,toBlock: 'latest'}).then((res)=>{
+        getPastEventsCached(
+            this.props.contracts['dao'], 
+            'NewVoting', 
+            {fromBlock: fromBlock, toBlock: 'latest'},
+            this.props.web3
+        ).then((res)=>{
             events.push.apply(events,res);
             let id = events[events.length-1].returnValues.id;
             this.setState({votingID:id})

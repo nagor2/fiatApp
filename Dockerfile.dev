@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Копируем файлы зависимостей
+COPY package*.json ./
+
+# Устанавливаем зависимости
+RUN npm install
+
+# Копируем исходники (для hot reload будет переопределено через volume)
+COPY . .
+
+# Expose порт dev server
+EXPOSE 3000
+
+# Запуск dev server
+CMD ["npm", "start"]

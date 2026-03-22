@@ -1,5 +1,5 @@
 import React from "react";
-import {getHolders, getTransfers} from "../utils/utils";
+import {getHolders, getTransfers, toFloat} from "../utils/utils";
 import Button from "./Button";
 
 
@@ -11,20 +11,25 @@ export default class DFC extends React.Component{
     }
     componentDidMount() {
         const {contracts} = this.props;
+        
+        if (!contracts || !contracts['flatCoin'] || !contracts['cdp'] || !contracts['dao'] || !contracts['basket']) {
+            console.warn('DFC: contracts not fully initialized yet');
+            return;
+        }
 
         contracts['flatCoin'].methods.totalSupply().call().then((supply)=>{
-            this.setState({supply: (parseFloat(supply)/10**18).toFixed(2)});
+            this.setState({supply: (toFloat(supply)/10**18).toFixed(2)});
             contracts['flatCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stub)=>{
-                this.setState({stubFund:(parseFloat(stub)/10**18).toFixed(8)})
+                this.setState({stubFund:(toFloat(stub)/10**18).toFixed(8)})
 
                 contracts['dao'].methods.params('stabilizationFundPercent').call().then((stabilizationFundPercent) => {
-                    this.setState({stubFundDemand:(parseFloat(supply) * parseFloat(stabilizationFundPercent) / 100 - parseFloat(stub))});
+                    this.setState({stubFundDemand:(toFloat(supply) * toFloat(stabilizationFundPercent) / 100 - toFloat(stub))});
                 });
             });
 
         });
-        getTransfers(contracts['flatCoin']).then((result)=>{this.setState({transfers: result.length})});
-        getHolders(contracts['flatCoin']).then((result)=>{this.setState({holders: result.length})});
+        getTransfers(contracts['flatCoin'], this.props.web3).then((result)=>{this.setState({transfers: result.length})});
+        getHolders(contracts['flatCoin'], this.props.web3).then((result)=>{this.setState({holders: result.length})});
         /*
         contracts['pool'].methods.getReserves().call().then((reserve)=>{
             this.setState({pricePool: (reserve[0]*this.props.etcPrice/reserve[1]).toFixed(4)});
@@ -34,11 +39,11 @@ export default class DFC extends React.Component{
         this.setState({address: contracts['flatCoin']._address});
 
         this.props.web3.eth.getBalance(contracts['cdp']._address).then((result) => {
-            this.setState({collateral: ((parseFloat(result)/10**18).toFixed(3)*this.props.ethPrice).toFixed(3)});
+            this.setState({collateral: ((toFloat(result)/10**18).toFixed(3)*this.props.ethPrice).toFixed(3)});
         });
 
         contracts['basket'].methods.getCurrentSharePriceChange().call().then((sharePrice)=>{
-            this.setState({indicative: (parseFloat(sharePrice)/10**6).toFixed(4)});
+            this.setState({indicative: (toFloat(sharePrice)/10**6).toFixed(4)});
             contracts['flatCoin'].methods.totalSupply().call().then((supply) => {
                 const percent = parseFloat(100*this.state.collateral/this.state.supply/this.state.indicative).toFixed(2);
                 this.setState({collateralPercent:percent});
@@ -46,7 +51,7 @@ export default class DFC extends React.Component{
         });
 
         contracts['flatCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((allowance)=>{
-            this.setState({allowedToAuction: allowance});
+            this.setState({allowedToAuction: toFloat(allowance)});
         });
 
     }
@@ -131,7 +136,7 @@ export default class DFC extends React.Component{
             <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of DFC supply)</b></div>
             <div>stabilization fund: <b>{this.state.stubFund}</b></div>
             <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>
-            <div>allowed to auction: <b>{parseFloat(this.state.allowedToAuction)/10**18}</b></div>
+            <div>allowed to auction: <b>{toFloat(this.state.allowedToAuction)/10**18}</b></div>
 
             <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
             <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>

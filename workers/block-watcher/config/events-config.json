@@ -1,0 +1,14 @@
+{
+  "contractEvents": {
+    "dao": ["NewVoting", "VotingFailed"],
+    "rule": ["Transfer", "Approval"],
+    "flatCoin": ["Transfer", "Approval"],
+    "cdp": ["PositionOpened", "PositionClosed", "PositionLiquidated", "Transfer"],
+    "oracle": ["priceUpdated", "priceUpdateRequest"],
+    "deposit": ["DepositOpened", "DepositClosed", "Transfer"],
+    "basket": ["Transfer"],
+    "auction": ["newAuction", "newBid", "auctionFinished"],
+    "pool": ["Swap", "Mint", "Burn", "Sync", "Transfer"]
+  },
+  "comment": "Список событий для индексации через getPastEvents"
+}

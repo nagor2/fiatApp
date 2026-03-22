@@ -8,6 +8,7 @@ import RuleToken from "./RuleToken";
 import DFC from "./DFC";
 import Swap from "./Swap";
 import Borrow from "./Borrow";
+import {toFloat} from "../utils/utils";
 import UpdateCDP from "./UpdateCDP";
 import CDP from "./CDP";
 import DebtPosition from "./DebtPosition";
@@ -18,6 +19,8 @@ import WithDrawDeposit from "./WithDrawDeposit";
 import PayInterestCDP from "./PayInterestCDP";
 import CloseCDP from "./CloseCDP";
 import MakeBidTSCBuyout from "./MakeBidTSCBuyout";
+import {getPastEventsCached} from "../utils/cacheApi";
+import {cachedContractCall} from "../utils/cachedContractCall";
 import WithdrawEtherCDP from "./WithdrawEtherCDP";
 import DAO from "./DAO";
 import ImproveBid from "./ImproveBid";
@@ -28,6 +31,7 @@ import Plus from "./Plus";
 import SwapRLE from  "./SwapRLE";
 import config from "../utils/config";
 import AuctionContract from "./AuctionContract";
+import ExchangeRateContract from "./ExchangeRateContract";
 /* global BigInt */
 
 
@@ -35,7 +39,7 @@ export default class MyPanel extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            open: false,
+            open: props.initialOpen || false,
             itemsCount:'',
             products:this.props.products,
             contracts:'',
@@ -71,7 +75,11 @@ export default class MyPanel extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.props !== prevProps) {
+        const contentChanged = this.props.content.title !== prevProps.content.title;
+        const contractsChanged = this.props.contracts !== prevProps.contracts;
+        const accountChanged = this.props.account !== prevProps.account;
+        
+        if (contentChanged || contractsChanged || accountChanged) {
             this.renderSwitch();
             this.getItems(this.props.content.title);
         }
@@ -126,139 +134,160 @@ export default class MyPanel extends React.Component {
                 case 'makeBidTSCBuyout': return <MakeBidTSCBuyout explorer={this.props.explorer} web3={this.props.web3} auction={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'withdrawEther': return <WithdrawEtherCDP web3={this.props.web3} position={content[0]} contracts={this.props.contracts} account={this.props.account} id={content[2]}/>; break;
                 case 'INTDAO': return <DAO web3={this.props.web3} contracts={this.props.contracts} explorer={this.props.explorer} account={this.props.account} id={content[2]}/>; break;
+                case 'ExchangeRateContract': return <ExchangeRateContract web3={this.props.web3} contracts={this.props.contracts} explorer={this.props.explorer} account={this.props.account} />; break;
                 case 'improveBid': return <ImproveBid  explorer={this.props.explorer} contracts={this.props.contracts} account={this.props.account} bid={content[0]} id={content[2]}/>; break;
                 default: return content['text'];break;
             }
         }
     }
 
-    getCommodities(){
+    async getCommodities(){
         const{contracts} = this.props;
         let prod = [];
-        if (contracts['basket']!==undefined)
-            contracts['basket'].methods.itemsCount().call().then((result) => {
+        if (contracts['basket']!==undefined) {
+            try {
+                const result = await cachedContractCall('basket', 'itemsCount', [], contracts['basket']);
                 this.setState({itemsCount: result});
+                
                 for (let i = 1; i <= result; i++) {
-                    contracts['basket'].methods.items(i).call().then((result) => {
-                        contracts['basket'].methods.getPrice(result['symbol']).call().then((price) => {
-                            prod.push({
-                                title: result['symbol'],
-                                name: 'initial price: ' + (parseFloat(result['initialPrice'])/10**6).toFixed(5),
-                                id: i,
-                                balance: (parseFloat(price) / 10 ** 6).toFixed(5),
-                                iconType: 'crude'
-                            });
-                        });
+                    const item = await cachedContractCall('basket', 'items', [i], contracts['basket']);
+                    const price = await cachedContractCall('basket', 'getPrice', [item['symbol']], contracts['basket']);
+                    
+                    prod.push({
+                        title: item['symbol'],
+                        name: 'initial price: ' + (toFloat(item['initialPrice'])/10**6).toFixed(5),
+                        id: i,
+                        balance: (toFloat(price) / 10 ** 6).toFixed(5),
+                        iconType: 'crude'
                     });
                 }
-                this.setState({products: prod})
-            });
-
+                this.setState({products: prod});
+            } catch (error) {
+                console.error('Failed to load commodities:', error);
+            }
+        }
     }
 
-    getAuctions(past){
+    async getAuctions(past){
         const{contracts} = this.props;
         let products=[];
-        if (contracts['auction']!==undefined)
-            contracts['auction'].getPastEvents('newAuction', {
-                fromBlock: fromBlock
-                ,toBlock: 'latest'
-            }).then((events) => {
-                //console.dir (events);
+        if (contracts['auction']!==undefined) {
+            try {
+                const events = await getPastEventsCached(
+                    contracts['auction'],
+                    'newAuction',
+                    {fromBlock: fromBlock, toBlock: 'latest'},
+                    this.props.web3
+                );
+                
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
-
-                    //if (event.returnValues.lotAddress == contracts['dao'].addresses())
                     let id = event.returnValues.auctionID;
-                    contracts['auction'].methods.auctions(id).call().then((auction) => {
+                    const auction = await cachedContractCall('auction', 'auctions', [id], contracts['auction']);
 
-                        if (auction.finalized == past) {
-                            let title='Liquidate collateral';
-                            let balance = 0;
-                            if (auction.lotToken == contracts['rule']._address){
-                                title = 'DFC buyout';
-                                balance = (parseFloat(auction.paymentAmount) / 10 ** 18).toFixed(2);
-                            }
-                            if (auction.lotToken == contracts['flatCoin']._address){
-                                title = 'Rule buyout';
-                                balance =  (parseFloat(auction.lotAmount) / 10 ** 18).toFixed(2);
-                            }
-
-                            let auc = {
-                                iconType: 'auction',
-                                title: title,
-                                id: id,
-                                name: dateFromTimestamp(auction.initTime),
-                                balance: balance
-                            }
-
-                            if (!products.find(a=>a.id==auc.id))
-                            products.push(auc)
+                    if (auction.finalized == past) {
+                        let title='Liquidate collateral';
+                        let balance = 0;
+                        if (auction.lotToken == contracts['rule']._address){
+                            title = 'DFC buyout';
+                            balance = (parseFloat(auction.paymentAmount) / 10 ** 18).toFixed(2);
                         }
-                    });
+                        if (auction.lotToken == contracts['flatCoin']._address){
+                            title = 'Rule buyout';
+                            balance =  (parseFloat(auction.lotAmount) / 10 ** 18).toFixed(2);
+                        }
 
+                        let auc = {
+                            iconType: 'auction',
+                            title: title,
+                            id: id,
+                            name: dateFromTimestamp(auction.initTime),
+                            balance: balance
+                        }
+
+                        if (!products.find(a=>a.id==auc.id))
+                            products.push(auc);
+                    }
                 }
                 this.setState({products: products});
-            });
-
+            } catch (error) {
+                console.error('Failed to load auctions:', error);
+            }
+        }
     }
 
-    getLoans(){
+    async getLoans(){
         const{contracts} = this.props;
         let products=[];
-        if (contracts['cdp']!==undefined)
-                contracts['cdp'].getPastEvents('PositionOpened', {
-                fromBlock: fromBlock
-                ,toBlock: 'latest'
-            }).then((events) => {
+        if (contracts['cdp']!==undefined) {
+            try {
+                const events = await getPastEventsCached(
+                    contracts['cdp'],
+                    'PositionOpened',
+                    {fromBlock: fromBlock, toBlock: 'latest'},
+                    this.props.web3
+                );
+                
                 for (let i = 0; i < events.length; i++) {
                     let event = events[i];
                     if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
                         let id = event.returnValues.posID;
-                        contracts['cdp'].methods.positions(id).call().then((position) => {
-                            if (position.liquidationStatus<2)
-                                products.push({
-                                    iconType: 'loan',
-                                    title: 'debt position',
-                                    id: id,
-                                    name: dateFromTimestamp(position.timeOpened),
-                                    balance: (parseFloat(position.coinsMinted) / 10 ** 18).toFixed(2)
-                                })
-                        });
+                        const position = await cachedContractCall('cdp', 'positions', [id], contracts['cdp']);
+                        
+                        if (position.liquidationStatus < 2) {
+                            products.push({
+                                iconType: 'loan',
+                                title: 'debt position',
+                                id: id,
+                                name: dateFromTimestamp(position.timeOpened),
+                                balance: (parseFloat(position.coinsMinted) / 10 ** 18).toFixed(2)
+                            });
+                        }
                     }
                 }
                 this.setState({products: products});
-            });
+            } catch (error) {
+                console.error('Failed to load loans:', error);
+            }
+        }
     }
 
-    getDeposits(){
+    async getDeposits(){
         const{contracts} = this.props;
         let products=[];
-        if (contracts['deposit']!==undefined)
-            contracts['deposit'].getPastEvents('DepositOpened', {fromBlock: fromBlock,toBlock: 'latest'}).then((events)=>{
-                //console.log(events)
-                for (let i =0; i<events.length; i++) {
+        if (contracts['deposit']!==undefined) {
+            try {
+                const events = await getPastEventsCached(
+                    contracts['deposit'],
+                    'DepositOpened',
+                    {fromBlock: fromBlock, toBlock: 'latest'},
+                    this.props.web3
+                );
+                
+                for (let i = 0; i < events.length; i++) {
                     let event = events[i];
-                    if (event.returnValues.owner.toLowerCase()==this.props.account.toLowerCase()){
+                    if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
                         let id = event.returnValues.id;
-                        contracts['deposit'].methods.deposits(id).call().then((deposit)=> {
-                            if (!deposit.closed){
-                                let dep = {
-                                    iconType: 'deposit',
-                                    title: 'deposit',
-                                    id: id,
-                                    name: dateFromTimestamp(deposit.timeOpened),
-                                    balance: (parseFloat(deposit.coinsDeposited)/10**18).toFixed(2)
-                                }
-                                if (!products.find(a=>a.id==dep.id))
-                                    products.push(dep);
+                        const deposit = await cachedContractCall('deposit', 'deposits', [id], contracts['deposit']);
+                        
+                        if (!deposit.closed) {
+                            let dep = {
+                                iconType: 'deposit',
+                                title: 'deposit',
+                                id: id,
+                                name: dateFromTimestamp(deposit.timeOpened),
+                                balance: (parseFloat(deposit.coinsDeposited) / 10 ** 18).toFixed(2)
                             }
-                        });
+                            if (!products.find(a => a.id == dep.id))
+                                products.push(dep);
+                        }
                     }
                 }
-                this.setState({products:products});
-            });
-
+                this.setState({products: products});
+            } catch (error) {
+                console.error('Failed to load deposits:', error);
+            }
+        }
     }
 
     getItems(title) {
@@ -272,7 +301,7 @@ export default class MyPanel extends React.Component {
     }
 
     render() {
-        let items = this.state.products?this.state.products.sort((a,b)=>(a.id-b.id)).map(product =><Product web3={this.props.web3} emitter={this.props.emitter} contracts={this.props.contracts} section={this.props.content.title} account={this.props.account?this.props.account:''} key={product.id} id={product.id} iconType={product.iconType} title={product.title} balance={product.balance} name = {product.name}/>):'';
+        let items = this.state.products?this.state.products.sort((a,b)=>(a.id-b.id)).map(product =><Product web3={this.props.web3} emitter={this.props.emitter} navigate={this.props.navigate} contracts={this.props.contracts} section={this.props.content.title} account={this.props.account?this.props.account:''} key={product.id} id={product.id} iconType={product.iconType} title={product.title} balance={product.balance} name = {product.name} hash={product.hash}/>):'';
         return <div className="panel xs_12" style={{backgroundColor:this.props.bgColor}}>
             {this.props.content.expander?
                 <div className="expander" onClick={this.toggleChildMenu}>
@@ -287,11 +316,11 @@ export default class MyPanel extends React.Component {
                             </g>
                         </svg>
                     </div>
-                    {this.props.content.plus?<Plus emitter={this.props.emitter} action={this.props.content.add}/>:''}
+                    {this.props.content.plus?<Plus emitter={this.props.emitter} navigate={this.props.navigate} action={this.props.content.add}/>:''}
                 </div>:''}
             <div>
                 <div className={"collapsed" + (this.state.open ? ' in' : '')}>
-                    {this.props.content.expander?items:''}
+                    {this.props.content.expander?(this.props.children || items):''}
                 </div>
 
                 {this.props.displayContent?this.renderContent(this.state.content):''}

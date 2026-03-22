@@ -1,5 +1,5 @@
 import React from "react";
-import {dateFromTimestamp, Loader} from "../utils/utils";
+import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import Button from "./Button";
 
 export default class Deposit extends React.Component{
@@ -24,11 +24,11 @@ export default class Deposit extends React.Component{
         contracts['deposit'].methods.deposits(this.props.id).call().then((deposit)=>{
             this.setState({opened:dateFromTimestamp(deposit.timeOpened)});
             this.setState({updated:dateFromTimestamp(deposit.lastTimeUpdated)});
-            this.setState({coinsDeposited:(parseFloat(deposit.coinsDeposited)/10**18).toFixed(2)});
+            this.setState({coinsDeposited:(toFloat(deposit.coinsDeposited)/10**18).toFixed(2)});
         })
 
         contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{
-            this.setState({accumulatedInterest:parseFloat(interest)/10**18});
+            this.setState({accumulatedInterest:toFloat(interest)/10**18});
         })
 
         contracts['dao'].methods.params('depositRate').call().then((interest)=>{
@@ -41,7 +41,7 @@ export default class Deposit extends React.Component{
         contracts['deposit'].methods.deposits(this.props.id).call().then((deposit)=>{
             this.setState({opened:dateFromTimestamp(deposit.timeOpened)});
             this.setState({updated:dateFromTimestamp(deposit.lastTimeUpdated)});
-            this.setState({coinsDeposited:(parseFloat(deposit.coinsDeposited)/10**18).toFixed(2)});
+            this.setState({coinsDeposited:(toFloat(deposit.coinsDeposited)/10**18).toFixed(2)});
         })
 
         contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{

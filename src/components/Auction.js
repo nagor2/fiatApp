@@ -1,7 +1,8 @@
 import React from "react";
 import Bids from "./Bids";
 import {fromBlock} from "../utils/config"
-import {Loader} from "../utils/utils"
+import {Loader, toFloat} from "../utils/utils"
+import {getPastEventsCached} from "../utils/cacheApi";
 /* global BigInt */
 
 export default class Auction extends React.Component{
@@ -30,7 +31,12 @@ export default class Auction extends React.Component{
     componentDidMount() {
         const { contracts } = this.props;
         let bids = [];
-        contracts['auction'].getPastEvents('newBid', {filter: {auctionID:this.props.id}, fromBlock: fromBlock}).then((res)=> {
+        getPastEventsCached(
+            contracts['auction'],
+            'newBid',
+            {filter: {auctionID:this.props.id}, fromBlock: fromBlock},
+            this.props.web3
+        ).then((res)=> {
             res = res.sort((a,b)=>(b.blockNumber - a.blockNumber));
             for (let i=0; i<res.length; i++) {
                 if (!bids.find(e=>e.returnValues.bidID==res[i].returnValues.bidID)){
@@ -91,8 +97,8 @@ export default class Auction extends React.Component{
                     contracts['dao'].methods.params('minAuctionPriceMove').call().then((minAuctionPriceMove)=> {
 
                         //console.log("minAuctionPriceMove: "+minAuctionPriceMove);
-                        //console.log("bestBid.bidAmount: "+parseFloat(bestBid.bidAmount)/10**18);
-                        let nextBid = parseFloat(bestBid.bidAmount)/10**18 * (100 + this.state.move*parseFloat(minAuctionPriceMove))/100;
+                        //console.log("bestBid.bidAmount: "+toFloat(bestBid.bidAmount)/10**18);
+                        let nextBid = toFloat(bestBid.bidAmount)/10**18 * (100 + this.state.move*toFloat(minAuctionPriceMove))/100;
                         this.setState({nextBid:nextBid})
                         //console.log('nextBid:'+this.state.nextBid);
                     });

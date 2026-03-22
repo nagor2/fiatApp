@@ -10,9 +10,14 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-redux": "^9.2.0",
+    "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
+    "recharts": "^2.15.4",
     "web-vitals": "^4.2.4",
     "web3": "^4.16.0"
+  },
+  "devDependencies": {
+    "http-proxy-middleware": "^3.0.3"
   },
   "scripts": {
     "start": "react-scripts start",

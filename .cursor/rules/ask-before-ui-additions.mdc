@@ -1,0 +1,67 @@
+---
+description: Always ask before adding new UI elements or navigation components
+alwaysApply: true
+---
+
+# Ask Before Adding UI Elements
+
+When working on frontend tasks, **ALWAYS ASK the user** before adding new visual UI elements, especially:
+
+- Navigation menus
+- Sidebars
+- Top bars / headers
+- Footer sections
+- Modal dialogs
+- Floating action buttons
+- Toast notifications
+- Any visible UI components not explicitly requested
+
+## Why This Rule Exists
+
+Users may have specific design preferences or UX patterns in mind. Adding unrequested UI elements can:
+- Clutter the interface
+- Conflict with existing design
+- Add unnecessary complexity
+- Waste development time if changes are rejected
+
+## When to Ask
+
+Before implementing:
+1. **Navigation elements** - menus, breadcrumbs, tabs
+2. **Layout changes** - adding containers, wrappers, sections
+3. **Interactive widgets** - buttons, toggles, dropdowns not in requirements
+4. **Visual enhancements** - animations, transitions, decorative elements
+
+## Correct Approach
+
+```markdown
+❌ BAD: Implement navigation menu without asking
+✅ GOOD: "Should I add a navigation menu for routing between pages, or would you prefer a different approach?"
+
+❌ BAD: Add sidebar with links
+✅ GOOD: "I can add navigation. Would you like: 1) Top horizontal menu, 2) Sidebar, 3) Just URL routing without visible navigation?"
+
+❌ BAD: Create elaborate UI components
+✅ GOOD: "I've set up routing. Would you like me to add a navigation menu, or keep it minimal?"
+```
+
+## Exceptions
+
+You may add UI elements **WITHOUT** asking if:
+- User explicitly requested them in their message
+- They are essential for the core functionality (e.g., form inputs, buttons for actions)
+- They are minimal and required for the feature to work
+
+## Example
+
+User: "Add React Router to the app"
+
+```markdown
+✅ CORRECT Response:
+"I'll set up React Router with routes for each page. 
+Should I also add a navigation menu to switch between pages, 
+or would you prefer to navigate through the existing panel structure?"
+
+❌ INCORRECT Response:
+*Implements router AND navigation menu without asking*
+```

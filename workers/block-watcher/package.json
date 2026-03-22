@@ -1,0 +1,20 @@
+{
+  "name": "dotflat-block-watcher",
+  "version": "1.0.0",
+  "description": "Background worker for monitoring Ethereum blockchain and cache invalidation",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "web3": "^4.16.0",
+    "redis": "^4.7.0",
+    "ws": "^8.18.0",
+    "winston": "^3.15.0",
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

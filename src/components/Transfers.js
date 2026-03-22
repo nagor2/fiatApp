@@ -1,7 +1,8 @@
 import React from "react";
 import {fromBlock} from "../utils/config";
 import Product from "./Product";
-import {dateFromTimestamp, Loader} from "../utils/utils";
+import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
+import {getPastEventsCached} from "../utils/cacheApi";
 
 export default class Transfers extends React.Component{
 
@@ -10,12 +11,18 @@ export default class Transfers extends React.Component{
         this.state = {txs:[], wethBalance:0}
     }
 
-    componentDidMount() {
+    async componentDidMount() {
 
         const {contracts} = this.props;
         let txs = [];
         this.setState({txs:txs})
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { from: this.props.account }, fromBlock: fromBlock}).then((res)=> {
+        
+        getPastEventsCached(
+            contracts[this.props.contractName], 
+            'Transfer', 
+            {filter: { from: this.props.account }, fromBlock: fromBlock},
+            this.props.web3
+        ).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -25,7 +32,13 @@ export default class Transfers extends React.Component{
             txs.push.apply(txs,res);
             this.setState({txs:txs})
         })
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { to: this.props.account }, fromBlock: fromBlock}).then((res)=> {
+        
+        getPastEventsCached(
+            contracts[this.props.contractName], 
+            'Transfer', 
+            {filter: { to: this.props.account }, fromBlock: fromBlock},
+            this.props.web3
+        ).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -42,7 +55,13 @@ export default class Transfers extends React.Component{
         const {contracts} = this.props;
         let txs = [];
         this.setState({txs:txs})
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { from: this.props.account }, fromBlock: fromBlock}).then((res)=> {
+        
+        getPastEventsCached(
+            contracts[this.props.contractName], 
+            'Transfer', 
+            {filter: { from: this.props.account }, fromBlock: fromBlock},
+            this.props.web3
+        ).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -52,7 +71,13 @@ export default class Transfers extends React.Component{
             txs.push.apply(txs,res);
             this.setState({txs:txs})
         })
-        contracts[this.props.contractName].getPastEvents('Transfer', {filter: { to: this.props.account }, fromBlock: fromBlock}).then((res)=> {
+        
+        getPastEventsCached(
+            contracts[this.props.contractName], 
+            'Transfer', 
+            {filter: { to: this.props.account }, fromBlock: fromBlock},
+            this.props.web3
+        ).then((res)=> {
             for (let i=0; i<res.length; i++) {
                 this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
                     res[i].block = b;
@@ -69,7 +94,7 @@ export default class Transfers extends React.Component{
             <Product emitter={this.props.emitter} contracts={this.props.contracts} account={this.props.account?this.props.account:''} section={'Transfers'} key={product.id} id={product.id}
                      iconType={(product.returnValues.to.toLowerCase() == this.props.account.toLowerCase())? 'in' : 'out'}
                      title={(product.returnValues.to.toLowerCase() == this.props.account.toLowerCase() ? product.returnValues.from : product.returnValues.to)}
-                     balance={(parseFloat(product.returnValues.value)/10**18).toFixed(2)}
+                     balance={(toFloat(product.returnValues.value)/10**18).toFixed(2)}
                      name={product.block==undefined?'':dateFromTimestamp(product.block.timestamp)}
                      hash={product.transactionHash}
             />):'';

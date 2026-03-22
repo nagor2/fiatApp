@@ -1,0 +1,149 @@
+services:
+  # Development LOCAL режим с локальным RPC (Ganache/Hardhat на порту 8545)
+  app-dev-local:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dotflat-dev-local
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3007:3000"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - REACT_APP_RPC_URL=http://host.docker.internal:8545
+      - WDS_SOCKET_PORT=3007
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    stdin_open: true
+    tty: true
+    profiles:
+      - dev-local
+
+  # Development режим с hot reload + RPC через proxy (как в production)
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dotflat-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3008:3000"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - REACT_APP_RPC_URL=/api/rpc
+      - WDS_SOCKET_PORT=3008
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
+    stdin_open: true
+    tty: true
+    profiles:
+      - dev
+
+  # Production-like режим (multi-stage build + nginx)
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotflat-prod
+    depends_on:
+      app-backend:
+        condition: service_healthy
+    ports:
+      - "8008:80"
+    restart: unless-stopped
+    profiles:
+      - prod
+
+  # Backend API с Redis cache
+  app-backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    container_name: dotflat-backend
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - RPC_URL=${RPC_URL:-https://eth.rpc.rivet.cloud/6f4e0413c2dd468ebd08f54a5c9c5b82}
+      - REDIS_URL=redis://redis:6379
+      - CACHE_TTL=${CACHE_TTL:-60}
+      - CACHE_ENABLED=true
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - CORS_ORIGIN=http://localhost:8008,http://localhost:3000
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - prod
+      - backend
+
+  # Redis для кэша
+  redis:
+    image: redis:7-alpine
+    container_name: dotflat-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    profiles:
+      - prod
+      - workers
+
+  # Background workers (block-watcher, etc)
+  app-workers:
+    build:
+      context: workers/block-watcher
+      dockerfile: Dockerfile
+    container_name: dotflat-workers
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - RPC_WS_URL=${RPC_WS_URL:-wss://ethereum.publicnode.com}
+      - RPC_HTTP_URL=${RPC_HTTP_URL:-https://ethereum.publicnode.com}
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY:-YOUR_ETHERSCAN_API_KEY}
+      - ETHERSCAN_API_URL=${ETHERSCAN_API_URL:-https://api.etherscan.io/v2/api}
+      - START_BLOCK=${START_BLOCK:-21664714}
+      - REDIS_URL=redis://redis:6379
+      - HEALTH_BROADCAST_PORT=3002
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - CLEAR_CACHE=${CLEAR_CACHE:-false}
+    ports:
+      - "3002:3002"  # HTTP health endpoint
+      - "3003:3003"  # WebSocket health broadcast
+    restart: unless-stopped
+    profiles:
+      - prod
+      - workers
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  default:
+    name: dotflat-network

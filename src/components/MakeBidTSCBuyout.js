@@ -1,5 +1,5 @@
 import React from "react";
-import {Loader} from "../utils/utils";
+import {Loader, toFloat} from "../utils/utils";
 
 export default class MakeBidTSCBuyout extends React.Component{
 
@@ -23,8 +23,8 @@ export default class MakeBidTSCBuyout extends React.Component{
 
         if (this.props.contracts !== 'undefined'){
             this.props.contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-                const minted = parseFloat(this.props.web3.utils.fromWei(this.props.position.coinsMinted));
-                const feeNeeded = 1.2*parseFloat(this.props.web3.utils.fromWei(fee));
+                const minted = toFloat(this.props.web3.utils.fromWei(this.props.position.coinsMinted));
+                const feeNeeded = 1.2*toFloat(this.props.web3.utils.fromWei(fee));
                 const needed = minted+feeNeeded;
                 console.log(typeof (feeNeeded))
                 console.log(typeof (minted))

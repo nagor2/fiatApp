@@ -1,5 +1,5 @@
 import React from "react";
-import {dateFromTimestamp} from "../utils/utils";
+import {dateFromTimestamp, toFloat} from "../utils/utils";
 
 export default class Bids extends React.Component{
     constructor(props) {
@@ -68,7 +68,7 @@ class Bid extends React.Component{
                         {this.state.canceled?'canceled':'active'}
                     </div>
                     <div>
-                        {(parseFloat(this.props.bid.returnValues.bidAmount)/10**18).toFixed(2)}
+                        {(toFloat(this.props.bid.returnValues.bidAmount)/10**18).toFixed(2)}
                     </div>
                     <div>
                         {this.state.yourBid&&!this.state.canceled?<>

@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "./Button";
+import {toFloat} from "../utils/utils";
 import config from "../utils/config";
 
 export default class DepositContract extends React.Component{
@@ -26,16 +27,16 @@ export default class DepositContract extends React.Component{
 
         if (this.props.account){
             contracts['flatCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
-                this.setState({allowanceToDeposit:(parseFloat(result)/10**18).toFixed(5)});
+                this.setState({allowanceToDeposit:(toFloat(result)/10**18).toFixed(5)});
             });
             contracts['flatCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
-                this.setState({approvedFromCDP:(parseFloat(result)/10**18).toFixed(5)});
+                this.setState({approvedFromCDP:(toFloat(result)/10**18).toFixed(5)});
             });
         }
 
 
         contracts['flatCoin'].methods.balanceOf(contracts['deposit']._address).call().then((result) => {
-            this.setState({overallVolume:(parseFloat(result)/10**18).toFixed(2)});
+            this.setState({overallVolume:(toFloat(result)/10**18).toFixed(2)});
         });
 
         contracts['dao'].methods.params('depositRate').call().then((interest)=>{

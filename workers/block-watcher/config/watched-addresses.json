@@ -1,0 +1,37 @@
+{
+  "dao": {
+    "address": "0x55Ead3b40016b1d5417F5A20F2d1E53e2d1c9122",
+    "name": "DFC DAO",
+    "abiFile": "dao-abi.json"
+  },
+  "staticContracts": [
+    {
+      "address": "0x718626E8c94DFdB24e7BD6d5F6da22035BCF47F7",
+      "name": "DFC/ETH Pool",
+      "type": "pool"
+    }
+  ],
+  "dynamicContracts": [
+    "rule",
+    "flatCoin",
+    "cdp",
+    "oracle",
+    "deposit",
+    "basket",
+    "auction"
+  ],
+  "cacheDependencies": {
+    "oracle": ["basket", "cdp"],
+    "basket": ["cdp"],
+    "rule": ["dao"],
+    "flatCoin": ["dao"]
+  },
+  "wallets": [],
+  "settings": {
+    "blockConfirmations": 1,
+    "reconnectDelay": 5000,
+    "healthBroadcastInterval": 5000,
+    "etherscanBatchSize": 10000,
+    "cacheTTL": 3600
+  }
+}

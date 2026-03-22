@@ -1,5 +1,5 @@
 import React from "react";
-import {Loader} from "../utils/utils";
+import {Loader, toFloat} from "../utils/utils";
 
 export default class PayInterestCDP extends React.Component{
     constructor(props) {
@@ -12,7 +12,7 @@ export default class PayInterestCDP extends React.Component{
 
     allow(){
         const {contracts} = this.props;
-        contracts['flatCoin'].methods.approve(contracts['cdp']._address,(parseFloat(this.state.needed)*10**18)
+        contracts['flatCoin'].methods.approve(contracts['cdp']._address,(toFloat(this.state.needed)*10**18)
             .toString()).send({from:this.props.account})
             .on('transactionHash', (hash) => {
                 this.setState({'loader':true})
@@ -46,16 +46,16 @@ export default class PayInterestCDP extends React.Component{
     componentDidMount() {
         const {contracts} = this.props;
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({needed:parseFloat(fee)/10**18*1.001});
+            this.setState({needed:toFloat(fee)/10**18*1.001});
             //TODO: set 1.001
         })
 
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:parseFloat(fee)/10**18});
+            this.setState({fee:toFloat(fee)/10**18});
         })
 
         contracts['flatCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
-            this.setState({allowance:parseFloat(allowed)/10**18});
+            this.setState({allowance:toFloat(allowed)/10**18});
         })
 
 
@@ -64,15 +64,15 @@ export default class PayInterestCDP extends React.Component{
     componentDidUpdate() {
         const {contracts} = this.props;
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({needed:parseFloat(fee)/10**18*1.001});
+            this.setState({needed:toFloat(fee)/10**18*1.001});
         })
 
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:parseFloat(fee)/10**18});
+            this.setState({fee:toFloat(fee)/10**18});
         })
 
         contracts['flatCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
-            this.setState({allowance:parseFloat(allowed)/10**18});
+            this.setState({allowance:toFloat(allowed)/10**18});
         })
 
 
@@ -81,7 +81,7 @@ export default class PayInterestCDP extends React.Component{
     render (){
         return <><div><b>Pay interest for loan #{this.props.id}</b></div>
             <div align='left'>
-                <div>DFC minted:         <b>{parseFloat(this.props.position.coinsMinted)/10**18} DFC</b></div>
+                <div>DFC minted:         <b>{toFloat(this.props.position.coinsMinted)/10**18} DFC</b></div>
                 <div>your allowance to CPD:         <b>{this.state.allowance} DFC</b></div>
                 <div>your fee to pay:         <b>{this.state.fee} DFC</b></div>
                 <div>you have to allow:         <b>~{this.state.needed} DFC</b></div>

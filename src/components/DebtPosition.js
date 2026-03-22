@@ -1,5 +1,5 @@
 import React from "react";
-import {dateFromTimestamp} from "../utils/utils";
+import {dateFromTimestamp, toFloat} from "../utils/utils";
 import Button from "./Button";
 import CDP from "./CDP";
 
@@ -40,7 +40,7 @@ export default class DebtPosition extends React.Component{
             if (position.lastTimeUpdated!=undefined)
             this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
             if (position.coinsMinted!=undefined)
-                this.setState({coinsMinted:parseFloat(position.coinsMinted)/10**18});
+                this.setState({coinsMinted:toFloat(position.coinsMinted)/10**18});
 
             if (position.ethAmountLocked!=undefined)
                 this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked,'ether')});
@@ -49,11 +49,11 @@ export default class DebtPosition extends React.Component{
 
 
             contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
-                this.setState({maxStableCoinsToMint:parseFloat(maxCoins)/10**18});
+                this.setState({maxStableCoinsToMint:toFloat(maxCoins)/10**18});
             })
         })
         contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:parseFloat(fee)/10**18});
+            this.setState({fee:toFloat(fee)/10**18});
         })
 
         contracts['dao'].methods.params('interestRate').call().then((interest)=>{
@@ -85,20 +85,20 @@ export default class DebtPosition extends React.Component{
                 if (position.lastTimeUpdated!=undefined)
                 this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
                 if (position.coinsMinted!=undefined)
-                    this.setState({coinsMinted:parseFloat(position.coinsMinted)/10**18});
+                    this.setState({coinsMinted:toFloat(position.coinsMinted)/10**18});
 
                 if (position.ethAmountLocked!=undefined)
-                    this.setState({ethLocked:parseFloat(position.ethAmountLocked)/10**18});
+                    this.setState({ethLocked:toFloat(position.ethAmountLocked)/10**18});
                 if (position.interestAmountRecorded!=undefined)
-                    this.setState({feeGeneratedRecorded:parseFloat(position.interestAmountRecorded)/10**18});
+                    this.setState({feeGeneratedRecorded:toFloat(position.interestAmountRecorded)/10**18});
 
 
                 contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
-                    this.setState({maxStableCoinsToMint:parseFloat(maxCoins)/10**18});
+                    this.setState({maxStableCoinsToMint:toFloat(maxCoins)/10**18});
                 })
             })
             contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-                this.setState({fee:parseFloat(fee)/10**18});
+                this.setState({fee:toFloat(fee)/10**18});
             })
 
             contracts['dao'].methods.params('interestRate').call().then((interest)=>{

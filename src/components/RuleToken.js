@@ -1,5 +1,5 @@
 import React from "react";
-import {getHolders, getTransfers} from "../utils/utils";
+import {getHolders, getTransfers, toFloat} from "../utils/utils";
 
 export default class RuleToken extends React.Component{
     constructor(props) {
@@ -8,15 +8,31 @@ export default class RuleToken extends React.Component{
     }
 
     componentWillReceiveProps () {
-        this.props.contract.methods.totalSupply().call().then((supply)=>{this.setState({supply: (supply/10**18).toFixed(2)});});
-        getTransfers(this.props.contract).then((result)=>{this.setState({transfers: result.length})});
-        getHolders(this.props.contract).then((result)=>{this.setState({holders: result.length})});
-        this.setState({address: this.props.contract._address});
+        this.loadContractData();
     }
+    
     componentDidMount() {
-        this.props.contract.methods.totalSupply().call().then((supply)=>{this.setState({supply: (parseFloat(supply)/10**18).toFixed(2)});});
-        getTransfers(this.props.contract).then((result)=>{this.setState({transfers: result.length})});
-        getHolders(this.props.contract).then((result)=>{this.setState({holders: result.length})});
+        this.loadContractData();
+    }
+    
+    loadContractData() {
+        if (!this.props.contract || !this.props.contract.methods) {
+            console.warn('RuleToken: contract is not initialized yet');
+            return;
+        }
+        
+        this.props.contract.methods.totalSupply().call().then((supply)=>{
+            this.setState({supply: (toFloat(supply)/10**18).toFixed(2)});
+        }).catch(err => console.error('Failed to get totalSupply:', err));
+        
+        getTransfers(this.props.contract, this.props.web3).then((result)=>{
+            this.setState({transfers: result.length});
+        }).catch(err => console.error('Failed to get transfers:', err));
+        
+        getHolders(this.props.contract, this.props.web3).then((result)=>{
+            this.setState({holders: result.length});
+        }).catch(err => console.error('Failed to get holders:', err));
+        
         this.setState({address: this.props.contract._address});
     }
 

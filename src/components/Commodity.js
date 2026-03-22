@@ -1,5 +1,5 @@
 import React from "react";
-import {dateFromTimestamp} from '../utils/utils.js'
+import {dateFromTimestamp, toFloat} from '../utils/utils.js'
 
 export default class Commodity extends React.Component{
     constructor(props) {
@@ -18,28 +18,33 @@ export default class Commodity extends React.Component{
     }
 
     componentDidMount() {
-        const {contracts} = this.props;
-        contracts['basket'].methods.items(this.props.id).call().then((item)=>{
-            this.setState({initialPrice: (parseFloat(item['initialPrice'])/10**6).toFixed(5)});
-            this.setState({share: item['share']});
-            contracts['basket'].methods.getPrice(item['symbol']).call().then((price)=>{
-                this.setState({price: (parseFloat(price)/10**6).toFixed(5)});});
-            contracts['oracle'].methods.timeStamp(item['symbol']).call().then((timeStamp)=>{
-                this.setState({lastUpdated: dateFromTimestamp(timeStamp)});
-            });
-        });
+        this.loadCommodityData();
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        if (prevProps.id !== this.props.id) {
+            this.loadCommodityData();
+        }
+    }
+    
+    loadCommodityData() {
         const {contracts} = this.props;
+        
+        if (!contracts || !contracts['basket'] || !contracts['oracle'] || !this.props.id) {
+            console.warn('Commodity: contracts not initialized or id is missing');
+            return;
+        }
+        
         contracts['basket'].methods.items(this.props.id).call().then((item)=>{
-            this.setState({initialPrice: (parseFloat(item['initialPrice'])/10**6).toFixed(5)});
+            this.setState({initialPrice: (toFloat(item['initialPrice'])/10**6).toFixed(5)});
             this.setState({share: item['share']});
             contracts['basket'].methods.getPrice(item['symbol']).call().then((price)=>{
-                this.setState({price: (parseFloat(price)/10**6).toFixed(5)});});
+                this.setState({price: (toFloat(price)/10**6).toFixed(5)});
+            }).catch(err => console.error('Failed to get price:', err));
+            
             contracts['oracle'].methods.timeStamp(item['symbol']).call().then((timeStamp)=>{
                 this.setState({lastUpdated: dateFromTimestamp(timeStamp)});
-            });
-        });
+            }).catch(err => console.error('Failed to get timestamp:', err));
+        }).catch(err => console.error('Failed to get commodity item:', err));
     }
 }

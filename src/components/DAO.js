@@ -1,6 +1,7 @@
 import React from "react";
 import {fromBlock} from "../utils/config";
-import {dateFromTimestamp, Loader} from "../utils/utils";
+import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
+import {getPastEventsCached} from "../utils/cacheApi";
 
 export default class DAO extends React.Component{
     constructor(props) {
@@ -33,10 +34,15 @@ export default class DAO extends React.Component{
 
         let events=[];
 
-        this.props.contracts['dao'].getPastEvents('NewVoting', {fromBlock: fromBlock,toBlock: 'latest'}).then((res)=>{
+        getPastEventsCached(
+            this.props.contracts['dao'], 
+            'NewVoting', 
+            {fromBlock: fromBlock, toBlock: 'latest'},
+            this.props.web3
+        ).then((res)=>{
             if (events.length>0) {
                 events.push.apply(events, res);
-                let id = parseFloat(events[events.length - 1].returnValues.id);
+                let id = toFloat(events[events.length - 1].returnValues.id);
                 this.setState({votingID: id})
                 this.props.contracts['dao'].methods.votings(id).call().then((res) => {
                     this.setState({currentVoitng: res});
@@ -161,12 +167,12 @@ export default class DAO extends React.Component{
         return  <div align='left'>
             <div align='center'><b>DAO</b></div>
             {this.state.amount>0?<a className={"small-button pointer green right"} onClick={()=>this.allowRLE()}>allow Rule tokens</a>:''}
-            <div>ruleBalanceOf DAO: <b>{(parseFloat(this.state.ruleBalanceOfDAO)/10**18).toFixed(2)}</b></div>
-            <div>Total pooled tokens: <b>{(parseFloat(this.state.totalPooled)/10**18).toFixed(2)}</b></div>
+            <div>ruleBalanceOf DAO: <b>{(toFloat(this.state.ruleBalanceOfDAO)/10**18).toFixed(2)}</b></div>
+            <div>Total pooled tokens: <b>{(toFloat(this.state.totalPooled)/10**18).toFixed(2)}</b></div>
 
             {this.state.allowed>0?<a className={"small-button pointer green right"} onClick={()=>this.poolRLE()}>pool tokens</a>:''}
-            {this.props.account!=''?<div>Your allowed tokens: <b>{(parseFloat(this.state.allowed)/10**18).toFixed(2)}</b></div>:''}
-            {this.props.account!=''?<div>Your pooled tokens: <b>{(parseFloat(this.state.userPooled)/10**18).toFixed(2)}</b></div>:''}
+            {this.props.account!=''?<div>Your allowed tokens: <b>{(toFloat(this.state.allowed)/10**18).toFixed(2)}</b></div>:''}
+            {this.props.account!=''?<div>Your pooled tokens: <b>{(toFloat(this.state.userPooled)/10**18).toFixed(2)}</b></div>:''}
 
             {this.state.loader?<Loader/>:''}
 

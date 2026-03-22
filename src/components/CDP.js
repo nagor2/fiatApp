@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "./Button";
+import {toFloat} from "../utils/utils";
 
 export default class CDP extends React.Component{
     constructor(props) {
@@ -25,55 +26,61 @@ export default class CDP extends React.Component{
 
     componentDidMount() {
         const { contracts } = this.props;
+        
+        if (!contracts || !contracts['flatCoin'] || !contracts['cdp'] || !contracts['dao'] || !contracts['rule'] || !contracts['auction']) {
+            console.warn('CDP: contracts not fully initialized yet');
+            return;
+        }
+        
         if (this.props.account) this.setState({account:this.props.account});
 
         this.props.contracts['flatCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stubFund)=>{
-            this.setState({stubFund: (parseFloat(stubFund)/10**18).toFixed(8)});
+            this.setState({stubFund: (toFloat(stubFund)/10**18).toFixed(8)});
             contracts['flatCoin'].methods.totalSupply().call().then((supply)=>{
 
                 contracts['dao'].methods.params('stabilizationFundPercent').call().then((percent)=>{
-                    const coinsExceed =  parseFloat(stubFund) - parseFloat(supply)*parseFloat(percent)/100;
+                    const coinsExceed =  toFloat(stubFund) - toFloat(supply)*toFloat(percent)/100;
 
                     this.setState({exceed: (coinsExceed/10**18).toFixed(2)});
                 });
 
-                this.setState({stubFund: (parseFloat(stubFund)/10**18).toFixed(2)});
+                this.setState({stubFund: (toFloat(stubFund)/10**18).toFixed(2)});
             });
         });
 
         this.props.contracts['rule'].methods.balanceOf(contracts['cdp']._address).call().then((ruleBalance)=>{
-            this.setState({RuleBalanceOfCDP: (parseFloat(ruleBalance)/10**18).toFixed(2)});
+            this.setState({RuleBalanceOfCDP: (toFloat(ruleBalance)/10**18).toFixed(2)});
         });
 
         contracts['flatCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((result) => {
-            this.setState({toAuction: (parseFloat(result)/10**18).toFixed(2)});
+            this.setState({toAuction: (toFloat(result)/10**18).toFixed(2)});
         });
 
         if (this.props.account!=='')
             contracts['flatCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
-                this.setState({userAllowence: (parseFloat(result)/10**18).toFixed(10)});
+                this.setState({userAllowence: (toFloat(result)/10**18).toFixed(10)});
             });
 
 
         this.props.web3.eth.getBalance(contracts['cdp']._address).then((result) => {
-            this.setState({wethBalance: (parseFloat(result)/10**18).toFixed(2)});
-            this.setState({collateral:((parseFloat(result)/10**18).toFixed(3)*this.props.ethPrice).toFixed(3)})
+            this.setState({wethBalance: (toFloat(result)/10**18).toFixed(2)});
+            this.setState({collateral:((toFloat(result)/10**18).toFixed(3)*this.props.ethPrice).toFixed(3)})
         });
 
         contracts['cdp'].methods.numPositions().call().then((result)=>{
-            this.setState({positionsCount: parseFloat(result)});
+            this.setState({positionsCount: toFloat(result)});
         });
 
         contracts['dao'].methods.params('collateralDiscount').call().then((result)=>{
-            this.setState({dicount: parseFloat(result)+'%'});
+            this.setState({dicount: toFloat(result)+'%'});
         });
 
         contracts['dao'].methods.params('interestRate').call().then((result)=>{
-            this.setState({interestRate: parseFloat(result)+'%'});
+            this.setState({interestRate: toFloat(result)+'%'});
         });
 
         contracts['flatCoin'].methods.totalSupply().call().then((result)=>{
-            this.setState({tscSupply: (parseFloat(result)/10**18).toFixed(4)});
+            this.setState({tscSupply: (toFloat(result)/10**18).toFixed(4)});
         });
 
         this.setState({address: contracts['cdp']._address});
