@@ -4,6 +4,43 @@ import config from "../utils/config";
 
 const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
+const INVESTING_COM_URLS = {
+    'Gold': 'https://www.investing.com/commodities/gold',
+    'XAU/USD': 'https://www.investing.com/currencies/xau-usd',
+    'Silver': 'https://www.investing.com/commodities/silver',
+    'XAG/USD': 'https://www.investing.com/currencies/xag-usd',
+    'Copper': 'https://www.investing.com/commodities/copper',
+    'Copper London': 'https://www.investing.com/commodities/copper',
+    'Platinum': 'https://www.investing.com/commodities/platinum',
+    'Palladium': 'https://www.investing.com/commodities/palladium',
+    'Crude Oil WTI': 'https://www.investing.com/commodities/crude-oil',
+    'Brent Oil': 'https://www.investing.com/commodities/brent-oil',
+    'Natural Gas': 'https://www.investing.com/commodities/natural-gas',
+    'Heating Oil': 'https://www.investing.com/commodities/heating-oil',
+    'Gasoline RBOB': 'https://www.investing.com/commodities/gasoline-rbob',
+    'London Gas Oil': 'https://www.investing.com/commodities/london-gas-oil',
+    'Aluminium': 'https://www.investing.com/commodities/aluminum',
+    'Zinc': 'https://www.investing.com/commodities/zinc-futures',
+    'Nickel': 'https://www.investing.com/commodities/nickel',
+    'US Wheat': 'https://www.investing.com/commodities/us-wheat',
+    'Rough Rice': 'https://www.investing.com/commodities/rough-rice',
+    'US Corn': 'https://www.investing.com/commodities/us-corn',
+    'US Soybeans': 'https://www.investing.com/commodities/us-soybeans',
+    'US Soybean Oil': 'https://www.investing.com/commodities/us-soybean-oil',
+    'US Soybean Meal': 'https://www.investing.com/commodities/us-soybean-meal',
+    'US Cotton': 'https://www.investing.com/commodities/us-cotton-no.2',
+    'US Cocoa': 'https://www.investing.com/commodities/us-cocoa',
+    'Orange Juice': 'https://www.investing.com/commodities/orange-juice',
+    'Live Cattle': 'https://www.investing.com/commodities/live-cattle',
+    'Lumber': 'https://www.investing.com/commodities/lumber',
+    'US Coffee C': 'https://www.investing.com/commodities/us-coffee-c',
+    'London Coffee': 'https://www.investing.com/commodities/london-coffee',
+    'US Sugar': 'https://www.investing.com/commodities/us-sugar-no11',
+    'Lean Hogs': 'https://www.investing.com/commodities/lean-hogs',
+    'Feeder Cattle': 'https://www.investing.com/commodities/feed-cattle',
+    'Oats': 'https://www.investing.com/commodities/oats'
+};
+
 export default class ExchangeRateContract extends React.Component {
     constructor(props) {
         super(props);
@@ -18,10 +55,10 @@ export default class ExchangeRateContract extends React.Component {
     }
 
     async componentDidMount() {
-        const { contracts } = this.props;
+        const { contracts, web3 } = this.props;
         
-        if (!contracts || !contracts['oracle']) {
-            console.warn('Oracle contract not initialized yet');
+        if (!contracts || !contracts['oracle'] || !contracts['basket']) {
+            console.warn('Oracle or Basket contract not initialized yet');
             return;
         }
 
@@ -29,75 +66,223 @@ export default class ExchangeRateContract extends React.Component {
             const oracleAddress = contracts['oracle']._address;
             this.setState({ address: oracleAddress });
 
-            const instrumentsCountResponse = await fetch(
+            const instrumentsCountRes = await fetch(
                 `${BLOCK_WATCHER_API}/api/call/oracle/instrumentsCount`
             );
-            const instrumentsCountData = await instrumentsCountResponse.json();
+            const instrumentsCountData = await instrumentsCountRes.json();
             const instrumentsCount = parseInt(instrumentsCountData.result);
-            
             this.setState({ instrumentsCount });
 
-            const instrumentsMap = new Map();
-            const instrumentPromises = [];
+            console.log('Oracle instrumentsCount:', instrumentsCount);
+
+            const basketItemsCountRes = await fetch(
+                `${BLOCK_WATCHER_API}/api/call/basket/itemsCount`
+            );
+            const basketItemsCountData = await basketItemsCountRes.json();
+            const basketItemsCount = parseInt(basketItemsCountData.result);
+
+            const sharesCountRes = await fetch(
+                `${BLOCK_WATCHER_API}/api/call/basket/sharesCount`
+            );
+            const sharesCountData = await sharesCountRes.json();
+            const totalShares = parseInt(sharesCountData.result);
+
+            const basketItems = [];
+            const basketPromises = [];
             
-            for (let id = 1; id <= instrumentsCount; id++) {
-                instrumentPromises.push(
+            for (let id = 1; id <= basketItemsCount; id++) {
+                basketPromises.push(
+                    fetch(`${BLOCK_WATCHER_API}/api/call/basket/items?args=[${id}]`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const item = data.result;
+                            basketItems.push({
+                                symbol: item.symbol,
+                                share: parseInt(item.share),
+                                initialPrice: parseFloat(item.initialPrice) / 10**6
+                            });
+                        })
+                        .catch(err => {
+                            console.warn(`Failed to load basket item ${id}:`, err);
+                        })
+                );
+            }
+            await Promise.all(basketPromises);
+
+            console.log('Basket items loaded:', basketItems);
+
+            const basketSymbolToOracleId = new Map();
+            const dictionaryPromises = [];
+            
+            for (const item of basketItems) {
+                dictionaryPromises.push(
+                    fetch(`${BLOCK_WATCHER_API}/api/call/oracle/dictionary?args=["${encodeURIComponent(item.symbol)}"]`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const dict = data.result;
+                            const oracleId = parseInt(dict.id);
+                            const decimals = parseInt(dict.decimals);
+                            if (oracleId > 0) {
+                                basketSymbolToOracleId.set(item.symbol, {
+                                    oracleId,
+                                    decimals,
+                                    share: item.share,
+                                    initialPrice: item.initialPrice
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.warn(`Failed to load dictionary for ${item.symbol}:`, err);
+                        })
+                );
+            }
+            await Promise.all(dictionaryPromises);
+
+            console.log('Symbol to Oracle ID mapping:', Array.from(basketSymbolToOracleId.entries()));
+
+            const instrumentsMap = new Map();
+            const oraclePromises = [];
+            
+            for (const [symbol, info] of basketSymbolToOracleId) {
+                const id = info.oracleId;
+                oraclePromises.push(
                     fetch(`${BLOCK_WATCHER_API}/api/call/oracle/instruments?args=[${id}]`)
                         .then(res => res.json())
                         .then(data => {
                             const instrument = data.result;
-                            const price = parseFloat(instrument.price) / 10**18;
-                            const timestamp = parseInt(instrument.timeStamp);
+                            const decimals = info.decimals;
                             
                             instrumentsMap.set(id, {
                                 id,
-                                name: `Instrument #${id}`,
-                                price,
-                                timestamp
+                                symbol,
+                                decimals,
+                                currentPrice: parseFloat(instrument.price) / (10**decimals),
+                                timestamp: parseInt(instrument.timeStamp)
                             });
+                        })
+                        .catch(err => {
+                            console.warn(`Failed to load oracle instrument ${symbol} (ID=${id}):`, err);
                         })
                 );
             }
             
-            await Promise.all(instrumentPromises);
+            await Promise.all(oraclePromises);
 
-            const eventsResponse = await fetch(
-                `${BLOCK_WATCHER_API}/api/events/${oracleAddress}?event=priceUpdated&limit=100`
+            const txResponse = await fetch(
+                `${BLOCK_WATCHER_API}/api/transactions/${oracleAddress}?limit=100`
             );
-            const eventsData = await eventsResponse.json();
-            const events = eventsData.events || [];
+            const txData = await txResponse.json();
+            const transactions = (txData.transactions || [])
+                .filter(tx => tx.method === 'updateSeveralPrices');
 
-            console.log('Oracle events loaded:', events.length);
+            console.log('updateSeveralPrices transactions found:', transactions.length);
 
             const priceMap = new Map();
-            const eventInstrumentRequests = new Map();
 
-            for (const event of events) {
-                const id = parseInt(event.returnValues.id);
-                const blockNumber = parseInt(event.blockNumber);
-                const timestamp = parseInt(event.blockTimestamp);
-                const price = parseFloat(event.returnValues.price) / 10**18;
+            const updateSeveralPricesABI = contracts['oracle']._jsonInterface.find(
+                x => x.name === 'updateSeveralPrices' && x.type === 'function'
+            );
 
-                const instrumentName = instrumentsMap.get(id)?.name || `Instrument #${id}`;
+            for (const tx of transactions) {
+                try {
+                    const decoded = web3.eth.abi.decodeParameters(
+                        updateSeveralPricesABI.inputs,
+                        tx.input.slice(10)
+                    );
 
-                const key = `${timestamp}-${blockNumber}`;
-                if (!priceMap.has(key)) {
-                    priceMap.set(key, {
-                        timestamp,
-                        blockNumber,
-                        date: new Date(timestamp * 1000).toLocaleDateString('ru-RU'),
-                        time: new Date(timestamp * 1000).toLocaleTimeString('ru-RU')
-                    });
+                    const ids = decoded.ids || decoded[0];
+                    const prices = decoded.prices || decoded[1];
+
+                    const timestamp = parseInt(tx.blockTimestamp);
+                    const blockNumber = parseInt(tx.blockNumber);
+
+                    const key = `${timestamp}-${blockNumber}`;
+                    if (!priceMap.has(key)) {
+                        priceMap.set(key, {
+                            timestamp,
+                            blockNumber,
+                            date: new Date(timestamp * 1000).toLocaleDateString('ru-RU'),
+                            time: new Date(timestamp * 1000).toLocaleTimeString('ru-RU')
+                        });
+                    }
+
+                    const entry = priceMap.get(key);
+
+                    for (let i = 0; i < ids.length; i++) {
+                        const id = parseInt(ids[i]);
+                        const instrumentInfo = instrumentsMap.get(id);
+                        
+                        if (instrumentInfo) {
+                            const decimals = instrumentInfo.decimals;
+                            const price = parseFloat(prices[i]) / (10**decimals);
+                            entry[instrumentInfo.symbol] = price;
+                        }
+                    }
+
+                    let weightedRatioSum = 0;
+                    
+                    for (const [symbol, info] of basketSymbolToOracleId) {
+                        const currentPrice = entry[symbol];
+                        if (currentPrice && info.initialPrice > 0) {
+                            const ratio = currentPrice / info.initialPrice;
+                            weightedRatioSum += ratio * info.share;
+                        }
+                    }
+                    
+                    if (totalShares > 0) {
+                        const weightedRatio = weightedRatioSum / totalShares;
+                        entry['DFC'] = weightedRatio;
+                    }
+                } catch (error) {
+                    console.error('Failed to decode tx:', tx.hash, error);
                 }
-
-                const entry = priceMap.get(key);
-                entry[instrumentName] = price;
             }
+
+            let currentWeightedRatioSum = 0;
+            let latestTimestamp = 0;
+            
+            for (const [symbol, info] of basketSymbolToOracleId) {
+                const instrumentData = instrumentsMap.get(info.oracleId);
+                if (instrumentData && info.initialPrice > 0) {
+                    const ratio = instrumentData.currentPrice / info.initialPrice;
+                    currentWeightedRatioSum += ratio * info.share;
+                    latestTimestamp = Math.max(latestTimestamp, instrumentData.timestamp);
+                }
+            }
+            
+            const currentDfcPrice = totalShares > 0 ? currentWeightedRatioSum / totalShares : 0;
+            const dfcTimestamp = latestTimestamp;
 
             const priceHistory = Array.from(priceMap.values())
                 .sort((a, b) => a.timestamp - b.timestamp);
 
-            const instruments = Array.from(instrumentsMap.values());
+            const firstDFC = priceHistory.length > 0 ? priceHistory[0].DFC : null;
+            
+            if (firstDFC && firstDFC > 0) {
+                priceHistory.forEach(entry => {
+                    if (entry.DFC) {
+                        entry.DFC = entry.DFC / firstDFC;
+                    }
+                });
+            }
+
+            console.log('Price history built:', priceHistory.length, 'entries');
+            console.log('First DFC (base):', firstDFC);
+            console.log('Current DFC from contract:', currentDfcPrice);
+
+            const normalizedCurrentDFC = firstDFC && firstDFC > 0 
+                ? currentDfcPrice / firstDFC
+                : currentDfcPrice;
+
+            const instruments = [
+                {
+                    id: 0,
+                    symbol: 'DFC',
+                    currentPrice: normalizedCurrentDFC,
+                    timestamp: dfcTimestamp
+                },
+                ...Array.from(instrumentsMap.values())
+            ];
 
             console.log('Price history built:', priceHistory.length, 'entries');
             console.log('Instruments:', instruments);
@@ -121,7 +306,7 @@ export default class ExchangeRateContract extends React.Component {
             return <div align='center'>Loading oracle data...</div>;
         }
 
-        const dfcKey = 'Instrument #1';
+        const dfcKey = 'DFC';
         const dataKeys = [dfcKey];
         if (selectedInstrument && selectedInstrument !== 'none' && selectedInstrument !== dfcKey) {
             dataKeys.push(selectedInstrument);
@@ -151,30 +336,12 @@ export default class ExchangeRateContract extends React.Component {
                             }}
                         >
                             <option value="none">None</option>
-                            {instruments.filter(i => i.name !== dfcKey).map(instrument => (
-                                <option key={instrument.id} value={instrument.name}>
-                                    {instrument.name}
+                            {instruments.filter(i => i.symbol !== dfcKey).map(instrument => (
+                                <option key={instrument.id} value={instrument.symbol}>
+                                    {instrument.symbol}
                                 </option>
                             ))}
                         </select>
-                    </div>
-
-                    {/* Current Prices */}
-                    <div style={{ marginTop: '20px', marginBottom: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
-                        <h4 style={{ marginTop: 0, color: '#000' }}>Current Prices:</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                            {instruments.map(instrument => (
-                                <div key={instrument.id} style={{ padding: '10px', background: '#fff', borderRadius: '4px', border: '1px solid #ddd' }}>
-                                    <div style={{ fontWeight: 'bold', color: '#2196f3' }}>{instrument.name}</div>
-                                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginTop: '5px' }}>
-                                        ${instrument.price.toFixed(2)}
-                                    </div>
-                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>
-                                        {new Date(instrument.timestamp * 1000).toLocaleString('ru-RU')}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Line Chart */}
@@ -189,10 +356,15 @@ export default class ExchangeRateContract extends React.Component {
                                         label={{ value: 'Date', position: 'insideBottom', offset: -5 }}
                                     />
                                     <YAxis 
-                                        label={{ value: 'Price ($)', angle: -90, position: 'insideLeft' }}
+                                        label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
                                     />
                                     <Tooltip 
-                                        formatter={(value, name) => [`$${value.toFixed(2)}`, name]}
+                                        formatter={(value, name) => {
+                                            if (name === 'DFC') {
+                                                return [value.toFixed(4), name];
+                                            }
+                                            return [`$${value.toFixed(2)}`, name];
+                                        }}
                                         labelFormatter={(label, payload) => {
                                             if (payload && payload.length > 0) {
                                                 return `${payload[0].payload.date} ${payload[0].payload.time}`;
@@ -207,9 +379,9 @@ export default class ExchangeRateContract extends React.Component {
                                         stroke="#8884d8" 
                                         strokeWidth={2}
                                         dot={false}
-                                        name="DFC/USD"
+                                        name={dfcKey}
                                     />
-                                    {selectedInstrument && selectedInstrument !== dfcKey && (
+                                    {selectedInstrument && selectedInstrument !== 'none' && selectedInstrument !== dfcKey && (
                                         <Line 
                                             type="monotone" 
                                             dataKey={selectedInstrument}
@@ -240,7 +412,7 @@ export default class ExchangeRateContract extends React.Component {
                                             <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Block</th>
                                             {dataKeys.map(key => (
                                                 <th key={key} style={{ padding: '10px', textAlign: 'right', color: '#000' }}>
-                                                    {key === dfcKey ? 'DFC/USD' : key}
+                                                    {key}
                                                 </th>
                                             ))}
                                         </tr>
@@ -262,7 +434,10 @@ export default class ExchangeRateContract extends React.Component {
                                                 </td>
                                                 {dataKeys.map(key => (
                                                     <td key={key} style={{ padding: '10px', textAlign: 'right', color: '#000', fontWeight: 'bold' }}>
-                                                        {entry[key] ? `$${entry[key].toFixed(2)}` : '-'}
+                                                        {entry[key] 
+                                                            ? (key === 'DFC' ? entry[key].toFixed(4) : `$${entry[key].toFixed(2)}`)
+                                                            : '-'
+                                                        }
                                                     </td>
                                                 ))}
                                             </tr>
@@ -272,6 +447,45 @@ export default class ExchangeRateContract extends React.Component {
                             </div>
                         </div>
                     )}
+
+                    {/* Current Prices */}
+                    <div style={{ marginTop: '30px', marginBottom: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
+                        <h3 style={{ marginTop: 0, color: '#000' }}>Current prices in contract</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                            {instruments.map(instrument => {
+                                const investingUrl = INVESTING_COM_URLS[instrument.symbol];
+                                return (
+                                    <div key={instrument.id} style={{ padding: '10px', background: '#fff', borderRadius: '4px', border: '1px solid #ddd' }}>
+                                        <div style={{ fontWeight: 'bold', color: '#2196f3' }}>
+                                            {investingUrl ? (
+                                                <a 
+                                                    href={investingUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: '#2196f3', textDecoration: 'none' }}
+                                                    onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                                                    onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                                                >
+                                                    {instrument.symbol}
+                                                </a>
+                                            ) : (
+                                                instrument.symbol
+                                            )}
+                                        </div>
+                                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginTop: '5px' }}>
+                                            {instrument.symbol === 'DFC' 
+                                                ? (instrument.currentPrice ? instrument.currentPrice.toFixed(4) : 'N/A')
+                                                : (instrument.currentPrice ? `$${instrument.currentPrice.toFixed(2)}` : 'N/A')
+                                            }
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>
+                                            {instrument.timestamp ? new Date(instrument.timestamp * 1000).toLocaleString('ru-RU') : 'N/A'}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
 
                     <div style={{ marginTop: '20px' }}>
                         <div>address: <a target='_blank' rel="noopener noreferrer" href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
