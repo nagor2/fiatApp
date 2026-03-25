@@ -32,6 +32,6 @@
     "reconnectDelay": 5000,
     "healthBroadcastInterval": 5000,
     "etherscanBatchSize": 10000,
-    "cacheTTL": 3600
+    "cacheTTL": 0
   }
 }

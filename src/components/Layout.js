@@ -5,7 +5,7 @@ import ConnectButton from './ConnectButton';
 import { Address, ETHPrice } from '../utils/utils.js';
 
 const Layout = () => {
-  const { account, walletConnected, ethPrice, ethPriceLastUpdate, getAccount } = useWeb3();
+  const { account, walletConnected, ethPrice, ethPriceLastUpdate, ethPriceEtherscan, ethPriceUniswap, getAccount } = useWeb3();
   const navigate = useNavigate();
 
   const handleLogoClick = () => {
@@ -15,8 +15,12 @@ const Layout = () => {
   return (
     <div className="App">
       <div className="App-header">
-        <w3m-button balance="hide" />
-        <ETHPrice ethPrice={ethPrice} lastUpdate={ethPriceLastUpdate} />
+        <ETHPrice 
+          ethPrice={ethPrice} 
+          lastUpdate={ethPriceLastUpdate}
+          ethPriceEtherscan={ethPriceEtherscan}
+          ethPriceUniswap={ethPriceUniswap}
+        />
         <img src='/img/logo.png' alt="DotFlat Logo" />
         &nbsp;
         <h2 align="center" className="pointer" onClick={handleLogoClick}>

@@ -253,26 +253,62 @@ class BlockWatcher {
     const currentBlock = Number(await this.web3.eth.getBlockNumber());
     const checkpoint = await this.loadCheckpoint();
     const currentHash = await this.getContractsHash();
-    
+
+    // Загружаем реальные счетчики из Redis при старте
+    await this.loadCountersFromRedis();
+
     let syncFromBlock = this.startBlock;
-    
+
     if (checkpoint) {
       if (checkpoint.contractsHash === currentHash) {
         syncFromBlock = checkpoint.lastProcessedBlock + 1;
         logger.info(`Resuming from checkpoint: block ${checkpoint.lastProcessedBlock}`);
+        logger.info(`Current stats: ${this.health.transactionsIndexed} txs, ${this.health.eventsIndexed} events`);
       } else {
         logger.info(`Contracts list changed, full rescan from block ${this.startBlock}`);
+        // При rescan сбрасываем счетчики (данные будут перезаписаны)
+        this.health.transactionsIndexed = 0;
+        this.health.eventsIndexed = 0;
       }
     } else {
       logger.info(`No checkpoint found, starting from block ${this.startBlock}`);
     }
-    
+
     if (syncFromBlock < currentBlock) {
       this.health.status = 'syncing';
       await this.historicalSync(syncFromBlock, currentBlock);
     } else {
       logger.info('Already synced to current block');
       this.health.lastProcessedBlock = currentBlock;
+    }
+  }
+  
+  async loadCountersFromRedis() {
+    try {
+      // Подсчитываем транзакции для каждого контракта
+      let totalTxs = 0;
+      for (const [address] of this.watchedAddresses.entries()) {
+        const txsListKey = `txs:${address}:list`;
+        const count = await this.redisClient.zCard(txsListKey);
+        totalTxs += count;
+      }
+      this.health.transactionsIndexed = totalTxs;
+      
+      // Подсчитываем события по контрактам
+      let totalEvents = 0;
+      for (const [, contractInfo] of this.watchedAddresses.entries()) {
+        if (contractInfo.type === 'wallet') continue;
+        
+        const contractKey = contractInfo.contractKey;
+        const eventsListKey = `events:${contractKey}:all:list`;
+        const count = await this.redisClient.zCard(eventsListKey);
+        totalEvents += count;
+      }
+      this.health.eventsIndexed = totalEvents;
+      
+      logger.info(`Loaded from Redis: ${totalTxs} transactions, ${totalEvents} events`);
+    } catch (error) {
+      logger.warn('Failed to load counters from Redis:', error.message);
     }
   }
   

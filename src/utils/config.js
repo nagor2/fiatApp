@@ -2897,15 +2897,6 @@ config.Balances = {
     link:'/'
 };
 
-config.Commodities = {
-    title: 'Commodities',
-    plus: false,
-    expander:true,
-
-    subtitle: '',
-    link:'/'
-};
-
 config.Contracts = {
     title: 'Contracts',
     plus: false,

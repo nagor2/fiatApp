@@ -1,5 +1,5 @@
 import React from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import config from "../utils/config";
 
 const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
@@ -50,8 +50,20 @@ export default class ExchangeRateContract extends React.Component {
             priceHistory: [],
             selectedInstrument: 'none',
             instruments: [],
-            loading: true
-        }
+            loading: true,
+            currentPricesOpen: false,
+            priceHistoryOpen: false
+        };
+        this.toggleCurrentPrices = this.toggleCurrentPrices.bind(this);
+        this.togglePriceHistory = this.togglePriceHistory.bind(this);
+    }
+
+    toggleCurrentPrices() {
+        this.setState({ currentPricesOpen: !this.state.currentPricesOpen });
+    }
+
+    togglePriceHistory() {
+        this.setState({ priceHistoryOpen: !this.state.priceHistoryOpen });
     }
 
     async componentDidMount() {
@@ -157,7 +169,8 @@ export default class ExchangeRateContract extends React.Component {
                                 symbol,
                                 decimals,
                                 currentPrice: parseFloat(instrument.price) / (10**decimals),
-                                timestamp: parseInt(instrument.timeStamp)
+                                timestamp: parseInt(instrument.timeStamp),
+                                initialPrice: info.initialPrice
                             });
                         })
                         .catch(err => {
@@ -216,6 +229,7 @@ export default class ExchangeRateContract extends React.Component {
                             const decimals = instrumentInfo.decimals;
                             const price = parseFloat(prices[i]) / (10**decimals);
                             entry[instrumentInfo.symbol] = price;
+                            entry[`${instrumentInfo.symbol}_original`] = price;
                         }
                     }
 
@@ -266,6 +280,16 @@ export default class ExchangeRateContract extends React.Component {
                 });
             }
 
+            for (const [symbol, info] of basketSymbolToOracleId) {
+                if (info.initialPrice && info.initialPrice > 0) {
+                    priceHistory.forEach(entry => {
+                        if (entry[symbol]) {
+                            entry[symbol] = entry[symbol] / info.initialPrice;
+                        }
+                    });
+                }
+            }
+
             console.log('Price history built:', priceHistory.length, 'entries');
             console.log('First DFC (base):', firstDFC);
             console.log('Current DFC from contract:', currentDfcPrice);
@@ -281,7 +305,13 @@ export default class ExchangeRateContract extends React.Component {
                     currentPrice: normalizedCurrentDFC,
                     timestamp: dfcTimestamp
                 },
-                ...Array.from(instrumentsMap.values())
+                ...Array.from(instrumentsMap.values()).map(inst => ({
+                    ...inst,
+                    originalPrice: inst.currentPrice,
+                    currentPrice: inst.initialPrice && inst.initialPrice > 0 
+                        ? inst.currentPrice / inst.initialPrice 
+                        : inst.currentPrice
+                }))
             ];
 
             console.log('Price history built:', priceHistory.length, 'entries');
@@ -310,6 +340,37 @@ export default class ExchangeRateContract extends React.Component {
         const dataKeys = [dfcKey];
         if (selectedInstrument && selectedInstrument !== 'none' && selectedInstrument !== dfcKey) {
             dataKeys.push(selectedInstrument);
+        }
+
+        let minValue = Infinity;
+        let maxValue = -Infinity;
+        
+        priceHistory.forEach(entry => {
+            dataKeys.forEach(key => {
+                const value = entry[key];
+                if (value !== undefined && value !== null) {
+                    minValue = Math.min(minValue, value);
+                    maxValue = Math.max(maxValue, value);
+                }
+            });
+        });
+
+        if (minValue === Infinity) minValue = 0.5;
+        if (maxValue === -Infinity) maxValue = 1.5;
+
+        const padding = (maxValue - minValue) * 0.1;
+        const domainMin = Math.max(0, Math.floor((minValue - padding) * 2) / 2);
+        const domainMax = Math.ceil((maxValue + padding) * 2) / 2;
+
+        const tickStep = 0.5;
+        const ticks = [];
+        for (let tick = Math.floor(domainMin / tickStep) * tickStep; tick <= domainMax; tick += tickStep) {
+            ticks.push(Math.round(tick * 10) / 10);
+        }
+        
+        if (!ticks.includes(1)) {
+            ticks.push(1);
+            ticks.sort((a, b) => a - b);
         }
 
         return (
@@ -357,11 +418,23 @@ export default class ExchangeRateContract extends React.Component {
                                     />
                                     <YAxis 
                                         label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
+                                        domain={[domainMin, domainMax]}
+                                        ticks={ticks}
+                                    />
+                                    <ReferenceLine 
+                                        y={1} 
+                                        stroke="#666" 
+                                        strokeWidth={2}
+                                        strokeDasharray="5 5"
                                     />
                                     <Tooltip 
-                                        formatter={(value, name) => {
+                                        formatter={(value, name, props) => {
                                             if (name === 'DFC') {
                                                 return [value.toFixed(4), name];
+                                            }
+                                            const originalPrice = props.payload[`${name}_original`];
+                                            if (originalPrice !== undefined) {
+                                                return [`$${originalPrice.toFixed(2)}`, name];
                                             }
                                             return [`$${value.toFixed(2)}`, name];
                                         }}
@@ -398,71 +471,105 @@ export default class ExchangeRateContract extends React.Component {
                     {/* Price Table */}
                     {priceHistory.length > 0 && (
                         <div style={{ marginTop: '30px' }}>
-                            <h3 style={{ marginBottom: '15px', color: '#000' }}>Price Updates History</h3>
-                            <div style={{ overflowX: 'auto', maxHeight: '400px', overflowY: 'auto' }}>
-                                <table style={{
-                                    width: '100%',
-                                    borderCollapse: 'collapse',
-                                    fontSize: '13px'
-                                }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#f5f5f5', zIndex: 1 }}>
-                                        <tr style={{ borderBottom: '2px solid #ddd' }}>
-                                            <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Date</th>
-                                            <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Time</th>
-                                            <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Block</th>
-                                            {dataKeys.map(key => (
-                                                <th key={key} style={{ padding: '10px', textAlign: 'right', color: '#000' }}>
-                                                    {key}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {priceHistory.slice().reverse().map((entry, idx) => (
-                                            <tr key={`${entry.timestamp}-${entry.blockNumber}`} style={{
-                                                borderBottom: '1px solid #eee',
-                                                background: idx % 2 === 0 ? '#fff' : '#f9f9f9'
-                                            }}>
-                                                <td style={{ padding: '10px', color: '#000' }}>
-                                                    {entry.date}
-                                                </td>
-                                                <td style={{ padding: '10px', fontSize: '12px', color: '#666' }}>
-                                                    {entry.time}
-                                                </td>
-                                                <td style={{ padding: '10px', color: '#000' }}>
-                                                    {entry.blockNumber}
-                                                </td>
+                            <div className="expander" onClick={this.togglePriceHistory}>
+                                <div className="bt-tile__title pointer">
+                                    Price Updates History
+                                    <svg className={this.state.priceHistoryOpen ? 'rotate-180' : 'rotate-0'} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" style={{ marginLeft: '10px', verticalAlign: 'middle' }}>
+                                        <g fill="none" fillRule="evenodd" transform="translate(-446 -398)">
+                                            <path fill="currentColor" fillRule="nonzero" d="M95.8838835,240.366117 C95.3957281,239.877961 94.6042719,239.877961 94.1161165,240.366117 C93.6279612,240.854272 93.6279612,241.645728 94.1161165,242.133883 L98.6161165,246.633883 C99.1042719,247.122039 99.8957281,247.122039 100.383883,246.633883 L104.883883,242.133883 C105.372039,241.645728 105.372039,240.854272 104.883883,240.366117 C104.395728,239.877961 103.604272,239.877961 103.116117,240.366117 L99.5,243.982233 L95.8838835,240.366117 Z" transform="translate(356.5 164.5)"></path>
+                                            <polygon points="446 418 466 418 466 398 446 398"></polygon>
+                                        </g>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className={"collapsed" + (this.state.priceHistoryOpen ? ' in' : '')}>
+                                <div style={{ overflowX: 'auto', maxHeight: '400px', overflowY: 'auto', marginTop: '15px' }}>
+                                    <table style={{
+                                        width: '100%',
+                                        borderCollapse: 'collapse',
+                                        fontSize: '13px'
+                                    }}>
+                                        <thead style={{ position: 'sticky', top: 0, background: '#f5f5f5', zIndex: 1 }}>
+                                            <tr style={{ borderBottom: '2px solid #ddd' }}>
+                                                <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Date</th>
+                                                <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Time</th>
+                                                <th style={{ padding: '10px', textAlign: 'left', color: '#000' }}>Block</th>
                                                 {dataKeys.map(key => (
-                                                    <td key={key} style={{ padding: '10px', textAlign: 'right', color: '#000', fontWeight: 'bold' }}>
-                                                        {entry[key] 
-                                                            ? (key === 'DFC' ? entry[key].toFixed(4) : `$${entry[key].toFixed(2)}`)
-                                                            : '-'
-                                                        }
-                                                    </td>
+                                                    <th key={key} style={{ padding: '10px', textAlign: 'right', color: '#000' }}>
+                                                        {key}
+                                                    </th>
                                                 ))}
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {priceHistory.slice().reverse().map((entry, idx) => (
+                                                <tr key={`${entry.timestamp}-${entry.blockNumber}`} style={{
+                                                    borderBottom: '1px solid #eee',
+                                                    background: idx % 2 === 0 ? '#fff' : '#f9f9f9'
+                                                }}>
+                                                    <td style={{ padding: '10px', color: '#000' }}>
+                                                        {entry.date}
+                                                    </td>
+                                                    <td style={{ padding: '10px', fontSize: '12px', color: '#666' }}>
+                                                        {entry.time}
+                                                    </td>
+                                                    <td style={{ padding: '10px', color: '#000' }}>
+                                                        {entry.blockNumber}
+                                                    </td>
+                                                    {dataKeys.map(key => (
+                                                        <td key={key} style={{ padding: '10px', textAlign: 'right', color: '#000', fontWeight: 'bold' }}>
+                                                            {entry[key] 
+                                                                ? (key === 'DFC' ? entry[key].toFixed(4) : `$${entry[key].toFixed(2)}`)
+                                                                : '-'
+                                                            }
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* Current Prices */}
-                    <div style={{ marginTop: '30px', marginBottom: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
-                        <h3 style={{ marginTop: 0, color: '#000' }}>Current prices in contract</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                            {instruments.map(instrument => {
-                                const investingUrl = INVESTING_COM_URLS[instrument.symbol];
-                                return (
-                                    <div key={instrument.id} style={{ padding: '10px', background: '#fff', borderRadius: '4px', border: '1px solid #ddd' }}>
-                                        <div style={{ fontWeight: 'bold', color: '#2196f3' }}>
+                    <div style={{ marginTop: '30px', marginBottom: '20px' }}>
+                        <div className="expander" onClick={this.toggleCurrentPrices}>
+                            <div className="bt-tile__title pointer">
+                                Current prices in contract
+                                <svg className={this.state.currentPricesOpen ? 'rotate-180' : 'rotate-0'} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" style={{ marginLeft: '10px', verticalAlign: 'middle' }}>
+                                    <g fill="none" fillRule="evenodd" transform="translate(-446 -398)">
+                                        <path fill="currentColor" fillRule="nonzero" d="M95.8838835,240.366117 C95.3957281,239.877961 94.6042719,239.877961 94.1161165,240.366117 C93.6279612,240.854272 93.6279612,241.645728 94.1161165,242.133883 L98.6161165,246.633883 C99.1042719,247.122039 99.8957281,247.122039 100.383883,246.633883 L104.883883,242.133883 C105.372039,241.645728 105.372039,240.854272 104.883883,240.366117 C104.395728,239.877961 103.604272,239.877961 103.116117,240.366117 L99.5,243.982233 L95.8838835,240.366117 Z" transform="translate(356.5 164.5)"></path>
+                                        <polygon points="446 418 466 418 466 398 446 398"></polygon>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                        <div className={"collapsed" + (this.state.currentPricesOpen ? ' in' : '')}>
+                            <div style={{ marginTop: '15px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                                    {instruments.map(instrument => {
+                                        const investingUrl = INVESTING_COM_URLS[instrument.symbol];
+                                        
+                                        const displayPrice = instrument.originalPrice || instrument.currentPrice;
+                                        
+                                        let percentChange = null;
+                                        let changeColor = '#666';
+                                        if (instrument.initialPrice && instrument.initialPrice > 0 && instrument.originalPrice) {
+                                            percentChange = ((instrument.originalPrice - instrument.initialPrice) / instrument.initialPrice) * 100;
+                                            changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
+                                        }
+                                        
+                                        return (
+                                            <div key={instrument.id} style={{ padding: '10px', background: '#fff', borderRadius: '4px', border: '1px solid #ddd' }}>
+                                        <div style={{ fontWeight: 'bold', color: '#000' }}>
                                             {investingUrl ? (
                                                 <a 
                                                     href={investingUrl} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
-                                                    style={{ color: '#2196f3', textDecoration: 'none' }}
+                                                    style={{ color: '#000', textDecoration: 'none' }}
                                                     onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
                                                     onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                                                 >
@@ -472,18 +579,32 @@ export default class ExchangeRateContract extends React.Component {
                                                 instrument.symbol
                                             )}
                                         </div>
-                                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginTop: '5px' }}>
-                                            {instrument.symbol === 'DFC' 
-                                                ? (instrument.currentPrice ? instrument.currentPrice.toFixed(4) : 'N/A')
-                                                : (instrument.currentPrice ? `$${instrument.currentPrice.toFixed(2)}` : 'N/A')
-                                            }
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>
-                                            {instrument.timestamp ? new Date(instrument.timestamp * 1000).toLocaleString('ru-RU') : 'N/A'}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginTop: '5px' }}>
+                                                    {instrument.symbol === 'DFC' 
+                                                        ? (displayPrice ? displayPrice.toFixed(4) : 'N/A')
+                                                        : (displayPrice ? `$${displayPrice.toFixed(2)}` : 'N/A')
+                                                    }
+                                                </div>
+                                                
+                                                {instrument.initialPrice && instrument.initialPrice > 0 && (
+                                                    <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                                        Initial: ${instrument.initialPrice.toFixed(2)}{' '}
+                                                        {percentChange !== null && (
+                                                            <span style={{ color: changeColor, fontWeight: 'bold' }}>
+                                                                ({percentChange >= 0 ? '+' : ''}{percentChange.toFixed(2)}%)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                
+                                                <div style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>
+                                                    {instrument.timestamp ? new Date(instrument.timestamp * 1000).toLocaleString('ru-RU') : 'N/A'}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

@@ -1,0 +1,36 @@
+---
+description: SLC task creation workflow - ask before activating
+alwaysApply: true
+---
+
+# SLC Task Creation Workflow
+
+When the user writes "СЛК задача" (or similar requests to create a task in SLC):
+
+## Workflow
+
+1. **Create the task** using `create_task()` from the SLC MCP server
+2. **Do NOT automatically activate** the task
+3. **Ask the user** if they want to activate it now
+
+## Reasoning
+
+Users often want to create multiple tasks for planning purposes without immediately starting work on them. Automatically activating tasks interrupts this workflow.
+
+## Example
+
+```
+User: "СЛК задача: добавить темную тему"
+
+✅ CORRECT:
+- Create task using create_task()
+- Show confirmation: "Задача создана. Активировать её сейчас?"
+
+❌ INCORRECT:
+- Create and immediately activate_task()
+- Start working without asking
+```
+
+## Exceptions
+
+If the user explicitly says to activate or start working immediately, then activate the task without asking.

@@ -12,7 +12,8 @@ class HealthServer {
     this.redisClient = redisClient;
     this.contracts = contracts;
     this.server = null;
-    this.cacheTTL = settings.cacheTTL || 3600; // TTL для кэша contract calls (секунды), default 1 час
+    this.cacheTTL = settings.cacheTTL !== undefined ? settings.cacheTTL : 0; // TTL для кэша contract calls (0 = без TTL, event-driven инвалидация)
+    console.log(`HealthServer: cacheTTL = ${this.cacheTTL} (from settings: ${settings.cacheTTL})`);
   }
   
   async handleRequest(req, res) {
@@ -248,7 +249,13 @@ class HealthServer {
       const serialized = JSON.stringify(result, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
       );
-      await this.redisClient.setEx(cacheKey, this.cacheTTL, serialized);
+      
+      // Если TTL = 0, сохраняем без expiration (инвалидация только event-driven)
+      if (this.cacheTTL > 0) {
+        await this.redisClient.setEx(cacheKey, this.cacheTTL, serialized);
+      } else {
+        await this.redisClient.set(cacheKey, serialized);
+      }
     } catch (error) {
       console.error(`Cache write error for ${cacheKey}:`, error.message);
     }

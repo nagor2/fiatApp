@@ -57,66 +57,23 @@ export class Address extends React.Component {
     }
 }
 
-// Объединенная карточка с обеими ценами ETH
+// Объединенная карточка с ценами ETH из разных источников
 export class ETHPrice extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = {
-            actualPrice: null,
-            loading: true
-        };
-    }
-
-    componentDidMount() {
-        this.fetchEtherscanPrice();
-        this.interval = setInterval(() => this.fetchEtherscanPrice(), 60000);
-    }
-
-    componentWillUnmount() {
-        if (this.interval) {
-            clearInterval(this.interval);
-        }
-    }
-
-    async fetchEtherscanPrice() {
-        const config = require('./config').default;
-        if (!config.etherscanApiKey) {
-            this.setState({ loading: false });
-            return;
-        }
-
-        try {
-            const url = `${config.etherscanApiUrl}?chainid=1&module=stats&action=ethprice&apikey=${config.etherscanApiKey}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.status === '1' && data.result) {
-                this.setState({
-                    actualPrice: parseFloat(data.result.ethusd),
-                    loading: false
-                });
-            } else {
-                console.warn('Etherscan API response:', data);
-                this.setState({ loading: false });
-            }
-        } catch (err) {
-            console.error('Failed to fetch Etherscan price:', err);
-            this.setState({ loading: false });
-        }
-    }
-
     render() {
-        const { ethPrice } = this.props;
-        const { actualPrice, loading } = this.state;
+        const { ethPrice, ethPriceEtherscan, ethPriceUniswap } = this.props;
 
-        const actualText = loading ? 'loading...' : (actualPrice ? '$' + actualPrice.toFixed(2) : 'N/A');
+        const etherscanText = ethPriceEtherscan ? '$' + ethPriceEtherscan.toFixed(2) : 'N/A';
+        const uniswapText = ethPriceUniswap ? '$' + ethPriceUniswap.toFixed(2) : 'N/A';
 
         return (
             <div className="button address left" style={{ 
-                fontSize: '14px',
+                fontSize: '13px',
                 whiteSpace: 'nowrap'
             }}>
-                <strong>ETH</strong> actual: <strong>{actualText}</strong> in contract: <strong>${ethPrice}</strong>
+                <strong>ETH</strong> 
+                {' '}Etherscan: <strong>{etherscanText}</strong>
+                {' '}Uniswap: <strong>{uniswapText}</strong>
+                {' '}Contract: <strong>${ethPrice}</strong>
             </div>
         );
     }

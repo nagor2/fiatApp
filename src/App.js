@@ -13,6 +13,7 @@ import ContractsPage from './pages/ContractsPage';
 import CommoditiesPage from './pages/CommoditiesPage';
 import ChartsDemoPage from './pages/ChartsDemoPage';
 import BlockWatcherPage from './pages/BlockWatcherPage';
+import WalletTest from './components/WalletTest';
 import NotFoundPage from './pages/NotFoundPage';
 
 const events = require('events');
@@ -42,6 +43,7 @@ function App() {
             <Route path="commodity/:commodityName" element={<CommoditiesPage emitter={eventEmitter} />} />
             <Route path="charts-demo" element={<ChartsDemoPage />} />
             <Route path="block-watcher" element={<BlockWatcherPage emitter={eventEmitter} />} />
+            <Route path="test/wallet" element={<WalletTest />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

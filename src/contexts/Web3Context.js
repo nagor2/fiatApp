@@ -20,6 +20,8 @@ export const Web3Provider = ({ children }) => {
   const [walletConnected, setWalletConnected] = useState(false);
   const [ethPrice, setEthPrice] = useState('');
   const [ethPriceLastUpdate, setEthPriceLastUpdate] = useState(null);
+  const [ethPriceEtherscan, setEthPriceEtherscan] = useState(null);
+  const [ethPriceUniswap, setEthPriceUniswap] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const initWeb3 = async () => {
@@ -144,6 +146,37 @@ export const Web3Provider = ({ children }) => {
     }
   };
 
+  const fetchEthPriceEtherscan = async () => {
+    if (!config.etherscanApiKey) {
+      return;
+    }
+
+    try {
+      const url = `${config.etherscanApiUrl}?chainid=1&module=stats&action=ethprice&apikey=${config.etherscanApiKey}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === '1' && data.result) {
+        const price = parseFloat(data.result.ethusd);
+        setEthPriceEtherscan(price);
+        console.log('✅ ETH price from Etherscan:', price);
+      }
+    } catch (err) {
+      console.error('Failed to fetch Etherscan ETH price:', err);
+    }
+  };
+
+  const fetchEthPriceUniswap = async () => {
+    try {
+      const { getEthPriceInUsd } = await import('../utils/uniswap-quoter');
+      const result = await getEthPriceInUsd();
+      setEthPriceUniswap(result.priceInUSD);
+      console.log('✅ ETH price from Uniswap:', result.priceInUSD);
+    } catch (err) {
+      console.error('Failed to fetch Uniswap ETH price:', err);
+    }
+  };
+
   useEffect(() => {
     const initialize = async () => {
       const web3Instance = await initWeb3();
@@ -154,6 +187,20 @@ export const Web3Provider = ({ children }) => {
     initialize();
   }, []);
 
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    fetchEthPriceEtherscan();
+    fetchEthPriceUniswap();
+    
+    const interval = setInterval(() => {
+      fetchEthPriceEtherscan();
+      fetchEthPriceUniswap();
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [isInitialized]);
+
   const value = {
     web3,
     account,
@@ -161,8 +208,12 @@ export const Web3Provider = ({ children }) => {
     walletConnected,
     ethPrice,
     ethPriceLastUpdate,
+    ethPriceEtherscan,
+    ethPriceUniswap,
     isInitialized,
     getAccount,
+    fetchEthPriceEtherscan,
+    fetchEthPriceUniswap,
   };
 
   return (
