@@ -11,8 +11,6 @@ export default class ImproveBid extends React.Component{
     }
 
     componentDidMount() {
-        const { contracts } = this.props;
-
     }
 
     render() {

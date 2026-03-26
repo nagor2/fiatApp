@@ -255,7 +255,7 @@ export default class ExchangeRateContract extends React.Component {
             let currentWeightedRatioSum = 0;
             let latestTimestamp = 0;
             
-            for (const [symbol, info] of basketSymbolToOracleId) {
+            for (const [, info] of basketSymbolToOracleId) {
                 const instrumentData = instrumentsMap.get(info.oracleId);
                 if (instrumentData && info.initialPrice > 0) {
                     const ratio = instrumentData.currentPrice / info.initialPrice;

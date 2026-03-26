@@ -1,6 +1,5 @@
 import React from "react";
 import {Loader} from "../utils/utils";
-/* global BigInt */
 
 export default class WithdrawEtherCDP extends React.Component{
 
@@ -66,9 +65,9 @@ export default class WithdrawEtherCDP extends React.Component{
     render() {
         return <form>
             <div align='center'><b>WithdrawEtherCDP</b></div>
-            <a className={"button pointer green left"} onClick={()=>this.setMax()}>Max</a>
+            <button type="button" className={"button pointer green left"} onClick={()=>this.setMax()}>Max</button>
             ETH to withdraw: <input type='number' step="0.1" min="0" max={this.state.maxToWithdraw} name='toWithdraw' value={this.state.toWithdraw} onChange={e => this.changeToWithdraw(e)}/>
-            {this.state.buttonIsActive?<a className={"button pointer green right"} onClick={this.withdraw}>withdraw</a>:<div className="button address right">
+            {this.state.buttonIsActive?<button type="button" className={"button pointer green right"} onClick={this.withdraw}>withdraw</button>:<div className="button address right">
                 {'wrong ETH amount'}</div>}
             {this.state.loader?<Loader/>:''}
             <br></br><br></br><br></br><br></br><br></br>

@@ -15,7 +15,7 @@ const MainLayout = ({
   depositsInitialOpen,
   auctionsInitialOpen
 }) => {
-  const { web3, contracts, account, walletConnected, ethPrice } = useWeb3();
+  const { web3, contracts, account, walletConnected } = useWeb3();
   const navigate = useNavigate();
 
   return (

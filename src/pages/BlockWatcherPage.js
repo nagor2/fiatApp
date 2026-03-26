@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
-import config from '../utils/config';
-import { useWeb3 } from '../contexts/Web3Context';
 
 function BlockWatcherPage({ emitter }) {
-  const navigate = useNavigate();
-  const { web3, contracts, account, walletConnected } = useWeb3();
   const [workerHealth, setWorkerHealth] = useState(null);
   const [selectedContract, setSelectedContract] = useState('');
   const [contractsList, setContractsList] = useState([]);

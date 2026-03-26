@@ -6,7 +6,7 @@ import MyPanel from '../components/MyPanel';
 import config from '../utils/config';
 
 const CreditsPage = ({ emitter }) => {
-  const { web3, contracts, account, walletConnected, ethPrice } = useWeb3();
+  const { web3, contracts, account, ethPrice } = useWeb3();
   const navigate = useNavigate();
   const { id } = useParams();
   

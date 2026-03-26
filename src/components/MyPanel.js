@@ -28,11 +28,9 @@ import {fromBlock} from "../utils/config";
 import {dateFromTimestamp} from "../utils/utils";
 import Product from "./Product";
 import Plus from "./Plus";
-import SwapRLE from  "./SwapRLE";
 import config from "../utils/config";
 import AuctionContract from "./AuctionContract";
 import ExchangeRateContract from "./ExchangeRateContract";
-/* global BigInt */
 
 
 export default class MyPanel extends React.Component {

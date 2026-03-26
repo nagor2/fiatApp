@@ -148,6 +148,8 @@ export async function getPoolLiquidityViaWeb3(web3, ethPriceUSD = null) {
   }
 }
 
-export default {
+const uniswapPoolInfo = {
   getPoolLiquidityViaWeb3,
 };
+
+export default uniswapPoolInfo;

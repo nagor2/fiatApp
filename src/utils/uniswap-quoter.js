@@ -56,11 +56,6 @@ const QUOTER_ABI = [
   }
 ];
 
-const POOL_MANAGER_ABI = [
-  'event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)',
-  'function getLiquidity(bytes32 id) external view returns (uint128)'
-];
-
 const STATE_VIEW_ABI = [
   {
     "inputs": [
