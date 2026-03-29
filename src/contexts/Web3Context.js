@@ -124,31 +124,38 @@ export const Web3Provider = ({ children }) => {
   };
 
   const getAccount = async () => {
-    try {
-      if (window.ethereum) {
-        const accounts = await window.ethereum
-          .request({ method: "eth_requestAccounts" })
-          .catch((err) => {
-            if (err.code === 4001) {
-              console.log("Please connect to MetaMask.");
-            } else {
-              console.error(err);
-            }
-          });
-
+    console.log('🔄 getAccount called');
+    
+    // Проверяем есть ли уже подключение через MetaMask extension
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts && accounts.length > 0) {
-          console.log(accounts[0]);
+          console.log('✅ Already connected via MetaMask:', accounts[0]);
           setAccount(accounts[0]);
           setWalletConnected(true);
           return;
         }
+        
+        // Пробуем подключиться через расширение напрямую
+        console.log('🔄 Trying to connect via MetaMask extension...');
+        const newAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        if (newAccounts && newAccounts.length > 0) {
+          console.log('✅ Connected via MetaMask extension:', newAccounts[0]);
+          setAccount(newAccounts[0]);
+          setWalletConnected(true);
+          return;
+        }
+      } catch (err) {
+        console.log('MetaMask extension connection failed or rejected:', err.message);
       }
-      
-      console.log('no window ethereum');
-      console.log('trying to connect via WalletConnect...');
-      
-      const { initWalletConnect, connectWithWalletConnect } = await import('../utils/walletconnect');
-      initWalletConnect();
+    }
+    
+    // Если нет window.ethereum или пользователь отклонил - открываем Web3Modal
+    try {
+      console.log('🔄 Opening Web3Modal for WalletConnect...');
+      const { connectWithWalletConnect } = await import('../utils/walletconnect');
       const result = await connectWithWalletConnect();
       
       if (result && result.address) {
@@ -157,7 +164,7 @@ export const Web3Provider = ({ children }) => {
         setWalletConnected(true);
       }
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
+      console.error('❌ Connection error:', error.message);
     }
   };
 
@@ -221,13 +228,12 @@ export const Web3Provider = ({ children }) => {
       const web3Instance = await initWeb3();
       await initContracts(web3Instance);
       
-      // Подписываемся на события MetaMask
+      // Восстанавливаем ТОЛЬКО MetaMask расширение (не WalletConnect!)
       if (window.ethereum) {
         try {
-          // Проверяем сохраненное подключение
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts && accounts.length > 0) {
-            console.log('✅ Restored MetaMask connection:', accounts[0]);
+            console.log('✅ Restored MetaMask extension connection:', accounts[0]);
             setAccount(accounts[0]);
             setWalletConnected(true);
           }
@@ -252,28 +258,6 @@ export const Web3Provider = ({ children }) => {
           
         } catch (err) {
           console.log('No saved MetaMask connection');
-        }
-      } else {
-        // Проверяем сохраненное подключение через WalletConnect
-        try {
-          const { initWalletConnect } = await import('../utils/walletconnect');
-          const modal = initWalletConnect();
-          
-          if (modal && modal.getIsConnected()) {
-            const provider = modal.getWalletProvider();
-            if (provider) {
-              const { BrowserProvider } = await import('ethers');
-              const ethersProvider = new BrowserProvider(provider);
-              const signer = await ethersProvider.getSigner();
-              const address = await signer.getAddress();
-              
-              console.log('✅ Restored WalletConnect connection:', address);
-              setAccount(address);
-              setWalletConnected(true);
-            }
-          }
-        } catch (err) {
-          console.log('No saved WalletConnect connection:', err.message);
         }
       }
       

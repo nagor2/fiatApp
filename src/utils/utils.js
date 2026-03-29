@@ -50,7 +50,7 @@ export class Loader extends React.Component{
 
 export class Address extends React.Component {
     render() {
-        return <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
+        return <div className="right" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <div className="button address">
                 {this.props.account.slice(0, 6) +
                 '...' +this.props.account.slice(-4)}

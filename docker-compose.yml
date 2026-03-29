@@ -42,6 +42,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - REACT_APP_RPC_URL=/api/rpc
+      - REACT_APP_WORKERS_HEALTH_URL=http://192.168.31.173:3002/health
       - WDS_SOCKET_PORT=3008
       - DANGEROUSLY_DISABLE_HOST_CHECK=true
     stdin_open: true

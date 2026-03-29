@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../layouts/MainLayout';
 
+const BLOCK_WATCHER_API = (process.env.REACT_APP_WORKERS_HEALTH_URL || 'http://localhost:3002/health').replace('/health', '');
+
 function BlockWatcherPage({ emitter }) {
   const [workerHealth, setWorkerHealth] = useState(null);
   const [selectedContract, setSelectedContract] = useState('');
@@ -24,7 +26,7 @@ function BlockWatcherPage({ emitter }) {
     // Загружаем health status воркера
     const fetchHealth = async () => {
       try {
-        const response = await fetch('http://localhost:3002/health');
+        const response = await fetch(`${BLOCK_WATCHER_API}/health`);
         const data = await response.json();
         setWorkerHealth(data);
       } catch (error) {
@@ -39,7 +41,7 @@ function BlockWatcherPage({ emitter }) {
     // Загружаем список контрактов
     const fetchContracts = async () => {
       try {
-        const response = await fetch('http://localhost:3002/api/contracts');
+        const response = await fetch(`${BLOCK_WATCHER_API}/api/contracts`);
         const data = await response.json();
         setContractsList(data.contracts || []);
         if (data.contracts && data.contracts.length > 0) {
@@ -81,8 +83,8 @@ function BlockWatcherPage({ emitter }) {
         const eventFilter = eventTypeFilter !== 'all' ? `&event=${eventTypeFilter}` : '';
         
         const [eventsRes, txsRes] = await Promise.all([
-          fetch(`http://localhost:3002/api/events/${selectedContract}?page=${eventsPage}&limit=${eventsLimit}${eventFilter}`),
-          fetch(`http://localhost:3002/api/transactions/${selectedContract}?page=${txsPage}&limit=${txsLimit}`)
+          fetch(`${BLOCK_WATCHER_API}/api/events/${selectedContract}?page=${eventsPage}&limit=${eventsLimit}${eventFilter}`),
+          fetch(`${BLOCK_WATCHER_API}/api/transactions/${selectedContract}?page=${txsPage}&limit=${txsLimit}`)
         ]);
         
         const eventsData = await eventsRes.json();

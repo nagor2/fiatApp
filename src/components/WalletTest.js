@@ -7,13 +7,14 @@ import {
   subscribeToWalletConnectEvents,
 } from '../utils/walletconnect';
 import { getDfcPriceInEth, getDfcTokenInfo } from '../utils/uniswap-quoter';
-import { getPoolLiquidityViaWeb3 } from '../utils/uniswap-pool-info';
+import { getPoolLiquidityDirect, getPoolSwaps } from '../utils/pool-liquidity-direct';
 
 function WalletTest() {
   const { web3, ethPrice, ethPriceEtherscan, ethPriceUniswap } = useWeb3();
   const [wallet, setWallet] = useState(null);
   const [dfcPrice, setDfcPrice] = useState(null);
   const [poolInfo, setPoolInfo] = useState(null);
+  const [swaps, setSwaps] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -85,12 +86,27 @@ function WalletTest() {
     try {
       setLoading(true);
       setError(null);
-      const info = await getPoolLiquidityViaWeb3(web3, ethPriceUniswap);
+      const info = await getPoolLiquidityDirect(ethPriceUniswap);
       setPoolInfo(info);
       console.log('Pool Info:', info);
     } catch (err) {
       setError(err.message);
       console.error('Pool info error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGetSwaps = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const swapsData = await getPoolSwaps(20);
+      setSwaps(swapsData);
+      console.log('Pool Swaps:', swapsData);
+    } catch (err) {
+      setError(err.message);
+      console.error('Swaps error:', err);
     } finally {
       setLoading(false);
     }
@@ -270,6 +286,61 @@ function WalletTest() {
               <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>Source: {poolInfo.source}</p>
             </div>
           </div>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px' }}>
+        <h2>Pool Swaps History</h2>
+        <button 
+          onClick={handleGetSwaps}
+          disabled={loading}
+          style={{ 
+            padding: '10px 20px',
+            fontSize: '14px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            backgroundColor: loading ? '#ccc' : '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px'
+          }}
+        >
+          {loading ? 'Loading...' : 'Get Swaps (last 20)'}
+        </button>
+        
+        {swaps && swaps.length > 0 && (
+          <div style={{ marginTop: '15px' }}>
+            <p><strong>Found {swaps.length} swaps</strong></p>
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {swaps.reverse().map((swap, idx) => {
+                const amount0 = Number(swap.amount0) / 1e18;
+                const amount1 = Number(swap.amount1) / 1e18;
+                const isETHtoDF = amount0 > 0;
+                
+                return (
+                  <div key={idx} style={{ 
+                    padding: '10px', 
+                    marginBottom: '8px', 
+                    backgroundColor: isETHtoDF ? '#e8f5e9' : '#fff3e0',
+                    borderRadius: '4px',
+                    fontSize: '12px'
+                  }}>
+                    <div><strong>Block:</strong> {swap.blockNumber}</div>
+                    <div><strong>Direction:</strong> {isETHtoDF ? 'ETH → DFC' : 'DFC → ETH'}</div>
+                    <div><strong>Amount0 (ETH):</strong> {amount0.toFixed(6)}</div>
+                    <div><strong>Amount1 (DFC):</strong> {amount1.toFixed(2)}</div>
+                    <div><strong>Tick:</strong> {swap.tick}</div>
+                    <div style={{ marginTop: '5px', fontSize: '10px', color: '#666', wordBreak: 'break-all' }}>
+                      <strong>Tx:</strong> {swap.txHash}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
+        {swaps && swaps.length === 0 && (
+          <p style={{ marginTop: '10px', color: '#666' }}>No swaps found in last 50,000 blocks</p>
         )}
       </div>
 
