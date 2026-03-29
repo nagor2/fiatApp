@@ -5,7 +5,7 @@ import ConnectButton from './ConnectButton';
 import { Address, ETHPrice } from '../utils/utils.js';
 
 const Layout = () => {
-  const { account, walletConnected, ethPrice, ethPriceLastUpdate, ethPriceEtherscan, ethPriceUniswap, getAccount } = useWeb3();
+  const { account, walletConnected, ethPrice, ethPriceLastUpdate, ethPriceEtherscan, ethPriceUniswap, getAccount, disconnectWallet } = useWeb3();
   const navigate = useNavigate();
 
   const handleLogoClick = () => {
@@ -27,7 +27,7 @@ const Layout = () => {
           DotFlat
         </h2>
         {walletConnected ? (
-          <Address account={account} />
+          <Address account={account} onDisconnect={disconnectWallet} />
         ) : (
           <ConnectButton getAccount={getAccount} name='connect wallet' />
         )}

@@ -1,6 +1,9 @@
 import React from "react";
 import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import Button from "./Button";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Deposit extends React.Component{
     constructor(props){
@@ -11,51 +14,70 @@ export default class Deposit extends React.Component{
             updated: 0,
             coinsDeposited:0,
             accumulatedInterest:0,
-            interestRate:0
+            interestRate:0,
+            loading: true
         };
 
         this.close = this.close.bind(this);
         this.claimInterest = this.claimInterest.bind(this);
     }
 
+    async loadData() {
+        const { contracts } = this.props;
+        
+        if (!contracts || !contracts['deposit'] || !contracts['dao']) {
+            console.warn('Deposit: contracts not initialized yet');
+            this.setState({ loading: false });
+            return;
+        }
+
+        this.setState({ loading: true });
+
+        try {
+            const [depositRes, interestRes, rateRes] = await Promise.all([
+                fetch(`${BLOCK_WATCHER_API}/api/call/deposit/deposits?args=[${this.props.id}]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/deposit/overallInterest?args=[${this.props.id}]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["depositRate"]`)
+            ]);
+
+            const [depositData, interestData, rateData] = await Promise.all([
+                depositRes.json(),
+                interestRes.json(),
+                rateRes.json()
+            ]);
+
+            const deposit = depositData.result;
+
+            this.setState({
+                opened: dateFromTimestamp(deposit.timeOpened),
+                updated: dateFromTimestamp(deposit.lastTimeUpdated),
+                coinsDeposited: (toFloat(deposit.coinsDeposited)/10**18).toFixed(2),
+                accumulatedInterest: toFloat(interestData.result)/10**18,
+                interestRate: rateData.result,
+                loading: false
+            });
+        } catch (error) {
+            console.error(`❌ Deposit: Failed to load deposit ${this.props.id}:`, error);
+            this.setState({ loading: false });
+        }
+    }
+
     componentDidMount() {
-        const { contracts } = this.props;
-        this.setState({id:this.state.id})
-        contracts['deposit'].methods.deposits(this.props.id).call().then((deposit)=>{
-            this.setState({opened:dateFromTimestamp(deposit.timeOpened)});
-            this.setState({updated:dateFromTimestamp(deposit.lastTimeUpdated)});
-            this.setState({coinsDeposited:(toFloat(deposit.coinsDeposited)/10**18).toFixed(2)});
-        })
-
-        contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{
-            this.setState({accumulatedInterest:toFloat(interest)/10**18});
-        })
-
-        contracts['dao'].methods.params('depositRate').call().then((interest)=>{
-            this.setState({interestRate:interest});
-        })
+        this.loadData();
     }
 
-    componentDidUpdate() {
-        const { contracts } = this.props;
-        contracts['deposit'].methods.deposits(this.props.id).call().then((deposit)=>{
-            this.setState({opened:dateFromTimestamp(deposit.timeOpened)});
-            this.setState({updated:dateFromTimestamp(deposit.lastTimeUpdated)});
-            this.setState({coinsDeposited:(toFloat(deposit.coinsDeposited)/10**18).toFixed(2)});
-        })
-
-        contracts['deposit'].methods.overallInterest(this.props.id).call().then((interest)=>{
-            this.setState({accumulatedInterest:this.props.web3.utils.fromWei(interest,'ether')});
-        })
-
-        contracts['dao'].methods.params('depositRate').call().then((interest)=>{
-            this.setState({interestRate:interest});
-        })
+    componentDidUpdate(prevProps) {
+        if (prevProps.id !== this.props.id || (!prevProps.contracts?.deposit && this.props.contracts?.deposit)) {
+            this.loadData();
+        }
     }
 
-    close(){
-        this.props.contracts['deposit'].methods.deposits(this.props.id).call().then((d)=>{
-            this.props.contracts['deposit'].methods.withdraw(this.props.id,d.coinsDeposited).send({from:this.props.account})
+    async close(){
+        const depositRes = await fetch(`${BLOCK_WATCHER_API}/api/call/deposit/deposits?args=[${this.props.id}]`);
+        const depositData = await depositRes.json();
+        const d = depositData.result;
+        
+        this.props.contracts['deposit'].methods.withdraw(this.props.id,d.coinsDeposited).send({from:this.props.account})
                 .on('transactionHash', (hash) => {
                     this.setState({'loader':true})
                 })
@@ -68,8 +90,6 @@ export default class Deposit extends React.Component{
                 })
                 .on('error', console.error)
                 .catch(e=>console.error);
-        });
-
     }
     claimInterest(){
         //deposit.methods.claimInterest("+id+").send({from:userAddress});
@@ -89,6 +109,10 @@ export default class Deposit extends React.Component{
     }
 
     render() {
+        if (this.state.loading) {
+            return <div align='center'>Loading deposit data...</div>;
+        }
+
         return  <div align='left'>
             <Button emitter={this.props.emitter} action={'openDeposit'} id={this.props.id} name={"topUp"}/>
             <div align='center'><b>Deposit (id: {this.props.id})</b></div>

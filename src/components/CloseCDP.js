@@ -1,5 +1,8 @@
 import React from "react";
 import {Loader} from "../utils/utils";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class CloseCDP extends React.Component{
 
@@ -10,31 +13,32 @@ export default class CloseCDP extends React.Component{
         this.state={DFCBalance:0, buttonInactive: false, allowed:0, toAllow:0, coinsDeposited:0};
     }
 
-    componentDidMount() {
-        if (this.props.account)
-            this.props.contracts['flatCoin'].methods.balanceOf(this.props.account).call().then((res)=>{
-                this.setState({DFCBalance:this.props.web3.utils.fromWei(res,'ether')})
-            })
-
-        if (this.props.account)
-            this.props.contracts['flatCoin'].methods.allowance(this.props.account, this.props.contracts['cdp']._address).call().then((res)=>{
-                this.setState({allowed:this.props.web3.utils.fromWei(res,'ether')})
-            })
-
-        if (this.props.contracts !== 'undefined'){
-            this.props.contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-                const minted = parseFloat(this.props.web3.utils.fromWei(this.props.position.coinsMinted,'ether'));
-                const feeNeeded = 1.2*parseFloat(this.props.web3.utils.fromWei(fee,'ether'));
-                const needed = minted+feeNeeded;
-                //console.log(typeof (feeNeeded))
-                //console.log(typeof (minted))
-
-                this.setState({toAllow:needed});
-                this.setState({needed:needed});
-                //TODO: set 1.001
-            })
+    async componentDidMount() {
+        if (this.props.account) {
+            const balanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${this.props.account}"]`);
+            const balanceData = await balanceRes.json();
+            this.setState({DFCBalance:this.props.web3.utils.fromWei(balanceData.result,'ether')});
         }
 
+        if (this.props.account) {
+            const cdpAddress = this.props.contracts['cdp']._address;
+            const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${cdpAddress}"]`);
+            const allowanceData = await allowanceRes.json();
+            this.setState({allowed:this.props.web3.utils.fromWei(allowanceData.result,'ether')});
+        }
+
+        if (this.props.contracts !== 'undefined'){
+            const feeRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/totalCurrentFee?args=[${this.props.id}]`);
+            const feeData = await feeRes.json();
+            const fee = feeData.result;
+            
+            const minted = parseFloat(this.props.web3.utils.fromWei(this.props.position.coinsMinted,'ether'));
+            const feeNeeded = 1.2*parseFloat(this.props.web3.utils.fromWei(fee,'ether'));
+            const needed = minted+feeNeeded;
+
+            this.setState({toAllow:needed});
+            this.setState({needed:needed});
+        }
     }
 
 
@@ -47,11 +51,12 @@ export default class CloseCDP extends React.Component{
                 .on('receipt', (receipt) => {
                     this.setState({'loader':true})
                 })
-                .on('confirmation', (confirmationNumber, receipt) => {
+                .on('confirmation', async (confirmationNumber, receipt) => {
                     this.setState({'loader':false})
-                    this.props.contracts['flatCoin'].methods.allowance(this.props.account, this.props.contracts['cdp']._address).call().then((res)=>{
-                        this.setState({allowed:(res/10**18)})
-                    })
+                    const cdpAddress = this.props.contracts['cdp']._address;
+                    const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${cdpAddress}"]`);
+                    const allowanceData = await allowanceRes.json();
+                    this.setState({allowed:(allowanceData.result/10**18)});
                 })
                 .on('error', console.error)
                 .catch(e=>console.error);

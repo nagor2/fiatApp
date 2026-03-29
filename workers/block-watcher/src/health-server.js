@@ -146,6 +146,39 @@ class HealthServer {
       
       // Универсальный endpoint для вызова методов контрактов с кэшированием
       // GET /api/call/{contractKey}/{method}?args=["arg1","arg2"]
+      if (pathname.startsWith('/api/eth/getBalance')) {
+        // GET /api/eth/getBalance?address=0x...
+        const address = url.searchParams.get('address');
+        
+        if (!address) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Address parameter required' }));
+          return;
+        }
+        
+        try {
+          const { value, fromCache } = await this.getEthBalance(address);
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: true,
+            method: 'eth.getBalance',
+            address,
+            result: value,
+            cached: fromCache,
+            timestamp: new Date().toISOString()
+          }));
+        } catch (error) {
+          console.error(`eth.getBalance error (${address}):`, error.message);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: false,
+            error: error.message 
+          }));
+        }
+        return;
+      }
+      
       if (pathname.startsWith('/api/call/')) {
         const pathParts = pathname.split('/').filter(p => p);
         if (pathParts.length < 4) {
@@ -215,6 +248,39 @@ class HealthServer {
     });
   }
   
+  async getEthBalance(address) {
+    const cacheKey = `eth:balance:${address.toLowerCase()}`;
+    
+    // Проверяем кэш
+    try {
+      const cached = await this.redisClient.get(cacheKey);
+      if (cached) {
+        return { value: cached, fromCache: true };
+      }
+    } catch (error) {
+      console.error(`Cache read error for ${cacheKey}:`, error.message);
+    }
+    
+    // Получаем баланс через web3
+    const balance = await this.web3.eth.getBalance(address);
+    const balanceStr = balance.toString();
+    
+    // Сохраняем в кэш
+    try {
+      // Для балансов ETH используем короткий TTL или event-driven инвалидацию
+      if (this.cacheTTL > 0) {
+        await this.redisClient.setEx(cacheKey, this.cacheTTL, balanceStr);
+      } else {
+        // Без TTL - инвалидация при новых транзакциях
+        await this.redisClient.set(cacheKey, balanceStr);
+      }
+    } catch (error) {
+      console.error(`Cache write error for ${cacheKey}:`, error.message);
+    }
+    
+    return { value: balanceStr, fromCache: false };
+  }
+
   async callContractMethod(contractKey, methodName, args = []) {
     // Формируем cache key
     const argsHash = args.length > 0 ? `:${args.join(':')}` : '';

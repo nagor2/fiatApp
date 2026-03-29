@@ -46,7 +46,7 @@ export async function getPoolLiquidityViaWeb3(web3, ethPriceUSD = null) {
     console.log(`   Pool ID: ${UNISWAP_CONFIG.POOLS.DFC_ETH_V4.substring(0, 20)}...`);
     
     const currentBlock = await web3.eth.getBlockNumber();
-    const fromBlock = Math.max(0, Number(currentBlock) - 100000);
+    const fromBlock = Math.max(0, Number(currentBlock) - 49999);
     
     console.log(`   Fetching Swap events from block ${fromBlock} to ${currentBlock}...`);
     

@@ -3,7 +3,10 @@ import Bids from "./Bids";
 import {fromBlock} from "../utils/config"
 import {Loader, toFloat} from "../utils/utils"
 import {getPastEventsCached} from "../utils/cacheApi";
+import config from "../utils/config";
 /* global BigInt */
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Auction extends React.Component{
     constructor(props) {
@@ -24,102 +27,149 @@ export default class Auction extends React.Component{
             move:1,
             a: true,
             type:'',
-            lot:''
+            lot:'',
+            loading: true
         };
     }
 
-    componentDidMount() {
-        const { contracts } = this.props;
-        let bids = [];
-        getPastEventsCached(
-            contracts['auction'],
-            'newBid',
-            {filter: {auctionID:this.props.id}, fromBlock: fromBlock},
-            this.props.web3
-        ).then((res)=> {
-            res = res.sort((a,b)=>(b.blockNumber - a.blockNumber));
-            for (let i=0; i<res.length; i++) {
-                if (!bids.find(e=>e.returnValues.bidID==res[i].returnValues.bidID)){
-                    bids.push(res[i])
-                    this.props.web3.eth.getBlock(res[i].blockHash).then((b) => {
-                        res[i].block = b;
-                        this.setState({a: true})
-                        //console.log(res[i].returnValues.auctionID)
-                    });
-                    contracts['auction'].methods.bids(res[i].returnValues.bidID).call().then((bid) => {
-                        res[i].bid = bid;
-                        this.setState({a: true})
-                    })
-                }
-            }
-            this.setState({bids:bids})
-            this.setState({address:contracts['auction']._address});
-        })
+    async loadData() {
+        const { contracts, web3 } = this.props;
+        
+        if (!contracts || !contracts['auction'] || !contracts['dao']) {
+            console.warn('Auction: contracts not initialized yet');
+            this.setState({ loading: false });
+            return;
+        }
 
-        contracts['auction'].methods.auctions(this.props.id).call().then((auction)=>{
-            this.setState({auction:auction});
+        this.setState({ loading: true });
+        const startTime = performance.now();
 
-            let paymentContract = (auction.paymentToken==this.props.contracts['flatCoin']._address)?this.props.contracts['flatCoin']:this.props.contracts['rule'];
+        try {
+            console.log(`🔄 Auction: Loading auction ${this.props.id} via Block Watcher API...`);
+
+            const auctionRes = await fetch(`${BLOCK_WATCHER_API}/api/call/auction/auctions?args=[${this.props.id}]`);
+            const auctionData = await auctionRes.json();
+            const auction = auctionData.result;
+
+            this.setState({auction: auction, address: contracts['auction']._address});
+
+            let paymentContract = (auction.paymentToken==contracts['flatCoin']._address)?contracts['flatCoin']:contracts['rule'];
+            const paymentContractName = (auction.paymentToken==contracts['flatCoin']._address)?'flatCoin':'rule';
             this.setState({paymentTokenContract: paymentContract})
 
+            const auctionAddress = contracts['auction']._address;
+            
+            try {
+                const [allowanceRes, balanceRes] = await Promise.all([
+                    fetch(`${BLOCK_WATCHER_API}/api/call/${paymentContractName}/allowance?args=["${this.props.account}","${auctionAddress}"]`),
+                    fetch(`${BLOCK_WATCHER_API}/api/call/${paymentContractName}/balanceOf?args=["${this.props.account}"]`)
+                ]);
 
-            try{          paymentContract.methods.allowance(this.props.account,contracts['auction']._address).call().then((result) => {
-                this.setState({allowanceToAuction:result});
+                const [allowanceData, balanceData] = await Promise.all([
+                    allowanceRes.json(),
+                    balanceRes.json()
+                ]);
 
-
-                paymentContract.methods.balanceOf(this.props.account).call().then((result)=>{
-                    this.setState({paymentBalance:result});
+                this.setState({
+                    allowanceToAuction: allowanceData.result,
+                    paymentBalance: balanceData.result
                 });
-            });
-            }catch (e) {
-                
+            } catch (e) {
+                console.error('Failed to load payment token data:', e);
             }
-
-
-
-
 
             switch (auction.lotToken){
-                case this.props.contracts['rule']._address: this.setState({lot:'Rule', type:'DFC', move:-1, paymentToken: 'DFC'});break;
-                case this.props.contracts['flatCoin']._address: this.setState({lot:'DFC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
-                case this.props.contracts['weth']._address: this.setState({lot: 'WETH', type:'DFC', move:1, paymentToken: 'DFC'}); break;
+                case contracts['rule']._address: this.setState({lot:'Rule', type:'DFC', move:-1, paymentToken: 'DFC'});break;
+                case contracts['flatCoin']._address: this.setState({lot:'DFC', type:'Rule', move:1,  paymentToken: 'Rule'}); break;
+                case contracts['weth']._address: this.setState({lot: 'WETH', type:'DFC', move:1, paymentToken: 'DFC'}); break;
             }
 
-            this.props.web3.eth.getBlock('latest').then((block)=>{
-                this.setState({block:block})
-                contracts['dao'].methods.params('auctionTurnDuration').call().then((auctionTurnDuration)=> {
-                    this.setState({timeLeft:(auctionTurnDuration - (block.timestamp - auction.lastTimeUpdated))})
-                });
+            const block = await web3.eth.getBlock('latest');
+            const durationRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["auctionTurnDuration"]`);
+            const durationData = await durationRes.json();
+            const auctionTurnDuration = durationData.result;
+            
+            this.setState({
+                block: block,
+                timeLeft: (auctionTurnDuration - (block.timestamp - auction.lastTimeUpdated))
             });
-            if (auction.bestBidID!=0){
-                contracts['auction'].methods.bids(auction.bestBidID).call().then((bestBid)=>{
-                    this.setState({bestBid:bestBid})
-                    contracts['dao'].methods.params('minAuctionPriceMove').call().then((minAuctionPriceMove)=> {
 
-                        //console.log("minAuctionPriceMove: "+minAuctionPriceMove);
-                        //console.log("bestBid.bidAmount: "+toFloat(bestBid.bidAmount)/10**18);
-                        let nextBid = toFloat(bestBid.bidAmount)/10**18 * (100 + this.state.move*toFloat(minAuctionPriceMove))/100;
-                        this.setState({nextBid:nextBid})
-                        //console.log('nextBid:'+this.state.nextBid);
-                    });
-                });
+            if (auction.bestBidID!=0){
+                const bestBidRes = await fetch(`${BLOCK_WATCHER_API}/api/call/auction/bids?args=[${auction.bestBidID}]`);
+                const bestBidData = await bestBidRes.json();
+                const bestBid = bestBidData.result;
+                
+                this.setState({bestBid: bestBid})
+                
+                const minMoveRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["minAuctionPriceMove"]`);
+                const minMoveData = await minMoveRes.json();
+                const minAuctionPriceMove = minMoveData.result;
+                
+                let nextBid = toFloat(bestBid.bidAmount)/10**18 * (100 + this.state.move*toFloat(minAuctionPriceMove))/100;
+                this.setState({nextBid:nextBid})
             }
             else {
                 switch (auction.lotToken){
-                    case this.props.contracts['rule']._address:
-                        contracts['rule'].methods.totalSupply().call().then((ruleSupply)=>{
-                        contracts['dao'].methods.params('maxRuleEmissionPercent').call().then((maxRuleEmissionPercent)=> {
-                            this.setState({nextBid:ruleSupply*maxRuleEmissionPercent/100/10**18-1});
-                        });
-                    }); break;
-                    case this.props.contracts['flatCoin']._address: this.setState({nextBid:0.1}); break;
-                    case this.props.contracts['weth']._address: this.setState({nextBid:0.1}); break;
+                    case contracts['rule']._address:
+                        const [supplyRes, maxEmissionRes] = await Promise.all([
+                            fetch(`${BLOCK_WATCHER_API}/api/call/rule/totalSupply`),
+                            fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["maxRuleEmissionPercent"]`)
+                        ]);
+                        const [supplyData, maxEmissionData] = await Promise.all([
+                            supplyRes.json(),
+                            maxEmissionRes.json()
+                        ]);
+                        this.setState({nextBid:supplyData.result*maxEmissionData.result/100/10**18-1});
+                        break;
+                    case contracts['flatCoin']._address: this.setState({nextBid:0.1}); break;
+                    case contracts['weth']._address: this.setState({nextBid:0.1}); break;
                 }
             }
 
-        });
+            const events = await getPastEventsCached(
+                contracts['auction'],
+                'newBid',
+                {filter: {auctionID:this.props.id}, fromBlock: fromBlock},
+                web3
+            );
+            
+            const sortedEvents = events.sort((a,b)=>(b.blockNumber - a.blockNumber));
+            const bids = [];
+            
+            for (let i=0; i<sortedEvents.length; i++) {
+                if (!bids.find(e=>e.returnValues.bidID==sortedEvents[i].returnValues.bidID)){
+                    const event = sortedEvents[i];
+                    bids.push(event)
+                    
+                    const [blockData, bidRes] = await Promise.all([
+                        web3.eth.getBlock(event.blockHash),
+                        fetch(`${BLOCK_WATCHER_API}/api/call/auction/bids?args=[${event.returnValues.bidID}]`)
+                    ]);
+                    
+                    const bidData = await bidRes.json();
+                    event.block = blockData;
+                    event.bid = bidData.result;
+                }
+            }
+            
+            this.setState({bids: bids, loading: false});
 
+            console.log(`✅ Auction: Auction ${this.props.id} loaded in ${(performance.now() - startTime).toFixed(0)}ms`);
+        } catch (error) {
+            console.error(`❌ Auction: Failed to load auction ${this.props.id}:`, error);
+            this.setState({ loading: false });
+        }
+    }
 
+    componentDidMount() {
+        this.loadData();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.id !== this.props.id || (!prevProps.contracts?.auction && this.props.contracts?.auction)) {
+            console.log('Auction: Props changed, reloading data...');
+            this.loadData();
+        }
     }
 
     allowPayment(){
@@ -132,11 +182,13 @@ export default class Auction extends React.Component{
             .on('receipt', (receipt) => {
                 this.setState({'loader':true})
             })
-            .on('confirmation', (confirmationNumber, receipt) => {
+            .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
-                this.state.paymentTokenContract.methods.allowance(this.props.account, this.props.contracts['auction']._address).call().then((res)=>{
-                    this.setState({allowanceToAuction:(res)})
-                })
+                const paymentContractName = (this.state.auction.paymentToken==this.props.contracts['flatCoin']._address)?'flatCoin':'rule';
+                const auctionAddress = this.props.contracts['auction']._address;
+                const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/${paymentContractName}/allowance?args=["${this.props.account}","${auctionAddress}"]`);
+                const allowanceData = await allowanceRes.json();
+                this.setState({allowanceToAuction:(allowanceData.result)});
             })
             .on('error', console.error);
     }
@@ -175,6 +227,10 @@ export default class Auction extends React.Component{
     }
 
     render() {
+        if (this.state.loading) {
+            return <div align='center'>Loading auction data...</div>;
+        }
+
         return <div align='left'>
             <div align='center'><b>Auction ({this.state.type} buyout) (id: {this.props.id})</b></div>
             {(this.state.timeLeft <= 0) ?

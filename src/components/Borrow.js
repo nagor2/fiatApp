@@ -1,6 +1,8 @@
 import React from "react";
 import {Loader} from "../utils/utils";
+import config from "../utils/config";
 
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Borrow extends React.Component{
 
@@ -32,14 +34,17 @@ export default class Borrow extends React.Component{
         })
     }
 
-    changeProportions(e) {
+    async changeProportions(e) {
         if (!Number(e.target.value)||e.target.value<0||e.target.value =='undefined') {
             return;
         }
         if (e.target.name=='amount'){
-            this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(this.state.collateral,'ether')).call().then((result)=>{
-                e.target.value<=this.props.web3.utils.fromWei(result,'ether')&&this.state.amount>1&&this.state.collateral<=this.props.web3.utils.fromWei(this.state.balance,'ether')?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
-            });
+            const collateralWei = this.props.web3.utils.toWei(this.state.collateral,'ether');
+            const res = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMint?args=["${collateralWei}"]`);
+            const data = await res.json();
+            const result = data.result;
+            
+            e.target.value<=this.props.web3.utils.fromWei(result,'ether')&&this.state.amount>1&&this.state.collateral<=this.props.web3.utils.fromWei(this.state.balance,'ether')?this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
 
             if (e.target.value>=1)
                 this.setState({amount : e.target.value})
@@ -48,14 +53,16 @@ export default class Borrow extends React.Component{
         }
         else {
             this.setState({collateral : e.target.value})
-                this.props.contracts['cdp'].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei(e.target.value, 'ether')).call().then((result)=>{
-                this.setState({amount : this.props.web3.utils.fromWei(result,'ether')})
-            });
+            const collateralWei = this.props.web3.utils.toWei(e.target.value, 'ether');
+            const res = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMint?args=["${collateralWei}"]`);
+            const data = await res.json();
+            const result = data.result;
+            
+            this.setState({amount : this.props.web3.utils.fromWei(result,'ether')})
+            
             (e.target.value<=this.props.web3.utils.fromWei(this.state.balance,'ether')
                 &&this.state.amount>=1)?
                 this.setState({buttonInactive:true}):this.setState({buttonInactive:false});
-
-
         }
         return;
     }

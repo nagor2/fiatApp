@@ -1,5 +1,8 @@
 import React from "react";
 import {toFloat} from "../utils/utils";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class DepositContract extends React.Component{
     constructor(props) {
@@ -11,39 +14,90 @@ export default class DepositContract extends React.Component{
             depositsCount: 0,
             overallVolume: 0,
             overallFee: 0,
-            depositRate: 0
+            depositRate: 0,
+            loading: true
         };
     }
 
-    componentDidMount() {
-        const { contracts } = this.props;
-        this.setState({address:contracts['deposit']._address});
-
-        contracts['deposit'].methods.depositsCounter().call().then((result)=>{
-            this.setState({depositsCount:result});
-        });
-
-        if (this.props.account){
-            contracts['flatCoin'].methods.allowance(this.props.account,contracts['deposit']._address).call().then((result) => {
-                this.setState({allowanceToDeposit:(toFloat(result)/10**18).toFixed(5)});
-            });
-            contracts['flatCoin'].methods.allowance(contracts['cdp']._address, this.props.account).call().then((result) => {
-                this.setState({approvedFromCDP:(toFloat(result)/10**18).toFixed(5)});
-            });
+    async loadData() {
+        const { contracts, account } = this.props;
+        
+        if (!contracts || !contracts['deposit'] || !contracts['flatCoin'] || !contracts['dao'] || !contracts['cdp']) {
+            console.warn('DepositContract: contracts not initialized yet');
+            this.setState({ loading: false });
+            return;
         }
 
+        this.setState({ loading: true });
+        const startTime = performance.now();
 
-        contracts['flatCoin'].methods.balanceOf(contracts['deposit']._address).call().then((result) => {
-            this.setState({overallVolume:(toFloat(result)/10**18).toFixed(2)});
-        });
+        try {
+            console.log('🔄 DepositContract: Starting data load via Block Watcher API...');
 
-        contracts['dao'].methods.params('depositRate').call().then((interest)=>{
-            this.setState({depositRate:interest});
-        })
+            const depositAddress = contracts['deposit']._address;
+            const cdpAddress = contracts['cdp']._address;
+
+            const promises = [
+                fetch(`${BLOCK_WATCHER_API}/api/call/deposit/depositsCounter`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${depositAddress}"]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["depositRate"]`)
+            ];
+
+            if (account) {
+                promises.push(
+                    fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${account}","${depositAddress}"]`),
+                    fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${account}"]`)
+                );
+            }
+
+            const responses = await Promise.all(promises);
+            const dataPromises = responses.map(res => res.json());
+            const results = await Promise.all(dataPromises);
+
+            const newState = {
+                depositsCount: results[0].result,
+                overallVolume: (toFloat(results[1].result)/10**18).toFixed(2),
+                depositRate: results[2].result,
+                address: depositAddress,
+                loading: false
+            };
+
+            if (account) {
+                newState.allowanceToDeposit = (toFloat(results[3].result)/10**18).toFixed(5);
+                newState.approvedFromCDP = (toFloat(results[4].result)/10**18).toFixed(5);
+            }
+
+            this.setState(newState);
+
+            console.log(`✅ DepositContract: Total load time: ${(performance.now() - startTime).toFixed(0)}ms`);
+        } catch (error) {
+            console.error('❌ DepositContract: Failed to load data:', error);
+            this.setState({ loading: false });
+        }
+    }
+
+    componentDidMount() {
+        this.loadData();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!prevProps.contracts?.deposit && this.props.contracts?.deposit) {
+            console.log('DepositContract: Contracts initialized, loading data...');
+            this.loadData();
+        }
+        
+        if (prevProps.account !== this.props.account) {
+            console.log('DepositContract: Account changed, reloading data...');
+            this.loadData();
+        }
     }
 
 //TODO: implement overall fee
     render() {
+        if (this.state.loading) {
+            return <div align='center'>Loading deposit data...</div>;
+        }
+
         return  <div align='left'>
             <div align='center'><b>Deposit contract</b></div>
             {this.props.account!==''?<button type="button" className={"button pointer green right"} onClick={()=>this.props.emitter.emit('change-state', [,'openDeposit',])}>Open deposit</button>:''}

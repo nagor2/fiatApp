@@ -66,13 +66,16 @@ export default class ExchangeRateContract extends React.Component {
         this.setState({ priceHistoryOpen: !this.state.priceHistoryOpen });
     }
 
-    async componentDidMount() {
+    async loadData() {
         const { contracts, web3 } = this.props;
         
         if (!contracts || !contracts['oracle'] || !contracts['basket']) {
             console.warn('Oracle or Basket contract not initialized yet');
+            this.setState({ loading: false });
             return;
         }
+
+        this.setState({ loading: true });
 
         try {
             const oracleAddress = contracts['oracle']._address;
@@ -329,6 +332,17 @@ export default class ExchangeRateContract extends React.Component {
         }
     }
 
+    componentDidMount() {
+        this.loadData();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!prevProps.contracts?.oracle && this.props.contracts?.oracle) {
+            console.log('Contracts initialized, loading data...');
+            this.loadData();
+        }
+    }
+
     render() {
         const { priceHistory, selectedInstrument, instruments, loading } = this.state;
 
@@ -516,14 +530,19 @@ export default class ExchangeRateContract extends React.Component {
                                                     <td style={{ padding: '10px', color: '#000' }}>
                                                         {entry.blockNumber}
                                                     </td>
-                                                    {dataKeys.map(key => (
-                                                        <td key={key} style={{ padding: '10px', textAlign: 'right', color: '#000', fontWeight: 'bold' }}>
-                                                            {entry[key] 
-                                                                ? (key === 'DFC' ? entry[key].toFixed(4) : `$${entry[key].toFixed(2)}`)
-                                                                : '-'
-                                                            }
-                                                        </td>
-                                                    ))}
+                                                    {dataKeys.map(key => {
+                                                        const originalKey = `${key}_original`;
+                                                        const value = key === 'DFC' ? entry[key] : entry[originalKey];
+                                                        
+                                                        return (
+                                                            <td key={key} style={{ padding: '10px', textAlign: 'right', color: '#000', fontWeight: 'bold' }}>
+                                                                {value !== undefined && value !== null
+                                                                    ? (key === 'DFC' ? value.toFixed(4) : `$${value.toFixed(2)}`)
+                                                                    : '-'
+                                                                }
+                                                            </td>
+                                                        );
+                                                    })}
                                                 </tr>
                                             ))}
                                         </tbody>

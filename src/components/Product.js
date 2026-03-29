@@ -1,5 +1,8 @@
 import React from "react";
 import {toFloat} from "../utils/utils";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Product extends React.Component{
     constructor(props){
@@ -29,26 +32,25 @@ export default class Product extends React.Component{
         }
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         const{contracts} = this.props;
 
         if (this.props.section == 'Balances' || this.props.section == 'Loans' || this.props.section == 'Auctions' ||this.props.section == 'Deposits' ||this.props.section == 'Transfers' ){
             if (contracts['flatCoin']!==undefined && contracts['rule']!==undefined)
                 switch (this.props.title) {
                     case 'ETH':
-                        this.props.web3.eth.getBalance(this.props.account).then((result) => {
-                            this.setState({balance: ((toFloat(result) / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
-                        });
-
+                        const ethBalance = await this.props.web3.eth.getBalance(this.props.account);
+                        this.setState({balance: ((toFloat(ethBalance) / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
                         break;
                     case 'DFC':
-                        contracts['flatCoin'].methods.balanceOf(this.props.account).call().then((result) => {
-                            this.setState({balance: (toFloat(result) / 10 ** 18).toFixed(2)});
-                        });
+                        const dfcRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${this.props.account}"]`);
+                        const dfcData = await dfcRes.json();
+                        this.setState({balance: (toFloat(dfcData.result) / 10 ** 18).toFixed(2)});
                         break;
-                    case 'RLE': contracts['rule'].methods.balanceOf(this.props.account).call().then((result) => {
-                        this.setState({balance: (toFloat(result) / 10 ** 18).toFixed(2)});
-                    });
+                    case 'RLE':
+                        const rleRes = await fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${this.props.account}"]`);
+                        const rleData = await rleRes.json();
+                        this.setState({balance: (toFloat(rleData.result) / 10 ** 18).toFixed(2)});
                         break;
                     default:
                         this.setState({balance: this.props.balance});
@@ -59,26 +61,25 @@ export default class Product extends React.Component{
 
     }
 
-    componentWillReceiveProps() {
+    async componentWillReceiveProps() {
         const{contracts} = this.props;
 
         if (this.props.section == 'Balances'){
             if (contracts['flatCoin']!==undefined && contracts['rule']!==undefined )
                 switch (this.props.title) {
                     case 'ETH':
-                        this.props.web3.eth.getBalance(this.props.account).then((result) => {
-                            this.setState({balance: ((toFloat(result) / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
-                        });
-
+                        const ethBalance = await this.props.web3.eth.getBalance(this.props.account);
+                        this.setState({balance: ((toFloat(ethBalance) / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
                         break;
                     case 'DFC':
-                        contracts['flatCoin'].methods.balanceOf(this.props.account).call().then((result) => {
-                            this.setState({balance: (toFloat(result) / 10 ** 18).toFixed(2)});
-                        });
+                        const dfcRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${this.props.account}"]`);
+                        const dfcData = await dfcRes.json();
+                        this.setState({balance: (toFloat(dfcData.result) / 10 ** 18).toFixed(2)});
                         break;
-                    case 'RLE': contracts['rule'].methods.balanceOf(this.props.account).call().then((result) => {
-                        this.setState({balance: (toFloat(result) / 10 ** 18).toFixed(2)});
-                    });
+                    case 'RLE':
+                        const rleRes = await fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${this.props.account}"]`);
+                        const rleData = await rleRes.json();
+                        this.setState({balance: (toFloat(rleData.result) / 10 ** 18).toFixed(2)});
                         break;
                     default:
                         this.setState({balance: this.props.balance});

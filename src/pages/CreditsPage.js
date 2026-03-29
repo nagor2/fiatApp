@@ -6,7 +6,7 @@ import MyPanel from '../components/MyPanel';
 import config from '../utils/config';
 
 const CreditsPage = ({ emitter }) => {
-  const { web3, contracts, account, ethPrice } = useWeb3();
+  const { web3, contracts, account, ethPrice, ethPriceUniswap } = useWeb3();
   const navigate = useNavigate();
   const { id } = useParams();
   
@@ -31,6 +31,7 @@ const CreditsPage = ({ emitter }) => {
         content={config.about}
         account={account}
         ethPrice={ethPrice}
+        ethPriceUniswap={ethPriceUniswap}
       />
     </MainLayout>
   );

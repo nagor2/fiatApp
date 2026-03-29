@@ -124,25 +124,64 @@ export const Web3Provider = ({ children }) => {
   };
 
   const getAccount = async () => {
-    if (window.ethereum) {
-      const accounts = await window.ethereum
-        .request({ method: "eth_requestAccounts" })
-        .catch((err) => {
-          if (err.code === 4001) {
-            console.log("Please connect to MetaMask.");
-          } else {
-            console.error(err);
-          }
-        });
+    try {
+      if (window.ethereum) {
+        const accounts = await window.ethereum
+          .request({ method: "eth_requestAccounts" })
+          .catch((err) => {
+            if (err.code === 4001) {
+              console.log("Please connect to MetaMask.");
+            } else {
+              console.error(err);
+            }
+          });
 
-      if (accounts && accounts.length > 0) {
-        console.log(accounts[0]);
-        setAccount(accounts[0]);
+        if (accounts && accounts.length > 0) {
+          console.log(accounts[0]);
+          setAccount(accounts[0]);
+          setWalletConnected(true);
+          return;
+        }
+      }
+      
+      console.log('no window ethereum');
+      console.log('trying to connect via WalletConnect...');
+      
+      const { initWalletConnect, connectWithWalletConnect } = await import('../utils/walletconnect');
+      initWalletConnect();
+      const result = await connectWithWalletConnect();
+      
+      if (result && result.address) {
+        console.log('✅ Connected via WalletConnect:', result.address);
+        setAccount(result.address);
         setWalletConnected(true);
       }
-    } else {
-      console.log('no window ethereum');
-      console.log('try to connect to walletConnect');
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
+  };
+
+  const disconnectWallet = async () => {
+    try {
+      // Пробуем отключить WalletConnect
+      try {
+        const { disconnectWalletConnect, isWalletConnectConnected } = await import('../utils/walletconnect');
+        
+        if (isWalletConnectConnected()) {
+          await disconnectWalletConnect();
+          console.log('✅ Disconnected from WalletConnect');
+        }
+      } catch (err) {
+        console.log('WalletConnect not connected or error:', err.message);
+      }
+      
+      // Для MetaMask просто сбрасываем состояние
+      // (MetaMask не поддерживает programmatic disconnect)
+      setAccount('');
+      setWalletConnected(false);
+      console.log('✅ Wallet disconnected');
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error);
     }
   };
 
@@ -181,6 +220,63 @@ export const Web3Provider = ({ children }) => {
     const initialize = async () => {
       const web3Instance = await initWeb3();
       await initContracts(web3Instance);
+      
+      // Подписываемся на события MetaMask
+      if (window.ethereum) {
+        try {
+          // Проверяем сохраненное подключение
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) {
+            console.log('✅ Restored MetaMask connection:', accounts[0]);
+            setAccount(accounts[0]);
+            setWalletConnected(true);
+          }
+          
+          // Подписываемся на изменения аккаунтов
+          window.ethereum.on('accountsChanged', (accounts) => {
+            console.log('🔄 MetaMask accounts changed:', accounts);
+            if (accounts && accounts.length > 0) {
+              setAccount(accounts[0]);
+              setWalletConnected(true);
+            } else {
+              setAccount('');
+              setWalletConnected(false);
+            }
+          });
+          
+          // Подписываемся на изменения сети
+          window.ethereum.on('chainChanged', (chainId) => {
+            console.log('🔄 Chain changed:', chainId);
+            window.location.reload();
+          });
+          
+        } catch (err) {
+          console.log('No saved MetaMask connection');
+        }
+      } else {
+        // Проверяем сохраненное подключение через WalletConnect
+        try {
+          const { initWalletConnect } = await import('../utils/walletconnect');
+          const modal = initWalletConnect();
+          
+          if (modal && modal.getIsConnected()) {
+            const provider = modal.getWalletProvider();
+            if (provider) {
+              const { BrowserProvider } = await import('ethers');
+              const ethersProvider = new BrowserProvider(provider);
+              const signer = await ethersProvider.getSigner();
+              const address = await signer.getAddress();
+              
+              console.log('✅ Restored WalletConnect connection:', address);
+              setAccount(address);
+              setWalletConnected(true);
+            }
+          }
+        } catch (err) {
+          console.log('No saved WalletConnect connection:', err.message);
+        }
+      }
+      
       setIsInitialized(true);
     };
     
@@ -212,6 +308,7 @@ export const Web3Provider = ({ children }) => {
     ethPriceUniswap,
     isInitialized,
     getAccount,
+    disconnectWallet,
     fetchEthPriceEtherscan,
     fetchEthPriceUniswap,
   };

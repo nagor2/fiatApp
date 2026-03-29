@@ -790,6 +790,13 @@ class BlockWatcher {
         logger.info(`Invalidated ${keys.length} backend cache keys for ${contractInfo.name} (${contractKey})`);
       }
       
+      // Инвалидируем ETH баланс для этого адреса
+      const ethBalanceKey = `eth:balance:${address}`;
+      const ethDeleted = await this.redisClient.del(ethBalanceKey);
+      if (ethDeleted > 0) {
+        logger.info(`Invalidated ETH balance cache for ${contractInfo.name} (${address})`);
+      }
+      
       // Инвалидируем зависимые контракты
       if (this.cacheDependencies && this.cacheDependencies[contractKey]) {
         for (const depKey of this.cacheDependencies[contractKey]) {

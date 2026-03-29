@@ -3,6 +3,9 @@ import {fromBlock} from "../utils/config";
 import Product from "./Product";
 import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import {getPastEventsCached} from "../utils/cacheApi";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Transfers extends React.Component{
 
@@ -99,7 +102,7 @@ export default class Transfers extends React.Component{
                      hash={product.transactionHash}
             />):'';
         return <><div className={'flex-col'}><b>Your {this.props.contractName.replace(/\b\w/g, l => l.toUpperCase())} transfers</b><p></p><Paginator items={items} perPage={10}/></div>
-            <div><TransferForm web3={this.props.web3} contract={this.props.contracts[this.props.contractName]} account={this.props.account}/></div>
+            <div><TransferForm web3={this.props.web3} contract={this.props.contracts[this.props.contractName]} account={this.props.account} contractName={this.props.contractName}/></div>
         </>;
     }
 }
@@ -147,11 +150,10 @@ class TransferForm extends React.Component{
         this.state = {loader:false, balance:0, amount:0, address:'0x0'}
     }
 
-    componentDidMount() {
-        this.props.contract.methods.balanceOf(this.props.account).call().then((balance)=>{
-            this.setState({balance:balance});
-        })
-
+    async componentDidMount() {
+        const balanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/${this.props.contractName}/balanceOf?args=["${this.props.account}"]`);
+        const balanceData = await balanceRes.json();
+        this.setState({balance:balanceData.result});
     }
 
     transfer(){

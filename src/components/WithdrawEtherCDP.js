@@ -1,5 +1,8 @@
 import React from "react";
 import {Loader} from "../utils/utils";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class WithdrawEtherCDP extends React.Component{
 
@@ -9,23 +12,28 @@ export default class WithdrawEtherCDP extends React.Component{
         this.state={maxToWithdraw: 0, toWithdraw:0};
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         const { contracts } = this.props;
 
-        contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.props.id).call().then((maxCoins) => {
-            const coinsDifference = maxCoins - this.props.position.coinsMinted;
-            this.props.contracts["cdp"].methods.getMaxFlatCoinsToMint(this.props.web3.utils.toWei('0.000001', 'ether')).call().then((coinsPerEther) => {
-                console.log(coinsDifference)
-                console.log(coinsPerEther)
+        const maxCoinsRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMintForPos?args=[${this.props.id}]`);
+        const maxCoinsData = await maxCoinsRes.json();
+        const maxCoins = maxCoinsData.result;
+        
+        const coinsDifference = maxCoins - this.props.position.coinsMinted;
+        
+        const coinsPerEtherRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMint?args=["${this.props.web3.utils.toWei('0.000001', 'ether')}"]`);
+        const coinsPerEtherData = await coinsPerEtherRes.json();
+        const coinsPerEther = coinsPerEtherData.result;
+        
+        console.log(coinsDifference)
+        console.log(coinsPerEther)
 
-                const ethToWithdraw = parseFloat(coinsDifference)/ 1000000 /parseFloat(coinsPerEther) - 0.001;
+        const ethToWithdraw = parseFloat(coinsDifference)/ 1000000 /parseFloat(coinsPerEther) - 0.001;
 
-                console.log(ethToWithdraw)
-                this.setState({maxToWithdraw: ethToWithdraw})
-                this.setState({toWithdraw: ethToWithdraw})
-                this.setState({buttonIsActive:true})
-            })
-        })
+        console.log(ethToWithdraw)
+        this.setState({maxToWithdraw: ethToWithdraw})
+        this.setState({toWithdraw: ethToWithdraw})
+        this.setState({buttonIsActive:true})
     }
 
     setMax(){

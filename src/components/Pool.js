@@ -1,7 +1,10 @@
 import React from "react";
 import {fromBlock} from "../utils/config";
-import {dateFromTimestamp, Loader} from "../utils/utils";
+import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import {getPastEventsCached} from "../utils/cacheApi";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Pool extends React.Component{
     constructor(props) {
@@ -9,50 +12,103 @@ export default class Pool extends React.Component{
         this.state = {address:'', isActiveVoting:false, votingID:0, allowed:0, ruleBalanceOfDAO:0, totalPooled:0, userPooled:0,
             votingDiv:false, addVotingDiv:false, voteDiv:false, loader:false, amount:0, userDecision:false,
             addVoting: {votingType:'1',name:'name', address:'0x0000000000000000000000000000000000000000', value:0, decision:false},
-            currentVoitng:[]};
+            currentVoitng:[], loading: true};
 
         this.toggle = this.toggle.bind(this);
     }
 
+    async loadData() {
+        const { contracts, account, web3 } = this.props;
+        
+        if (!contracts || !contracts['dao'] || !contracts['rule']) {
+            console.warn('Pool: contracts not initialized yet');
+            this.setState({ loading: false });
+            return;
+        }
+
+        this.setState({ loading: true });
+        const startTime = performance.now();
+
+        try {
+            console.log('🔄 Pool: Starting data load via Block Watcher API...');
+
+            const daoAddress = contracts['dao']._address;
+
+            const promises = [
+                fetch(`${BLOCK_WATCHER_API}/api/call/dao/activeVoting`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${daoAddress}"]`)
+            ];
+
+            if (account && account !== '') {
+                promises.push(
+                    fetch(`${BLOCK_WATCHER_API}/api/call/dao/pooled?args=["${account}"]`),
+                    fetch(`${BLOCK_WATCHER_API}/api/call/rule/allowance?args=["${account}","${daoAddress}"]`)
+                );
+            }
+
+            const responses = await Promise.all(promises);
+            const dataPromises = responses.map(res => res.json());
+            const results = await Promise.all(dataPromises);
+
+            const newState = {
+                isActiveVoting: results[0].result,
+                totalPooled: results[1].result,
+                address: daoAddress
+            };
+
+            if (account && account !== '') {
+                newState.userPooled = results[2].result;
+                newState.allowed = results[3].result;
+            }
+
+            const events = await getPastEventsCached(
+                contracts['dao'], 
+                'NewVoting', 
+                {fromBlock: fromBlock, toBlock: 'latest'},
+                web3
+            );
+
+            if (events && events.length > 0) {
+                const id = toFloat(events[events.length - 1].returnValues.id);
+                newState.votingID = id;
+                
+                const votingRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/votings?args=[${id}]`);
+                const votingData = await votingRes.json();
+                newState.currentVoitng = votingData.result;
+            }
+
+            newState.loading = false;
+            this.setState(newState);
+
+            console.log(`✅ Pool: Total load time: ${(performance.now() - startTime).toFixed(0)}ms`);
+        } catch (error) {
+            console.error('❌ Pool: Failed to load data:', error);
+            this.setState({ loading: false });
+        }
+    }
+
     componentDidMount() {
-        this.setState({address:this.props.contracts['dao']._address});
+        this.loadData();
+    }
 
-        this.props.contracts['dao'].methods.activeVoting().call().then((is)=>{
-            this.setState({isActiveVoting:is})});
-
-        this.props.contracts['dao'].methods.pooled(this.props.account).call().then((res)=>{
-            this.setState({userPooled:res})})
-
-        this.props.contracts['rule'].methods.balanceOf(this.props.contracts['dao']._address).call().then((res)=>{
-            this.setState({totalPooled:res})});
-
-        this.props.contracts['rule'].methods.allowance(this.props.account, this.props.contracts['dao']._address).call().then((res)=>{
-            this.setState({allowed:res})});
-
-
-        let events=[];
-
-        getPastEventsCached(
-            this.props.contracts['dao'], 
-            'NewVoting', 
-            {fromBlock: fromBlock, toBlock: 'latest'},
-            this.props.web3
-        ).then((res)=>{
-            events.push.apply(events,res);
-            let id = events[events.length-1].returnValues.id;
-            this.setState({votingID:id})
-            this.props.contracts['dao'].methods.votings(id).call().then((res)=> {
-                this.setState({currentVoitng:res});
-
-            })
-        })
-
-
-
+    componentDidUpdate(prevProps) {
+        if (!prevProps.contracts?.dao && this.props.contracts?.dao) {
+            console.log('Pool: Contracts initialized, loading data...');
+            this.loadData();
+        }
+        
+        if (prevProps.account !== this.props.account) {
+            console.log('Pool: Account changed, reloading data...');
+            this.loadData();
+        }
     }
 
 
     render() {
+        if (this.state.loading) {
+            return <div align='center'>Loading pool data...</div>;
+        }
+
         return  <div align='left'>
             <div align='center'><b>Pool</b></div>
             {this.state.amount>0?<a className={"small-button pointer green right"} onClick={()=>this.allowRLE()}>allow Rule tokens</a>:''}

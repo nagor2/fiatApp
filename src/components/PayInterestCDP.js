@@ -1,5 +1,8 @@
 import React from "react";
 import {Loader, toFloat} from "../utils/utils";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class PayInterestCDP extends React.Component{
     constructor(props) {
@@ -43,39 +46,47 @@ export default class PayInterestCDP extends React.Component{
             .on('error', console.error);
     }
 
-    componentDidMount() {
+    async loadData() {
         const {contracts} = this.props;
-        contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({needed:toFloat(fee)/10**18*1.001});
-            //TODO: set 1.001
-        })
+        
+        if (!contracts || !contracts['cdp'] || !contracts['flatCoin']) {
+            console.warn('PayInterestCDP: contracts not initialized yet');
+            return;
+        }
 
-        contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:toFloat(fee)/10**18});
-        })
+        try {
+            const cdpAddress = contracts['cdp']._address;
 
-        contracts['flatCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
-            this.setState({allowance:toFloat(allowed)/10**18});
-        })
+            const [feeRes, allowanceRes] = await Promise.all([
+                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/totalCurrentFee?args=[${this.props.id}]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${cdpAddress}"]`)
+            ]);
 
+            const [feeData, allowanceData] = await Promise.all([
+                feeRes.json(),
+                allowanceRes.json()
+            ]);
 
+            const fee = toFloat(feeData.result)/10**18;
+
+            this.setState({
+                fee: fee,
+                needed: fee*1.001,
+                allowance: toFloat(allowanceData.result)/10**18
+            });
+        } catch (error) {
+            console.error('❌ PayInterestCDP: Failed to load data:', error);
+        }
     }
 
-    componentDidUpdate() {
-        const {contracts} = this.props;
-        contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({needed:toFloat(fee)/10**18*1.001});
-        })
+    componentDidMount() {
+        this.loadData();
+    }
 
-        contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:toFloat(fee)/10**18});
-        })
-
-        contracts['flatCoin'].methods.allowance(this.props.account, contracts['cdp']._address).call().then((allowed)=>{
-            this.setState({allowance:toFloat(allowed)/10**18});
-        })
-
-
+    componentDidUpdate(prevProps) {
+        if (prevProps.id !== this.props.id || (!prevProps.contracts?.cdp && this.props.contracts?.cdp)) {
+            this.loadData();
+        }
     }
 
     render (){

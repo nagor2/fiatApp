@@ -1,59 +1,130 @@
 import React from "react";
 import {getHolders, getTransfers, toFloat} from "../utils/utils";
 import Button from "./Button";
+import config from "../utils/config";
 
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class DFC extends React.Component{
     constructor(props) {
         super(props);
         this.initCoinsBuyOut = this.initCoinsBuyOut.bind(this);
-        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'coming soon', indicative:'', etherPool:'coming soon', tscPool:'coming soon', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0}
+        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'loading...', indicative:'', etherPool:'coming soon', tscPool:'coming soon', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0, loading: true}
     }
-    componentDidMount() {
-        const {contracts} = this.props;
+    
+    async loadData() {
+        const {contracts, web3, ethPrice, ethPriceUniswap} = this.props;
         
         if (!contracts || !contracts['flatCoin'] || !contracts['cdp'] || !contracts['dao'] || !contracts['basket']) {
             console.warn('DFC: contracts not fully initialized yet');
+            this.setState({ loading: false });
             return;
         }
 
-        contracts['flatCoin'].methods.totalSupply().call().then((supply)=>{
-            this.setState({supply: (toFloat(supply)/10**18).toFixed(2)});
-            contracts['flatCoin'].methods.balanceOf(contracts['cdp']._address).call().then((stub)=>{
-                this.setState({stubFund:(toFloat(stub)/10**18).toFixed(8)})
+        this.setState({ loading: true });
+        const startTime = performance.now();
 
-                contracts['dao'].methods.params('stabilizationFundPercent').call().then((stabilizationFundPercent) => {
-                    this.setState({stubFundDemand:(toFloat(supply) * toFloat(stabilizationFundPercent) / 100 - toFloat(stub))});
-                });
+        try {
+            console.log('🔄 DFC: Starting data load via Block Watcher API...');
+
+            const cdpAddress = contracts['cdp']._address;
+            const auctionAddress = contracts['auction']._address;
+
+            const [supplyRes, stubRes, stabPercentRes, sharePriceRes, allowanceRes] = await Promise.all([
+                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/totalSupply`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${cdpAddress}"]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["stabilizationFundPercent"]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/basket/getCurrentSharePriceChange`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${auctionAddress}"]`)
+            ]);
+
+            const [supplyData, stubData, stabPercentData, sharePriceData, allowanceData] = await Promise.all([
+                supplyRes.json(),
+                stubRes.json(),
+                stabPercentRes.json(),
+                sharePriceRes.json(),
+                allowanceRes.json()
+            ]);
+
+            const supply = toFloat(supplyData.result);
+            const stub = toFloat(stubData.result);
+            const stabilizationFundPercent = toFloat(stabPercentData.result);
+            const sharePrice = toFloat(sharePriceData.result);
+            const allowedToAuction = toFloat(allowanceData.result);
+
+            const ethBalanceRes = await fetch(`${BLOCK_WATCHER_API}/api/eth/getBalance?address=${cdpAddress}`);
+            const ethBalanceData = await ethBalanceRes.json();
+            const ethBalance = ethBalanceData.result;
+            
+            const collateral = ((toFloat(ethBalance)/10**18).toFixed(3)*ethPrice).toFixed(3);
+            const percent = parseFloat(100*collateral/(supply/10**18)/(sharePrice/10**6)).toFixed(2);
+
+            let pricePoolValue = 'loading...';
+            
+            console.log(`🔍 DFC: ethPriceUniswap = ${ethPriceUniswap}`);
+            
+            if (ethPriceUniswap && ethPriceUniswap > 0) {
+                try {
+                    console.log('🔄 DFC: Fetching price from Uniswap...');
+                    const { getDfcPriceInEth } = await import('../utils/uniswap-quoter');
+                    const dfcPriceResult = await getDfcPriceInEth();
+                    console.log('🔍 DFC: dfcPriceResult =', dfcPriceResult);
+                    const dfcPriceUSD = (dfcPriceResult.priceInETH * ethPriceUniswap).toFixed(4);
+                    pricePoolValue = `$${dfcPriceUSD}`;
+                    console.log(`✅ DFC price from Uniswap: $${dfcPriceUSD}`);
+                } catch (err) {
+                    console.error('❌ Failed to get DFC price from Uniswap:', err);
+                    pricePoolValue = 'error loading';
+                }
+            } else {
+                console.log('⏳ DFC: Waiting for ETH price from Uniswap...');
+                pricePoolValue = 'waiting for ETH price...';
+            }
+
+            this.setState({
+                supply: (supply/10**18).toFixed(2),
+                stubFund: (stub/10**18).toFixed(8),
+                stubFundDemand: (supply * stabilizationFundPercent / 100 - stub),
+                indicative: (sharePrice/10**6).toFixed(4),
+                collateral: collateral,
+                collateralPercent: percent,
+                allowedToAuction: allowedToAuction,
+                address: contracts['flatCoin']._address,
+                pricePool: pricePoolValue,
+                loading: false
             });
 
-        });
-        getTransfers(contracts['flatCoin'], this.props.web3).then((result)=>{this.setState({transfers: result.length})});
-        getHolders(contracts['flatCoin'], this.props.web3).then((result)=>{this.setState({holders: result.length})});
-        /*
-        contracts['pool'].methods.getReserves().call().then((reserve)=>{
-            this.setState({pricePool: (reserve[0]*this.props.etcPrice/reserve[1]).toFixed(4)});
-            this.setState({etherPool: (reserve[0]/10**18).toFixed(4)});
-            this.setState({tscPool: (reserve[1]/10**18).toFixed(2)});
-        });*/
-        this.setState({address: contracts['flatCoin']._address});
+            const [transfers, holders] = await Promise.all([
+                getTransfers(contracts['flatCoin'], web3),
+                getHolders(contracts['flatCoin'], web3)
+            ]);
 
-        this.props.web3.eth.getBalance(contracts['cdp']._address).then((result) => {
-            this.setState({collateral: ((toFloat(result)/10**18).toFixed(3)*this.props.ethPrice).toFixed(3)});
-        });
-
-        contracts['basket'].methods.getCurrentSharePriceChange().call().then((sharePrice)=>{
-            this.setState({indicative: (toFloat(sharePrice)/10**6).toFixed(4)});
-            contracts['flatCoin'].methods.totalSupply().call().then((supply) => {
-                const percent = parseFloat(100*this.state.collateral/this.state.supply/this.state.indicative).toFixed(2);
-                this.setState({collateralPercent:percent});
+            this.setState({
+                transfers: transfers.length,
+                holders: holders.length
             });
-        });
 
-        contracts['flatCoin'].methods.allowance(contracts['cdp']._address, contracts['auction']._address).call().then((allowance)=>{
-            this.setState({allowedToAuction: toFloat(allowance)});
-        });
+            console.log(`✅ DFC: Total load time: ${(performance.now() - startTime).toFixed(0)}ms`);
+        } catch (error) {
+            console.error('❌ DFC: Failed to load data:', error);
+            this.setState({ loading: false });
+        }
+    }
 
+    componentDidMount() {
+        this.loadData();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!prevProps.contracts?.flatCoin && this.props.contracts?.flatCoin) {
+            console.log('DFC: Contracts initialized, loading data...');
+            this.loadData();
+        }
+        
+        if (!prevProps.ethPriceUniswap && this.props.ethPriceUniswap && this.props.contracts?.flatCoin) {
+            console.log('DFC: ETH price from Uniswap available, reloading data...');
+            this.loadData();
+        }
     }
 
     initCoinsBuyOut = ()=>{
@@ -97,17 +168,23 @@ export default class DFC extends React.Component{
             .on('receipt', (receipt) => {
                 this.setState({'loader':true})
             })
-            .on('confirmation', (confirmationNumber, receipt) => {
+            .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
-                this.props.contracts['flatCoin'].methods.allowance(this.props.contracts['cdp']._address, this.props.contracts['auction']._address).call().then((allowance)=>{
-                    this.setState({allowedToAuction: allowance});
-                });
+                const cdpAddress = this.props.contracts['cdp']._address;
+                const auctionAddress = this.props.contracts['auction']._address;
+                const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${auctionAddress}"]`);
+                const allowanceData = await allowanceRes.json();
+                this.setState({allowedToAuction: toFloat(allowanceData.result)});
             })
             .on('error', console.error);
     }
 
 
     render() {
+        if (this.state.loading) {
+            return <div align='center'>Loading DFC data...</div>;
+        }
+
         return <div align='left'>
             <div align='center'><b>Dotflat coin</b></div>
             {this.props.account!==''?<Button emitter={this.props.emitter} action={'Dotflat/ETH swap'} name={"Buy"}/>:''}

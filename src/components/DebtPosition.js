@@ -2,6 +2,9 @@ import React from "react";
 import {dateFromTimestamp, toFloat} from "../utils/utils";
 import Button from "./Button";
 import CDP from "./CDP";
+import config from "../utils/config";
+
+const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class DebtPosition extends React.Component{
     constructor(props){
@@ -17,7 +20,8 @@ export default class DebtPosition extends React.Component{
             ethLocked:0,
             feeGeneratedRecorded:0,
             interestRate:0,
-            liquidationStatus:0
+            liquidationStatus:0,
+            loading: true
         };
 //TODO: implement and test
         this.closeCDP = this.closeCDP.bind(this);
@@ -26,39 +30,61 @@ export default class DebtPosition extends React.Component{
         this.payInterest = this.payInterest.bind(this);
     }
 
+    async loadData() {
+        const { contracts, web3 } = this.props;
+        
+        if (!contracts || !contracts['cdp'] || !contracts['dao']) {
+            console.warn('DebtPosition: contracts not initialized yet');
+            this.setState({ loading: false });
+            return;
+        }
+
+        this.setState({ loading: true });
+        const startTime = performance.now();
+
+        try {
+            console.log(`🔄 DebtPosition: Loading position ${this.props.id} via Block Watcher API...`);
+
+            const [positionRes, feeRes, interestRes] = await Promise.all([
+                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/positions?args=[${this.props.id}]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/totalCurrentFee?args=[${this.props.id}]`),
+                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["interestRate"]`)
+            ]);
+
+            const [positionData, feeData, interestData] = await Promise.all([
+                positionRes.json(),
+                feeRes.json(),
+                interestRes.json()
+            ]);
+
+            const position = positionData.result;
+
+            const maxCoinsRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMintForPos?args=[${this.props.id}]`);
+            const maxCoinsData = await maxCoinsRes.json();
+
+            this.setState({
+                position: position,
+                liquidationStatus: position.liquidationStatus,
+                timeOpened: dateFromTimestamp(position.timeOpened),
+                lastTimeUpdated: dateFromTimestamp(position.lastTimeUpdated),
+                coinsMinted: toFloat(position.coinsMinted)/10**18,
+                ethLocked: web3.utils.fromWei(position.ethAmountLocked,'ether'),
+                feeGeneratedRecorded: web3.utils.fromWei(position.interestAmountRecorded,'ether'),
+                maxStableCoinsToMint: toFloat(maxCoinsData.result)/10**18,
+                fee: toFloat(feeData.result)/10**18,
+                interestRate: interestData.result,
+                loading: false
+            });
+
+            console.log(`✅ DebtPosition: Position ${this.props.id} loaded in ${(performance.now() - startTime).toFixed(0)}ms`);
+        } catch (error) {
+            console.error(`❌ DebtPosition: Failed to load position ${this.props.id}:`, error);
+            this.setState({ loading: false });
+        }
+    }
+
     componentDidMount() {
-        const { contracts } = this.props;
-        this.setState({id:this.state.id})
-        contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
-
-            //console.log(position)
-
-            this.setState({position:position});
-            this.setState({liquidationStatus:position.liquidationStatus});
-            if (position.timeOpened!=undefined)
-            this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
-            if (position.lastTimeUpdated!=undefined)
-            this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
-            if (position.coinsMinted!=undefined)
-                this.setState({coinsMinted:toFloat(position.coinsMinted)/10**18});
-
-            if (position.ethAmountLocked!=undefined)
-                this.setState({ethLocked:this.props.web3.utils.fromWei(position.ethAmountLocked,'ether')});
-            if (position.interestAmountRecorded!=undefined)
-                this.setState({feeGeneratedRecorded:this.props.web3.utils.fromWei(position.interestAmountRecorded,'ether')});
-
-
-            contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
-                this.setState({maxStableCoinsToMint:toFloat(maxCoins)/10**18});
-            })
-        })
-        contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-            this.setState({fee:toFloat(fee)/10**18});
-        })
-
-        contracts['dao'].methods.params('interestRate').call().then((interest)=>{
-            this.setState({interestRate:interest});
-        })
+        this.loadData();
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -75,37 +101,10 @@ export default class DebtPosition extends React.Component{
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps !== this.props) {
-            const { contracts } = this.props;
-            contracts['cdp'].methods.positions(this.props.id).call().then((position)=>{
-                this.setState({position:position});
-                this.setState({liquidationStatus:position.liquidationStatus});
-                if (position.lastTimeUpdated!=undefined)
-                this.setState({timeOpened:dateFromTimestamp(position.timeOpened)});
-                if (position.lastTimeUpdated!=undefined)
-                this.setState({lastTimeUpdated:dateFromTimestamp(position.lastTimeUpdated)});
-                if (position.coinsMinted!=undefined)
-                    this.setState({coinsMinted:toFloat(position.coinsMinted)/10**18});
-
-                if (position.ethAmountLocked!=undefined)
-                    this.setState({ethLocked:toFloat(position.ethAmountLocked)/10**18});
-                if (position.interestAmountRecorded!=undefined)
-                    this.setState({feeGeneratedRecorded:toFloat(position.interestAmountRecorded)/10**18});
-
-
-                contracts['cdp'].methods.getMaxFlatCoinsToMintForPos(this.state.id).call().then((maxCoins)=>{
-                    this.setState({maxStableCoinsToMint:toFloat(maxCoins)/10**18});
-                })
-            })
-            contracts['cdp'].methods.totalCurrentFee(this.props.id).call().then((fee)=>{
-                this.setState({fee:toFloat(fee)/10**18});
-            })
-
-            contracts['dao'].methods.params('interestRate').call().then((interest)=>{
-                this.setState({interestRate:interest});
-            })
+        if (prevProps.id !== this.props.id || (!prevProps.contracts?.cdp && this.props.contracts?.cdp)) {
+            console.log('DebtPosition: Props changed, reloading data...');
+            this.loadData();
         }
-
     }
 
     closeCDP(){
@@ -121,6 +120,10 @@ export default class DebtPosition extends React.Component{
     }
 
     render() {
+        if (this.state.loading) {
+            return <div align='center'>Loading position data...</div>;
+        }
+
         return  <div align='left'>
             <div align='center'><b>Debt position (id: {this.props.id})</b></div>
             <Button emitter={this.props.emitter} action={'payInterest'} id={this.props.id} name={"payInterest"} item={this.state.position}/>

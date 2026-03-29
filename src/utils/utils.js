@@ -50,9 +50,20 @@ export class Loader extends React.Component{
 
 export class Address extends React.Component {
     render() {
-        return <div className="button address right">
-            {this.props.account.slice(0, 6) +
-            '...' +this.props.account.slice(-4)}
+        return <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
+            <div className="button address">
+                {this.props.account.slice(0, 6) +
+                '...' +this.props.account.slice(-4)}
+            </div>
+            {this.props.onDisconnect && (
+                <a 
+                    className="button pointer red" 
+                    onClick={this.props.onDisconnect}
+                    style={{ fontSize: '11px', padding: '4px 8px' }}
+                >
+                    disconnect
+                </a>
+            )}
         </div>;
     }
 }
