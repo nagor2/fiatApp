@@ -6,17 +6,19 @@ variables:
   SERVICE: app-dotflat
   NAMESPACE: app-dotflat
   SERVICE_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+  BACKEND_IMAGE: "${CI_REGISTRY_IMAGE}/backend:${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+  WATCHER_IMAGE: "${CI_REGISTRY_IMAGE}/watcher:${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
 
 .build:image:
   stage: build
-  image: 
+  image:
     name: ${BUILD_IMAGE}
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
     - cp "${DOCKER_AUTH_CONFIG}" /kaniko/.docker/config.json
   script:
-    - >- 
+    - >-
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
@@ -24,15 +26,73 @@ variables:
   tags:
     - docker
 
+.build:backend:
+  stage: build
+  image:
+    name: ${BUILD_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - cp "${DOCKER_AUTH_CONFIG}" /kaniko/.docker/config.json
+  script:
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}/backend"
+      --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile"
+      --destination "${BACKEND_IMAGE}"
+  tags:
+    - docker
+
+.build:watcher:
+  stage: build
+  image:
+    name: ${BUILD_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - cp "${DOCKER_AUTH_CONFIG}" /kaniko/.docker/config.json
+  script:
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}/workers/block-watcher"
+      --dockerfile "${CI_PROJECT_DIR}/workers/block-watcher/Dockerfile"
+      --destination "${WATCHER_IMAGE}"
+  tags:
+    - docker
+
 .deploy:image:
   stage: deploy
-  image: 
+  image:
     name: ${DEPLOY_IMAGE}
-    entrypoint: [""] 
+    entrypoint: [""]
   before_script:
     - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
   script:
     - kubectl set image -n ${NAMESPACE} deployment/${SERVICE} ${SERVICE}=${SERVICE_IMAGE}
+  tags:
+    - docker
+
+.deploy:backend:
+  stage: deploy
+  image:
+    name: ${DEPLOY_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
+  script:
+    - kubectl set image -n ${NAMESPACE} deployment/backend backend=${BACKEND_IMAGE}
+  tags:
+    - docker
+
+.deploy:watcher:
+  stage: deploy
+  image:
+    name: ${DEPLOY_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
+  script:
+    - kubectl set image -n ${NAMESPACE} deployment/watcher watcher=${WATCHER_IMAGE}
   tags:
     - docker
 
@@ -69,3 +129,75 @@ deploy:image:prod:
     - if: $CI_COMMIT_REF_NAME == "master"
   needs:
     - build:image:prod
+
+# Backend build jobs
+build:backend:develop:
+  extends: .build:backend
+  environment: develop
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"
+
+build:backend:prod:
+  extends: .build:backend
+  environment: prod
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+
+# Watcher build jobs
+build:watcher:develop:
+  extends: .build:watcher
+  environment: develop
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"
+
+build:watcher:prod:
+  extends: .build:watcher
+  environment: prod
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+
+# Backend deploy jobs
+deploy:backend:develop:
+  stage: deploy
+  extends: .deploy:backend
+  environment: develop
+  variables:
+    K3S_CONFIG: "${K3SDEVCONFIG}"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"
+  needs:
+    - build:backend:develop
+
+deploy:backend:prod:
+  stage: deploy
+  extends: .deploy:backend
+  environment: prod
+  variables:
+    K3S_CONFIG: "${K3SPRODCONFIG}"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+  needs:
+    - build:backend:prod
+
+# Watcher deploy jobs
+deploy:watcher:develop:
+  stage: deploy
+  extends: .deploy:watcher
+  environment: develop
+  variables:
+    K3S_CONFIG: "${K3SDEVCONFIG}"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"
+  needs:
+    - build:watcher:develop
+
+deploy:watcher:prod:
+  stage: deploy
+  extends: .deploy:watcher
+  environment: prod
+  variables:
+    K3S_CONFIG: "${K3SPRODCONFIG}"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+  needs:
+    - build:watcher:prod
