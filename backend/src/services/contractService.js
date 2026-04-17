@@ -1,4 +1,4 @@
-const Web3 = require('web3');
+const { Web3 } = require('web3');
 const cacheService = require('./cacheService');
 const contractsConfig = require('../config/contracts');
 const logger = require('../utils/logger');
