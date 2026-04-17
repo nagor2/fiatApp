@@ -180,7 +180,7 @@ curl http://localhost:3001/health
 curl http://localhost:3001/api/contracts/cdp/state | jq
 
 # Логи
-docker compose logs -f app-backend
+docker compose logs -f backend
 ```
 
 ## Кэширование
@@ -243,7 +243,7 @@ const totalSupply = data;
 
 ```nginx
 location /api/ {
-  proxy_pass http://app-backend:3001;
+  proxy_pass http://backend:3001;
   proxy_set_header Host $host;
   proxy_set_header X-Real-IP $remote_addr;
 }
@@ -297,7 +297,7 @@ router.get('/dashboard/stats', async (req, res) => {
 
 ```bash
 # Проверить логи
-docker compose logs app-backend
+docker compose logs backend
 
 # Проверить что Redis работает
 docker compose exec redis redis-cli PING
@@ -307,7 +307,7 @@ docker compose exec redis redis-cli PING
 
 ```bash
 # Проверить подключение к Redis
-docker compose logs app-backend | grep Redis
+docker compose logs backend | grep Redis
 
 # Проверить есть ли ключи
 docker compose exec redis redis-cli KEYS "contract:*"

@@ -57,7 +57,7 @@ services:
       dockerfile: Dockerfile
     container_name: dotflat-prod
     depends_on:
-      app-backend:
+      backend:
         condition: service_healthy
     ports:
       - "8008:80"
@@ -66,7 +66,7 @@ services:
       - prod
 
   # Backend API с Redis cache
-  app-backend:
+  backend:
     build:
       context: backend
       dockerfile: Dockerfile

@@ -2,6 +2,7 @@ import React from "react";
 import {getHolders, getTransfers, toFloat} from "../utils/utils";
 import Button from "./Button";
 import config from "../utils/config";
+import { getPoolLiquidityDirect } from "../utils/pool-liquidity-direct";
 
 const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
@@ -9,15 +10,15 @@ export default class DFC extends React.Component{
     constructor(props) {
         super(props);
         this.initCoinsBuyOut = this.initCoinsBuyOut.bind(this);
-        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'loading...', indicative:'', etherPool:'coming soon', tscPool:'coming soon', collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0, loading: true}
+        this.state = {address:'', supply:'', transfers:'', holders:'', pricePool:'loading...', indicative:'', etherPool:'loading...', tscPool:'loading...', poolTVL: null, collateral:'', collateralPercent:'', stubFund:'', stubFundDemand: '', allowedToAuction:0, loading: true}
     }
     
     async loadData() {
         const {contracts, web3, ethPrice, ethPriceUniswap} = this.props;
         
-        if (!contracts || !contracts['flatCoin'] || !contracts['cdp'] || !contracts['dao'] || !contracts['basket']) {
-            console.warn('DFC: contracts not fully initialized yet');
-            this.setState({ loading: false });
+        if (!contracts || !contracts['flatCoin'] || !contracts['cdp'] || !contracts['dao'] || !contracts['basket'] || !contracts['auction']) {
+            console.warn('DFC: contracts not fully initialized yet, waiting...');
+            // Не меняем loading state - оставляем "Loading DFC data..."
             return;
         }
 
@@ -56,29 +57,85 @@ export default class DFC extends React.Component{
             const ethBalanceData = await ethBalanceRes.json();
             const ethBalance = ethBalanceData.result;
             
-            const collateral = ((toFloat(ethBalance)/10**18).toFixed(3)*ethPrice).toFixed(3);
-            const percent = parseFloat(100*collateral/(supply/10**18)/(sharePrice/10**6)).toFixed(2);
+            // Используем любую доступную цену ETH (предпочтительно Uniswap)
+            const effectiveEthPrice = ethPriceUniswap || ethPrice || 0;
+            
+            console.log('🔍 DFC collateral calculation:');
+            console.log('   ethBalance (wei):', ethBalance);
+            console.log('   ethBalance (ETH):', toFloat(ethBalance)/10**18);
+            console.log('   ethPrice (prop):', ethPrice);
+            console.log('   ethPriceUniswap (prop):', ethPriceUniswap);
+            console.log('   effectiveEthPrice (used):', effectiveEthPrice);
+            console.log('   supply (wei):', supply);
+            console.log('   supply (DFC):', supply/10**18);
+            console.log('   sharePrice:', sharePrice);
+            
+            const ethBalanceETH = toFloat(ethBalance)/10**18;
+            const collateral = (ethBalanceETH * effectiveEthPrice).toFixed(3);
+            const supplyDFC = supply/10**18;
+            const sharePriceNormalized = sharePrice/10**6;
+            const percent = supplyDFC > 0 && sharePriceNormalized > 0 
+                ? parseFloat(100 * collateral / supplyDFC / sharePriceNormalized).toFixed(2)
+                : '0.00';
+            
+            console.log('   collateral (USD):', collateral);
+            console.log('   collateralPercent:', percent);
 
             let pricePoolValue = 'loading...';
+            let etherPoolValue = 'loading...';
+            let tscPoolValue = 'loading...';
+            let poolTVL = null;
             
             console.log(`🔍 DFC: ethPriceUniswap = ${ethPriceUniswap}`);
             
             if (ethPriceUniswap && ethPriceUniswap > 0) {
+                let dfcPriceInETH = null;
+                
                 try {
                     console.log('🔄 DFC: Fetching price from Uniswap...');
                     const { getDfcPriceInEth } = await import('../utils/uniswap-quoter');
                     const dfcPriceResult = await getDfcPriceInEth();
                     console.log('🔍 DFC: dfcPriceResult =', dfcPriceResult);
-                    const dfcPriceUSD = (dfcPriceResult.priceInETH * ethPriceUniswap).toFixed(4);
+                    dfcPriceInETH = dfcPriceResult.priceInETH;
+                    const dfcPriceUSD = (dfcPriceInETH * ethPriceUniswap).toFixed(4);
                     pricePoolValue = `$${dfcPriceUSD}`;
                     console.log(`✅ DFC price from Uniswap: $${dfcPriceUSD}`);
                 } catch (err) {
                     console.error('❌ Failed to get DFC price from Uniswap:', err);
                     pricePoolValue = 'error loading';
                 }
+
+                // Get pool liquidity
+                try {
+                    console.log('🔄 DFC: Fetching pool liquidity...');
+                    const poolInfo = await getPoolLiquidityDirect(ethPriceUniswap);
+                    console.log('🔍 DFC: poolInfo =', poolInfo);
+                    
+                    if (poolInfo.amountETH !== undefined && poolInfo.amountDFC !== undefined) {
+                        const ethUSD = (poolInfo.amountETH * ethPriceUniswap).toFixed(0);
+                        const dfcUSD = dfcPriceInETH 
+                            ? (poolInfo.amountDFC * dfcPriceInETH * ethPriceUniswap).toFixed(0)
+                            : '?';
+                        
+                        etherPoolValue = `${poolInfo.amountETH.toFixed(4)} ETH ($${ethUSD})`;
+                        tscPoolValue = `${poolInfo.amountDFC.toFixed(2)} DFC ($${dfcUSD})`;
+                        poolTVL = poolInfo.tvlUSD > 0 ? poolInfo.tvlUSD : null;
+                        
+                        console.log(`✅ Pool: ${etherPoolValue}, ${tscPoolValue}, TVL: $${poolTVL}`);
+                    } else {
+                        etherPoolValue = 'no liquidity';
+                        tscPoolValue = 'no liquidity';
+                    }
+                } catch (err) {
+                    console.error('❌ Failed to get pool liquidity:', err);
+                    etherPoolValue = 'error loading';
+                    tscPoolValue = 'error loading';
+                }
             } else {
                 console.log('⏳ DFC: Waiting for ETH price from Uniswap...');
                 pricePoolValue = 'waiting for ETH price...';
+                etherPoolValue = 'waiting for ETH price...';
+                tscPoolValue = 'waiting for ETH price...';
             }
 
             this.setState({
@@ -91,6 +148,9 @@ export default class DFC extends React.Component{
                 allowedToAuction: allowedToAuction,
                 address: contracts['flatCoin']._address,
                 pricePool: pricePoolValue,
+                etherPool: etherPoolValue,
+                tscPool: tscPoolValue,
+                poolTVL: poolTVL,
                 loading: false
             });
 
@@ -116,13 +176,25 @@ export default class DFC extends React.Component{
     }
 
     componentDidUpdate(prevProps) {
-        if (!prevProps.contracts?.flatCoin && this.props.contracts?.flatCoin) {
-            console.log('DFC: Contracts initialized, loading data...');
+        // Проверяем что все необходимые контракты загрузились
+        const prevContractsReady = prevProps.contracts?.flatCoin && prevProps.contracts?.cdp && 
+                                   prevProps.contracts?.dao && prevProps.contracts?.basket && 
+                                   prevProps.contracts?.auction;
+        const currentContractsReady = this.props.contracts?.flatCoin && this.props.contracts?.cdp && 
+                                      this.props.contracts?.dao && this.props.contracts?.basket && 
+                                      this.props.contracts?.auction;
+        
+        if (!prevContractsReady && currentContractsReady) {
+            console.log('DFC: All contracts initialized, loading data...');
             this.loadData();
         }
         
-        if (!prevProps.ethPriceUniswap && this.props.ethPriceUniswap && this.props.contracts?.flatCoin) {
-            console.log('DFC: ETH price from Uniswap available, reloading data...');
+        // Перезагрузка когда любая цена ETH становится доступной
+        const prevEthPrice = prevProps.ethPriceUniswap || prevProps.ethPrice;
+        const currentEthPrice = this.props.ethPriceUniswap || this.props.ethPrice;
+        
+        if (!prevEthPrice && currentEthPrice && currentContractsReady) {
+            console.log('DFC: ETH price available, reloading data...');
             this.loadData();
         }
     }
@@ -210,6 +282,9 @@ export default class DFC extends React.Component{
 
             <div>ETH in pool: <b>{this.state.etherPool}</b></div>
             <div>DFC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Borrow"}/>:''}</div>
+            {this.state.poolTVL && (
+                <div>TVL in pool: <b>${this.state.poolTVL.toFixed(2)}</b></div>
+            )}
             <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of DFC supply)</b></div>
             <div>stabilization fund: <b>{this.state.stubFund}</b></div>
             <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>

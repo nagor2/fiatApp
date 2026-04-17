@@ -83,6 +83,13 @@ export default class MyPanel extends React.Component {
         }
     }
 
+    componentWillUnmount() {
+        // Cleanup: удаляем event listeners для предотвращения memory leak
+        if (this.props.emitter) {
+            this.props.emitter.removeAllListeners('change-state');
+        }
+    }
+
     toggleChildMenu() {
         this.setState(state => ({
             open: !state.open,
@@ -92,6 +99,8 @@ export default class MyPanel extends React.Component {
 
     renderSwitch(){
         if (this.props.displayContent) {
+            // Удаляем старый listener перед добавлением нового (предотвращаем memory leak)
+            this.props.emitter.removeAllListeners('change-state');
             this.props.emitter.on('change-state',  (state) =>{
                 this.setState({content: state});
             });

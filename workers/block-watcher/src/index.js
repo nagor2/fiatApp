@@ -624,6 +624,39 @@ class BlockWatcher {
   
   async subscribeToBlocks() {
     if (this.web3.currentProvider.constructor.name === 'WebsocketProvider') {
+      // WebSocket provider reconnection handling
+      const provider = this.web3.currentProvider;
+      
+      provider.on('connect', async () => {
+        logger.info('WebSocket connected');
+        
+        // Catch-up: check if we missed any blocks during disconnect
+        const currentBlock = Number(await this.web3.eth.getBlockNumber());
+        const lastProcessed = this.health.lastProcessedBlock || 0;
+        
+        if (currentBlock > lastProcessed + 1) {
+          const missedBlocks = currentBlock - lastProcessed;
+          logger.warn(`Detected ${missedBlocks} missed blocks (${lastProcessed} → ${currentBlock}), catching up...`);
+          
+          // Process missed blocks (limit to reasonable number to avoid overload)
+          const catchUpFrom = Math.max(lastProcessed + 1, currentBlock - 100);
+          for (let blockNum = catchUpFrom; blockNum < currentBlock; blockNum++) {
+            try {
+              const blockHeader = await this.web3.eth.getBlock(blockNum);
+              await this.processBlockHeader(blockHeader);
+            } catch (error) {
+              logger.error(`Failed to catch up block ${blockNum}:`, error.message);
+            }
+          }
+          logger.info(`Catch-up completed, processed blocks ${catchUpFrom} → ${currentBlock - 1}`);
+        }
+      });
+      
+      provider.on('disconnect', (error) => {
+        logger.warn('WebSocket disconnected:', error?.message || 'Unknown reason');
+        this.health.status = 'degraded';
+      });
+      
       this.subscription = await this.web3.eth.subscribe('newBlockHeaders');
       
       this.subscription.on('data', async (blockHeader) => {
@@ -899,10 +932,11 @@ class BlockWatcher {
       }
       
       // Вычисляем offset для пагинации (от конца, т.к. нужны последние)
-      const start = -(page * limit);
+      // Используем positive indices с ZREVRANGE вместо negative с ZRANGE REV
+      const start = (page - 1) * limit;
       const end = start + limit - 1;
       
-      // Получаем хэши транзакций для текущей страницы
+      // Получаем хэши транзакций для текущей страницы (ZREVRANGE для reverse order)
       const txHashes = await this.redisClient.zRange(listKey, start, end, { REV: true });
       
       const transactions = [];
@@ -994,10 +1028,11 @@ class BlockWatcher {
       }
       
       // Вычисляем offset для пагинации (от конца, т.к. нужны последние)
-      const start = -(page * limit);
+      // Используем positive indices с ZREVRANGE вместо negative с ZRANGE REV
+      const start = (page - 1) * limit;
       const end = start + limit - 1;
       
-      // Получаем ключи событий для текущей страницы
+      // Получаем ключи событий для текущей страницы (ZREVRANGE для reverse order)
       const eventKeys = await this.redisClient.zRange(listKey, start, end, { REV: true });
       
       const events = [];

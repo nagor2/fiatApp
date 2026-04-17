@@ -61,34 +61,35 @@ export default class Product extends React.Component{
 
     }
 
-    async componentWillReceiveProps() {
-        const{contracts} = this.props;
+    async componentDidUpdate(prevProps) {
+        const { contracts, account, section, title } = this.props;
 
-        if (this.props.section == 'Balances'){
-            if (contracts['flatCoin']!==undefined && contracts['rule']!==undefined )
-                switch (this.props.title) {
-                    case 'ETH':
-                        const ethBalance = await this.props.web3.eth.getBalance(this.props.account);
-                        this.setState({balance: ((toFloat(ethBalance) / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
-                        break;
-                    case 'DFC':
-                        const dfcRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${this.props.account}"]`);
-                        const dfcData = await dfcRes.json();
-                        this.setState({balance: (toFloat(dfcData.result) / 10 ** 18).toFixed(2)});
-                        break;
-                    case 'RLE':
-                        const rleRes = await fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${this.props.account}"]`);
-                        const rleData = await rleRes.json();
-                        this.setState({balance: (toFloat(rleData.result) / 10 ** 18).toFixed(2)});
-                        break;
-                    default:
-                        this.setState({balance: this.props.balance});
-                        break;
-                }
+        // Обновляем баланс только если изменился account или контракты стали доступны
+        const accountChanged = prevProps.account !== account;
+        const contractsReady = contracts?.['flatCoin'] && contracts?.['rule'];
+        const contractsJustReady = !prevProps.contracts?.['flatCoin'] && contractsReady;
 
-
+        if (section === 'Balances' && contractsReady && (accountChanged || contractsJustReady)) {
+            switch (title) {
+                case 'ETH':
+                    const ethBalance = await this.props.web3.eth.getBalance(account);
+                    this.setState({balance: ((toFloat(ethBalance) / 10 ** 11).toFixed(10) / 10 ** 7).toFixed(4)});
+                    break;
+                case 'DFC':
+                    const dfcRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${account}"]`);
+                    const dfcData = await dfcRes.json();
+                    this.setState({balance: (toFloat(dfcData.result) / 10 ** 18).toFixed(2)});
+                    break;
+                case 'RLE':
+                    const rleRes = await fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${account}"]`);
+                    const rleData = await rleRes.json();
+                    this.setState({balance: (toFloat(rleData.result) / 10 ** 18).toFixed(2)});
+                    break;
+                default:
+                    this.setState({balance: this.props.balance});
+                    break;
+            }
         }
-
     }
 
     handleClick = () => {

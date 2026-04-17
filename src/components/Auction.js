@@ -35,9 +35,9 @@ export default class Auction extends React.Component{
     async loadData() {
         const { contracts, web3 } = this.props;
         
-        if (!contracts || !contracts['auction'] || !contracts['dao']) {
-            console.warn('Auction: contracts not initialized yet');
-            this.setState({ loading: false });
+        if (!contracts || !contracts['auction'] || !contracts['dao'] || !contracts['flatCoin'] || !contracts['rule']) {
+            console.warn('Auction: contracts not initialized yet, waiting...');
+            // Не меняем loading state - оставляем пока контракты не загрузятся
             return;
         }
 

@@ -32,8 +32,8 @@ export default class CDP extends React.Component{
         const { contracts, account, web3, ethPrice } = this.props;
         
         if (!contracts || !contracts['flatCoin'] || !contracts['cdp'] || !contracts['dao'] || !contracts['rule'] || !contracts['auction']) {
-            console.warn('CDP: contracts not fully initialized yet');
-            this.setState({ loading: false });
+            console.warn('CDP: contracts not fully initialized yet, waiting...');
+            // Не меняем loading state - оставляем пока контракты не загрузятся
             return;
         }
 
@@ -116,12 +116,20 @@ export default class CDP extends React.Component{
     }
 
     componentDidUpdate(prevProps) {
-        if (!prevProps.contracts?.cdp && this.props.contracts?.cdp) {
-            console.log('CDP: Contracts initialized, loading data...');
+        // Проверяем что все необходимые контракты загрузились
+        const prevContractsReady = prevProps.contracts?.flatCoin && prevProps.contracts?.cdp && 
+                                   prevProps.contracts?.dao && prevProps.contracts?.rule && 
+                                   prevProps.contracts?.auction;
+        const currentContractsReady = this.props.contracts?.flatCoin && this.props.contracts?.cdp && 
+                                      this.props.contracts?.dao && this.props.contracts?.rule && 
+                                      this.props.contracts?.auction;
+        
+        if (!prevContractsReady && currentContractsReady) {
+            console.log('CDP: All contracts initialized, loading data...');
             this.loadData();
         }
         
-        if (prevProps.account !== this.props.account) {
+        if (prevProps.account !== this.props.account && currentContractsReady) {
             console.log('CDP: Account changed, reloading data...');
             this.loadData();
         }
