@@ -19,7 +19,7 @@
             │
             ↓
     Ethereum RPC (WebSocket)
-    wss://eth.rpc.rivet.cloud
+    wss://ethereum-rpc.publicnode.com
 ```
 
 ## Сервисы
@@ -123,10 +123,10 @@ docker compose --profile workers up
 
 ```bash
 # WebSocket для real-time (рекомендуется)
-RPC_WS_URL=wss://eth.rpc.rivet.cloud/YOUR_KEY
+RPC_WS_URL=wss://ethereum-rpc.publicnode.com
 
 # HTTP fallback
-RPC_HTTP_URL=https://eth.rpc.rivet.cloud/YOUR_KEY
+RPC_HTTP_URL=https://ethereum-rpc.publicnode.com
 
 # Redis
 REDIS_URL=redis://redis:6379

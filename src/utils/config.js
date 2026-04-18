@@ -2926,13 +2926,24 @@ config.Workers = {
     subtitle: '',
 }
 
+// По умолчанию используем nginx proxy /api/worker/ (тот же origin что и фронт).
+// Это избавляет от CORS и от попыток стучаться в loopback клиента.
+// В dev-режиме можно переопределить через REACT_APP_WORKERS_HEALTH_URL в .env.
+const defaultWorkerHealthUrl = "/api/worker/health";
+const rawWorkerHealthUrl = process.env.REACT_APP_WORKERS_HEALTH_URL || defaultWorkerHealthUrl;
+const workerHealthUrl = rawWorkerHealthUrl.startsWith('http')
+    ? rawWorkerHealthUrl
+    : (typeof window !== 'undefined'
+        ? `${window.location.origin}${rawWorkerHealthUrl}`
+        : rawWorkerHealthUrl);
+
 config.workers = [
     { 
         title: 'Block Watcher', 
         name: 'Monitors blockchain for cache invalidation', 
         id: 1, 
         iconType: 'robot',
-        healthUrl: process.env.REACT_APP_WORKERS_HEALTH_URL || 'http://localhost:3002/health'
+        healthUrl: workerHealthUrl
     },
 ];
 
@@ -3030,7 +3041,7 @@ config.about = {
 </div>
 };
 
-config.workersHealthUrl = process.env.REACT_APP_WORKERS_HEALTH_URL || 'http://localhost:3002/health';
+config.workersHealthUrl = workerHealthUrl;
 
 config.etherscanApiKey = 'YOUR_ETHERSCAN_API_KEY';
 config.etherscanApiUrl = 'https://api.etherscan.io/v2/api';

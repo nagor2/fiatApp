@@ -8,14 +8,12 @@ import { JsonRpcProvider } from 'ethers';
 const RPC_PROVIDERS = {
   PUBLICNODE: 'https://ethereum-rpc.publicnode.com',
   LLAMARPC: 'https://eth.llamarpc.com',
-  RIVET: 'https://eth.rpc.rivet.cloud/6f4e0413c2dd468ebd08f54a5c9c5b82',
 };
 
 const DEFAULT_RPC_URL = RPC_PROVIDERS.PUBLICNODE;
 const FALLBACK_RPC_URLS = [
   RPC_PROVIDERS.PUBLICNODE,
   RPC_PROVIDERS.LLAMARPC,
-  RPC_PROVIDERS.RIVET,
 ];
 
 const providerCache = new Map();

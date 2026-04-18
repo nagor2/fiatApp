@@ -77,7 +77,7 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=production
-      - RPC_URL=${RPC_URL:-https://eth.rpc.rivet.cloud/6f4e0413c2dd468ebd08f54a5c9c5b82}
+      - RPC_URL=${RPC_URL:-https://ethereum-rpc.publicnode.com}
       - REDIS_URL=redis://redis:6379
       - CACHE_TTL=${CACHE_TTL:-60}
       - CACHE_ENABLED=true

@@ -1,73 +1,85 @@
-# RPC Proxy Configuration
+# RPC & Worker Proxy Configuration
 
 ## Проблема
 
-Прямое обращение к внешнему Ethereum RPC провайдеру (`https://eth.rpc.rivet.cloud`) из браузера блокируется CORS политикой:
-- Браузер делает preflight запрос (OPTIONS)
-- RPC сервер не возвращает заголовок `Access-Control-Allow-Origin`
-- Браузер блокирует доступ к ответу
+Прямое обращение к внешним сервисам из браузера на `https://beta.app.dotflat.io`
+упирается в две вещи:
+
+1. **CORS для внешнего RPC.** Многие публичные Ethereum RPC не выставляют
+   `Access-Control-Allow-Origin`, поэтому preflight падает и браузер не даёт
+   прочитать ответ.
+2. **Private Network Access для воркеров.** Если фронтенд пытается стучаться в
+   `http://localhost:3002/health`, Chrome блокирует такой запрос как доступ
+   публичного origin к loopback-пространству клиента.
 
 ## Решение
 
-Настроен прокси на уровне сервера, чтобы запросы шли через наш бэкенд:
+Всё, что фронтенд делает «налево», проходит через nginx того же origin:
 
 ```
-Frontend (браузер) → Наш сервер (/api/rpc) → eth.rpc.rivet.cloud
+Browser (beta.app.dotflat.io)
+ ├─ /api/rpc/*       → ethereum-rpc.publicnode.com   (RPC)
+ ├─ /api/contracts/* → backend.app-dotflat.svc:3001  (кэш контрактов)
+ └─ /api/worker/*    → watcher.app-dotflat.svc:3002  (block-watcher health/events/tx)
 ```
+
+Так нет ни CORS, ни обращений к клиентскому localhost.
 
 ## Реализация
 
-### Production режим (nginx)
+### Production (nginx.conf)
 
-В `nginx.conf` добавлен location `/api/rpc`:
-- Проксирует запросы к `https://eth.rpc.rivet.cloud/...`
-- Добавляет CORS заголовки
-- Обрабатывает preflight запросы
+`nginx.conf` содержит три `location`:
 
-### Development режим (npm start)
+- `/api/rpc` → `https://ethereum-rpc.publicnode.com` (с rewrite префикса и CORS
+  заголовками на случай обращения со стороннего origin).
+- `/api/contracts` → `backend.app-dotflat.svc.cluster.local:3001`.
+- `/api/worker/` → `watcher.app-dotflat.svc.cluster.local:3002` (rewrite
+  обрезает `/api/worker/` из пути, на upstream уходит исходный путь воркера).
 
-В `src/setupProxy.js` настроен http-proxy-middleware:
-- Автоматически подхватывается `react-scripts`
-- Проксирует `/api/rpc` к rivet.cloud
-- Работает на `localhost:3000`
+Все upstream'ы резолвятся kube-dns в рантайме, чтобы контейнер не падал при
+старте, если целевой Service временно недоступен.
 
-### Конфигурация в коде
+### Development (src/setupProxy.js)
+
+Для `npm start` / hot-reload (`react-scripts`) используется
+`http-proxy-middleware`, который проксирует `/api/rpc` в тот же публичный RPC.
+
+### Код фронтенда
 
 `src/utils/config.js`:
+
 ```javascript
+// RPC
 config.rpc = process.env.REACT_APP_RPC_URL || "/api/rpc";
+
+// Worker health/API
+config.workersHealthUrl = process.env.REACT_APP_WORKERS_HEALTH_URL
+                      || "/api/worker/health";
 ```
 
-- По умолчанию использует относительный URL `/api/rpc` (прокси)
-- Можно переопределить через `.env` для прямого подключения (если RPC поддерживает CORS)
+Относительные пути автоматически «абсолютизируются» через
+`window.location.origin`, чтобы Web3.js получил полный URL.
 
-## Использование
+## Переопределение в dev
 
-### Production
+`.env`:
+
 ```bash
-docker compose --profile prod up
-```
-URL: `http://localhost:8008` → запросы идут через nginx → rivet.cloud
-
-### Development
-```bash
-docker compose --profile dev up
-```
-URL: `http://localhost:3000` → запросы идут через setupProxy.js → rivet.cloud
-
-### Локальная нода
-
-Создать `.env`:
-```bash
+# Локальный RPC
 REACT_APP_RPC_URL=http://localhost:8545
+
+# Локальный воркер
+REACT_APP_WORKERS_HEALTH_URL=http://localhost:3002/health
 ```
 
-Тогда запросы пойдут напрямую к локальной ноде (CORS не требуется для localhost).
+Если фронтенд раздаётся с `http://localhost`, браузер пустит такие запросы
+напрямую (CORS/PNA для loopback-origin к loopback-upstream не действуют).
 
 ## Преимущества
 
-1. **Нет CORS проблем** - запросы идут с того же origin
-2. **Безопасность** - RPC ключ не светится в браузере
-3. **Гибкость** - легко переключаться между провайдерами
-4. **Кэширование** - можно добавить кэш на уровне nginx
-5. **Мониторинг** - все RPC запросы логируются nginx
+1. **Нет CORS проблем** — запросы идут с того же origin.
+2. **Нет loopback-проблем** — фронт не ходит в localhost клиента.
+3. **RPC ключи / внутренние адреса не светятся в браузере.**
+4. **Гибкость** — легко переключать RPC/воркер через переменные.
+5. **Мониторинг** — все запросы логируются nginx.

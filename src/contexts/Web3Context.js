@@ -33,7 +33,7 @@ export const Web3Provider = ({ children }) => {
         console.log('using window web3');
       } else {
         web3Instance = new Web3(config.rpc);
-        console.log('using rivet');
+        console.log('using HTTP RPC:', config.rpc);
       }
     } catch (error) {
       console.log('Error initializing web3, using fallback RPC:', error.message);

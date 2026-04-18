@@ -141,10 +141,10 @@ curl -X POST http://localhost:3002/api/renewCache/flatCoin
 
 ```bash
 # RPC endpoint (WebSocket)
-RPC_WS_URL=wss://eth.rpc.rivet.cloud/...
+RPC_WS_URL=wss://ethereum-rpc.publicnode.com
 
 # Альтернативно HTTP для fallback
-RPC_HTTP_URL=https://eth.rpc.rivet.cloud/...
+RPC_HTTP_URL=https://ethereum-rpc.publicnode.com
 
 # Redis
 REDIS_URL=redis://redis:6379

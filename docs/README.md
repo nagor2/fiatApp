@@ -86,7 +86,7 @@ app-dotflat/
 ### Blockchain
 - Ethereum compatible network
 - Smart Contracts: DAO, CDP, Auction, Deposit, Oracle
-- Web3 provider: Rivet Cloud
+- Web3 provider: PublicNode (публичный CORS-совместимый RPC), с fallback на LlamaRPC
 
 ## Environments
 

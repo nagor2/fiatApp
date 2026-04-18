@@ -64,9 +64,35 @@ module.exports = function(app) {
       },
       onError: (err, req, res) => {
         console.error('[Contract Cache API Error]', err.message);
-        res.status(500).json({ 
-          error: 'Contract cache API error', 
-          message: err.message 
+        res.status(500).json({
+          error: 'Contract cache API error',
+          message: err.message
+        });
+      },
+    })
+  );
+
+  // Proxy для block-watcher worker API (/api/worker/* → localhost:3002/*).
+  // В production тот же путь проксируется nginx на k8s Service воркера.
+  // Позволяет фронтенду использовать один относительный URL в dev и prod.
+  app.use(
+    '/api/worker',
+    createProxyMiddleware({
+      target: 'http://localhost:3002',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/worker': '',
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        if (process.env.DEBUG_API) {
+          console.log(`[Worker Proxy] ${req.method} ${req.url}`);
+        }
+      },
+      onError: (err, req, res) => {
+        console.error('[Worker Proxy Error]', err.message);
+        res.status(500).json({
+          error: 'Worker proxy error',
+          message: err.message
         });
       },
     })

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../layouts/MainLayout';
 
-const BLOCK_WATCHER_API = (process.env.REACT_APP_WORKERS_HEALTH_URL || 'http://localhost:3002/health').replace('/health', '');
+// По умолчанию — nginx proxy того же origin (/api/worker). В dev можно переопределить
+// полным URL через REACT_APP_WORKERS_HEALTH_URL (например http://localhost:3002/health).
+const rawWorkerUrl = process.env.REACT_APP_WORKERS_HEALTH_URL || '/api/worker/health';
+const absoluteWorkerUrl = rawWorkerUrl.startsWith('http')
+  ? rawWorkerUrl
+  : (typeof window !== 'undefined' ? `${window.location.origin}${rawWorkerUrl}` : rawWorkerUrl);
+const BLOCK_WATCHER_API = absoluteWorkerUrl.replace(/\/health$/, '');
 
 function BlockWatcherPage({ emitter }) {
   const [workerHealth, setWorkerHealth] = useState(null);

@@ -11,7 +11,6 @@ This document describes the integration of Uniswap V4 DFC quotes and WalletConne
 Provides automatic fallback between multiple RPC providers:
 - PublicNode (primary)
 - LlamaRPC (fallback)
-- Rivet (fallback)
 
 Usage:
 ```javascript
@@ -149,7 +148,6 @@ Get a free project ID at: https://cloud.walletconnect.com/
 The integration uses public RPC endpoints with automatic fallback:
 1. PublicNode: `https://ethereum-rpc.publicnode.com`
 2. LlamaRPC: `https://eth.llamarpc.com`
-3. Rivet: `https://eth.rpc.rivet.cloud/...`
 
 ## Testing
 

@@ -3,7 +3,7 @@
  * Решает проблему "exceed maximum block range" при запросах к RPC
  */
 
-const MAX_BLOCK_RANGE = 49999; // Rivet limit: 50000, оставляем запас
+const MAX_BLOCK_RANGE = 49999; // Публичные RPC (PublicNode и др.) лимитируют eth_getLogs в 50000 блоков — оставляем запас
 
 /**
  * Получает события контракта с автоматической разбивкой на чанки

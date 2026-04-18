@@ -122,7 +122,7 @@ PORT=3001
 NODE_ENV=production
 
 # Ethereum RPC
-RPC_URL=https://eth.rpc.rivet.cloud/YOUR_KEY
+RPC_URL=https://ethereum-rpc.publicnode.com
 
 # Redis
 REDIS_URL=redis://redis:6379

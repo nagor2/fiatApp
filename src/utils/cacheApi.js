@@ -1,7 +1,13 @@
 // API для работы с block-watcher cache
 // Заменяет прямые RPC вызовы на кэшированные данные
 
-const WORKER_API_URL = process.env.REACT_APP_WORKERS_HEALTH_URL?.replace('/health', '') || 'http://localhost:3002';
+// По умолчанию — nginx proxy того же origin (/api/worker). В dev можно переопределить
+// полным URL через REACT_APP_WORKERS_HEALTH_URL (например http://localhost:3002/health).
+const rawWorkerUrl = process.env.REACT_APP_WORKERS_HEALTH_URL || '/api/worker/health';
+const absoluteWorkerUrl = rawWorkerUrl.startsWith('http')
+  ? rawWorkerUrl
+  : (typeof window !== 'undefined' ? `${window.location.origin}${rawWorkerUrl}` : rawWorkerUrl);
+const WORKER_API_URL = absoluteWorkerUrl.replace(/\/health$/, '');
 
 /**
  * Пересинхронизировать кэш контракта
