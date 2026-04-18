@@ -1,0 +1,33 @@
+# k8s Service для блок-вотчера.
+#
+# ЗАЧЕМ:
+#   Nginx фронта проксирует /api/worker/* на watcher.app-dotflat.svc.cluster.local:3002.
+#   Без этого Service запрос в nginx получает 503 Service Temporarily Unavailable.
+#
+# КТО ПРИМЕНЯЕТ:
+#   Админ кластера / владелец kubeconfig K3SDEVCONFIG (обычный developer не
+#   имеет прав `create services`). Один раз:
+#     kubectl apply -f k8s/watcher-service.yaml
+#
+# ПРОВЕРКА:
+#   kubectl -n app-dotflat get endpoints watcher
+#   # endpoint должен быть непустым (IP пода)
+#
+# ВАЖНО: selector должен совпадать с labels пода watcher. Если у пода метка
+# не `app=watcher`, поправьте selector — иначе endpoints будет пустой.
+apiVersion: v1
+kind: Service
+metadata:
+  name: watcher
+  namespace: app-dotflat
+  labels:
+    app: watcher
+spec:
+  type: ClusterIP
+  selector:
+    app: watcher
+  ports:
+    - name: http
+      port: 3002
+      targetPort: 3002
+      protocol: TCP

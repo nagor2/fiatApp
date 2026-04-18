@@ -27,7 +27,12 @@ class BlockWatcher {
   constructor() {
     this.rpcWsUrl = process.env.RPC_WS_URL;
     this.rpcHttpUrl = process.env.RPC_HTTP_URL;
-    this.redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    // Дефолт — FQDN Redis'а проекта DotFlat в k8s-неймспейсе `dotflat`.
+    // Переопределяется через env REDIS_URL (в k8s задаётся секретом watcher-env).
+    this.redisUrl = process.env.REDIS_URL || 'redis://redis.dotflat.svc.cluster.local:6379';
+    // Максимальное время ожидания готовности Redis перед fail-fast (мс).
+    // Если Redis не поднимается за это время — контейнер падает, kubelet рестартит.
+    this.redisReadyTimeoutMs = parseInt(process.env.REDIS_READY_TIMEOUT_MS || '60000', 10);
     this.healthPort = process.env.HEALTH_BROADCAST_PORT || 3002;
     this.startBlock = parseInt(process.env.START_BLOCK || '0');
     this.etherscanApiKey = process.env.ETHERSCAN_API_KEY;
@@ -91,17 +96,70 @@ class BlockWatcher {
   }
   
   async connectRedis() {
+    // reconnectStrategy: бесконечный реконнект с backoff 100мс..5000мс.
+    // Без этого node-redis v4 после ~20 неудачных попыток переходит в
+    // постоянное состояние 'closed', и любой set/zAdd кидает
+    // "The client is closed" — именно это мы ловили в проде.
     this.redisClient = redis.createClient({
-      url: this.redisUrl
+      url: this.redisUrl,
+      socket: {
+        reconnectStrategy: (retries) => {
+          const delay = Math.min(100 * Math.pow(2, retries), 5000);
+          if (retries > 0 && retries % 10 === 0) {
+            logger.warn(`Redis reconnect: attempt ${retries}, delay ${delay}ms`);
+          }
+          return delay;
+        },
+        connectTimeout: 10000,
+      },
     });
-    
+
     this.redisClient.on('error', (err) => {
-      logger.error('Redis Client Error:', err);
+      logger.error(`Redis Client Error: ${err.message}`);
       this.health.status = 'degraded';
+      this.health.redisError = err.message;
     });
-    
+    this.redisClient.on('ready',   () => {
+      logger.info('Redis ready');
+      this.health.redisError = null;
+      if (this.health.status === 'degraded') {
+        this.health.status = 'healthy';
+      }
+    });
+    this.redisClient.on('reconnecting', () => logger.warn('Redis reconnecting...'));
+    this.redisClient.on('end',     () => logger.warn('Redis connection ended'));
+
     await this.redisClient.connect();
     logger.info('Connected to Redis');
+  }
+
+  // Быстрая проверка доступности Redis без блокирующих вызовов.
+  // node-redis v4 выставляет isReady=true только когда соединение активно и
+  // готово принимать команды. Если false — никакие операции делать нельзя,
+  // иначе получим "The client is closed" / таймауты.
+  isRedisReady() {
+    return !!(this.redisClient && this.redisClient.isReady);
+  }
+
+  // Ждёт готовности Redis до таймаута. Если за это время клиент не поднялся —
+  // кидает ошибку (вызывающий код решает: упасть, пропустить батч, и т.п.).
+  // Используется в тяжёлых циклах (historicalSync), чтобы не сыпать тысячами
+  // запросов в заведомо нерабочий клиент.
+  async ensureRedisReady(timeoutMs = this.redisReadyTimeoutMs) {
+    if (this.isRedisReady()) return;
+    logger.warn(`Redis not ready, waiting up to ${timeoutMs}ms...`);
+    await new Promise((resolve, reject) => {
+      const onReady = () => {
+        clearTimeout(timer);
+        this.redisClient.off('ready', onReady);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        this.redisClient.off('ready', onReady);
+        reject(new Error(`Redis not ready after ${timeoutMs}ms`));
+      }, timeoutMs);
+      this.redisClient.on('ready', onReady);
+    });
   }
   
   async connectWeb3() {
@@ -235,6 +293,10 @@ class BlockWatcher {
   
   async saveCheckpoint(blockNumber) {
     try {
+      if (!this.isRedisReady()) {
+        logger.warn('Redis not ready, checkpoint not saved (will retry on next block)');
+        return;
+      }
       const checkpoint = {
         lastProcessedBlock: blockNumber,
         contractsHash: await this.getContractsHash(),
@@ -314,12 +376,17 @@ class BlockWatcher {
   
   async historicalSync(fromBlock, toBlock) {
     logger.info(`Starting historical sync: blocks ${fromBlock} → ${toBlock}`);
-    
+
+    // Если Redis не готов — не запускаем тяжёлый sync.
+    // Иначе получим сотни тысяч "The client is closed" ошибок и забитые CPU/логи.
+    await this.ensureRedisReady();
+
     // 1. Загружаем транзакции для каждого контракта через Etherscan API
     logger.info('=== PHASE 1: Loading transactions via Etherscan API ===');
     for (const [address, contractInfo] of this.watchedAddresses.entries()) {
+      await this.ensureRedisReady();
       logger.info(`Loading transactions for ${contractInfo.name} (${address})...`);
-      
+
       try {
         await this.loadTransactionsViaEtherscan(address, fromBlock, toBlock);
       } catch (error) {
@@ -332,6 +399,7 @@ class BlockWatcher {
     
     // 2. Загружаем события для каждого контракта через RPC getPastEvents
     logger.info('=== PHASE 2: Loading events via RPC getPastEvents ===');
+    await this.ensureRedisReady();
     await this.loadEventsViaRPC(fromBlock, toBlock);
     
     await this.saveCheckpoint(toBlock);
@@ -379,6 +447,11 @@ class BlockWatcher {
   
   async indexTransaction(tx, contractAddress) {
     try {
+      // Fail-fast: нет смысла декодировать method и строить payload,
+      // если Redis не готов принять запись — всё равно упадёт на set().
+      if (!this.isRedisReady()) {
+        throw new Error('Redis not ready, skipping tx');
+      }
       // Декодируем имя метода из input data
       let methodName = null;
       if (tx.input && tx.input.length >= 10) {
@@ -575,6 +648,11 @@ class BlockWatcher {
 
   async indexEvent(event, contractKey, contractAddress) {
     try {
+      // Fail-fast: не делаем тяжёлый getBlock() + сериализацию,
+      // если Redis не готов — всё равно set() упадёт.
+      if (!this.isRedisReady()) {
+        throw new Error('Redis not ready, skipping event');
+      }
       // Сериализуем весь event объект полностью
       const serializedEvent = this.serializeBigInt(event);
 

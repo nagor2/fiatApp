@@ -25,38 +25,69 @@ class HealthServer {
       
       if (pathname === '/health') {
         const health = this.getHealthStatus();
-        
-        // Добавляем статистику кэша из Redis
-        try {
-          const info = await this.redisClient.info('stats');
-          const lines = info.split('\n');
-          
-          let hits = 0;
-          let misses = 0;
-          
-          for (const line of lines) {
-            if (line.startsWith('keyspace_hits:')) {
-              hits = parseInt(line.split(':')[1]);
-            } else if (line.startsWith('keyspace_misses:')) {
-              misses = parseInt(line.split(':')[1]);
+
+        // Статистика кэша из Redis — опциональна.
+        // ВАЖНО: liveness probe k8s ждёт ответа за timeoutSeconds; если Redis лежит
+        // и мы здесь зависаем — kubelet решит, что под мёртв и убьёт его
+        // (Exit 137 / CrashLoopBackOff). Поэтому:
+        //  1) не трогаем redis, если клиент не ready (isReady=false);
+        //  2) даже когда ready — оборачиваем info() в короткий таймаут.
+        if (this.redisClient && this.redisClient.isReady) {
+          try {
+            const infoPromise = this.redisClient.info('stats');
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('redis info timeout')), 1000)
+            );
+            const info = await Promise.race([infoPromise, timeoutPromise]);
+            const lines = info.split('\n');
+
+            let hits = 0;
+            let misses = 0;
+
+            for (const line of lines) {
+              if (line.startsWith('keyspace_hits:')) {
+                hits = parseInt(line.split(':')[1]);
+              } else if (line.startsWith('keyspace_misses:')) {
+                misses = parseInt(line.split(':')[1]);
+              }
             }
+
+            const total = hits + misses;
+            const hitRate = total > 0 ? ((hits / total) * 100).toFixed(2) : '0.00';
+
+            health.cache = {
+              hits,
+              misses,
+              total,
+              hitRate: `${hitRate}%`
+            };
+          } catch (error) {
+            console.error('Failed to get cache stats:', error.message);
+            health.cache = { error: error.message };
           }
-          
-          const total = hits + misses;
-          const hitRate = total > 0 ? ((hits / total) * 100).toFixed(2) : '0.00';
-          
-          health.cache = {
-            hits,
-            misses,
-            total,
-            hitRate: `${hitRate}%`
-          };
-        } catch (error) {
-          console.error('Failed to get cache stats:', error.message);
+        } else {
+          health.cache = { error: 'redis not ready' };
         }
-        
+
+        // /health всегда отвечает 200 — это liveness, а не readiness.
+        // Отдельный readiness-эндпоинт ниже говорит k8s, готовы ли мы к трафику.
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(health));
+        return;
+      }
+
+      if (pathname === '/ready') {
+        // Readiness: контейнер готов принимать трафик только если Redis поднят.
+        // k8s readinessProbe использует это, чтобы вывести под из Service, пока
+        // Redis лежит (и избежать 503 на фронте без убийства пода).
+        const redisReady = !!(this.redisClient && this.redisClient.isReady);
+        const payload = {
+          ready: redisReady,
+          redis: redisReady ? 'ready' : 'not_ready',
+          timestamp: new Date().toISOString(),
+        };
+        res.writeHead(redisReady ? 200 : 503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(payload));
         return;
       }
       

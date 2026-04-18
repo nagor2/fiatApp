@@ -1,0 +1,47 @@
+# Strategic-merge патч для `deployment/watcher` в namespace `app-dotflat`.
+#
+# ЗАЧЕМ:
+#   1. readinessProbe /ready — пока Redis не поднят, под выводится из Service
+#      (nginx возвращает 503 только пока реально нечего отдать, вместо kill).
+#   2. livenessProbe /health — с большим initialDelay и failureThreshold,
+#      чтобы тяжёлый historical sync не триггерил Exit 137 (OOM/timeout kill).
+#   3. resources.limits.cpu = 1000m вместо 300m — иначе historical sync
+#      упирается в throttle и liveness timeout'ится.
+#
+# КТО ПРИМЕНЯЕТ:
+#   Админ кластера или developer, если у него есть права `patch deployments`
+#   (проверить: `kubectl -n app-dotflat auth can-i patch deployments`):
+#     kubectl -n app-dotflat patch deployment watcher \
+#       --type='strategic' --patch-file=k8s/watcher-deployment.patch.yaml
+#
+# ПРОВЕРКА:
+#   kubectl -n app-dotflat rollout status deployment/watcher
+#   kubectl -n app-dotflat describe pod -l app=watcher | grep -A2 'Liveness\|Readiness'
+spec:
+  template:
+    spec:
+      containers:
+        - name: watcher
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3002
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
