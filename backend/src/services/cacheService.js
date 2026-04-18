@@ -16,26 +16,55 @@ class CacheService {
 
     try {
       this.client = redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: process.env.REDIS_URL || 'redis://redis.dotflat.svc.cluster.local:6379',
+        socket: {
+          // Экспоненциальный backoff, максимум 30с.
+          // Без стратегии node-redis v4 за ~20 попыток сдаётся и уходит в
+          // "closed", а пока идёт — спамит ENOTFOUND по 10 раз в секунду.
+          // Мы хотим тихую паузу, чтобы контейнер не жёг CPU/логи, пока
+          // Service или Secret не поправлены администратором.
+          reconnectStrategy: (retries) => {
+            const delay = Math.min(1000 * 2 ** Math.min(retries, 10), 30000);
+            if (retries === 0 || retries % 5 === 0) {
+              logger.warn(
+                `Redis reconnect attempt #${retries + 1}, next delay ${delay}ms`
+              );
+            }
+            return delay;
+          },
+          connectTimeout: 10000,
+        },
       });
 
       this.client.on('error', (err) => {
-        logger.error('Redis Client Error:', err);
+        // Логируем только когда клиент был в рабочем состоянии — иначе
+        // цикл переподключения зальёт логи одинаковыми сообщениями.
+        if (this.client && this.client.isReady) {
+          logger.error('Redis Client Error:', err.message);
+        }
       });
 
-      this.client.on('connect', () => {
-        logger.info('Connected to Redis');
+      this.client.on('ready', () => {
+        logger.info('Redis ready');
+      });
+
+      this.client.on('end', () => {
+        logger.warn('Redis connection ended');
       });
 
       await this.client.connect();
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
+      // Если Redis недоступен на старте — не валим backend: API-эндпоинты
+      // не критичны к кэшу (get/set всё равно проверяют isReady и молча
+      // возвращают null/false). Это даёт админу время починить Service
+      // REDIS_URL без потери доступности /health и /api/contracts.
+      logger.error('Failed to connect to Redis (cache disabled):', error.message);
       this.enabled = false;
     }
   }
 
   async get(key) {
-    if (!this.enabled || !this.client) return null;
+    if (!this.enabled || !this.client || !this.client.isReady) return null;
 
     try {
       const data = await this.client.get(key);
@@ -52,7 +81,7 @@ class CacheService {
   }
 
   async set(key, value, ttl = null) {
-    if (!this.enabled || !this.client) return false;
+    if (!this.enabled || !this.client || !this.client.isReady) return false;
 
     try {
       const expiry = ttl || this.ttl;
@@ -66,7 +95,7 @@ class CacheService {
   }
 
   async del(key) {
-    if (!this.enabled || !this.client) return false;
+    if (!this.enabled || !this.client || !this.client.isReady) return false;
 
     try {
       await this.client.del(key);
@@ -79,7 +108,7 @@ class CacheService {
   }
 
   async invalidatePattern(pattern) {
-    if (!this.enabled || !this.client) return false;
+    if (!this.enabled || !this.client || !this.client.isReady) return false;
 
     try {
       const keys = await this.client.keys(pattern);

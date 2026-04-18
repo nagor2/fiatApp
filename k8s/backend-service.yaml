@@ -1,0 +1,35 @@
+# k8s Service для backend (API-сервер + RPC-прокси).
+#
+# ЗАЧЕМ:
+#   Nginx фронта проксирует /api/rpc и /api/contracts на
+#   backend.app-dotflat.svc.cluster.local:3001. Без Service nginx возвращает
+#   503 Service Temporarily Unavailable.
+#
+# КТО ПРИМЕНЯЕТ:
+#   Админ кластера / владелец K3SDEVCONFIG (у `developer` нет прав
+#   create services). Один раз:
+#     kubectl apply -f k8s/backend-service.yaml
+#
+# ПРОВЕРКА:
+#   kubectl -n app-dotflat get endpoints backend   # должен быть не пустым
+#
+# Порт 3001 — стандартный для DotFlat backend (см. backend/src/index.js).
+# Если Deployment использует другие labels (`app.kubernetes.io/name=backend`
+# или подобное) — поправьте selector под реальные лейблы пода:
+#   kubectl -n app-dotflat get pods --show-labels | grep backend
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: app-dotflat
+  labels:
+    app: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
