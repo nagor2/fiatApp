@@ -75,6 +75,32 @@ export default class CDP extends React.Component{
             const ethBalance = results[8];
 
             const coinsExceed = stubFund - totalSupply * stabFundPercent / 100;
+            const numPositions = toFloat(numPositionsRaw);
+
+            // Суммируем интерес по всем позициям параллельно.
+            // Позиции индексируются с 1 (новые id выдаются через ++numPositions в openCDP).
+            // totalCurrentFee = recorded + unrecorded accrual — то, что позиция "должна" контракту сейчас.
+            // positions(i).interestAmountRecorded — закристаллизованная часть долга (снимок на lastTimeUpdated).
+            const positionPromises = [];
+            for (let i = 1; i <= numPositions; i++) {
+                positionPromises.push(Promise.all([
+                    cachedContractCall('cdp', 'positions', [i], contracts['cdp']),
+                    cachedContractCall('cdp', 'totalCurrentFee', [i], contracts['cdp']),
+                ]));
+            }
+            const positionResults = await Promise.allSettled(positionPromises);
+
+            let feeEarnedSum = 0;
+            let feeRecordedSum = 0;
+            for (const r of positionResults) {
+                if (r.status !== 'fulfilled') continue;
+                const [position, currentFee] = r.value;
+                feeEarnedSum += Number(toFloat(currentFee)) / 1e18;
+                const recorded = position && position.interestAmountRecorded;
+                if (recorded !== undefined) {
+                    feeRecordedSum += Number(toFloat(recorded)) / 1e18;
+                }
+            }
 
             const newState = {
                 stubFund: (stubFund/10**18).toFixed(2),
@@ -82,11 +108,13 @@ export default class CDP extends React.Component{
                 exceed: (coinsExceed/10**18).toFixed(2),
                 RuleBalanceOfCDP: (toFloat(ruleBalanceRaw)/10**18).toFixed(2),
                 toAuction: (toFloat(toAuctionRaw)/10**18).toFixed(2),
-                positionsCount: toFloat(numPositionsRaw),
+                positionsCount: numPositions,
                 dicount: toFloat(collateralDiscountRaw)+'%',
                 interestRate: toFloat(interestRateRaw)+'%',
                 wethBalance: (toFloat(ethBalance)/10**18).toFixed(2),
                 collateral: ((toFloat(ethBalance)/10**18).toFixed(3)*ethPrice).toFixed(3),
+                feeEarned: feeEarnedSum.toFixed(4),
+                feePayed: feeRecordedSum.toFixed(4),
                 address: cdpAddress,
                 loading: false
             };
@@ -161,9 +189,9 @@ export default class CDP extends React.Component{
             <div>ETH balance of contract: <b>{this.state.wethBalance} ({this.state.collateral} USD)</b></div>
             {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['cdp'].methods.burnRule().send({from:this.props.account})}>burn Rule ({this.state.RuleBalanceOfCDP}) from CDP</a>}
             <div>positions count: <b>{this.state.positionsCount}</b></div>
-            <div>overall fee earned: <b>{this.state.feeEarned}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Open dept position"}/>:''}</div>
+            <div>overall fee earned: <b>{this.state.feeEarned} DFC</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Open dept position"}/>:''}</div>
 
-            <div>overall fee payed: <b>{this.state.feePayed}</b></div>
+            <div>overall fee recorded: <b>{this.state.feePayed} DFC</b></div>
             <div>collateral discount: <b>{this.state.dicount}</b></div>
             <div>interest rate: <b>{this.state.interestRate}</b></div>
             <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>

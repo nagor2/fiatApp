@@ -49,10 +49,32 @@ export default class DepositContract extends React.Component{
             }
 
             const results = await Promise.all(promises);
+            const depositsCount = Number(toFloat(results[0])) || 0;
+
+            // Суммируем проценты по всем депозитам параллельно.
+            // overallInterest(id) возвращает текущий накопленный процент
+            // (recorded + unrecorded accrual на момент вызова) для активных
+            // позиций. Для закрытых — 0 после claimInterest. Поэтому метрика
+            // отражает "сколько процентов сейчас начислено, но ещё не выплачено"
+            // по всем депозитам контракта.
+            const interestPromises = [];
+            for (let i = 1; i <= depositsCount; i++) {
+                interestPromises.push(
+                    cachedContractCall('deposit', 'overallInterest', [i], contracts['deposit'])
+                );
+            }
+            const interestResults = await Promise.allSettled(interestPromises);
+            let overallFeeSum = 0;
+            for (const r of interestResults) {
+                if (r.status === 'fulfilled') {
+                    overallFeeSum += Number(toFloat(r.value)) / 1e18;
+                }
+            }
 
             const newState = {
-                depositsCount: results[0],
+                depositsCount: depositsCount,
                 overallVolume: (toFloat(results[1])/10**18).toFixed(2),
+                overallFee: overallFeeSum.toFixed(4),
                 depositRate: results[2],
                 address: depositAddress,
                 loading: false
@@ -88,7 +110,6 @@ export default class DepositContract extends React.Component{
         }
     }
 
-//TODO: implement overall fee
     render() {
         if (this.state.loading) {
             return <div align='center'>Loading deposit data...</div>;
@@ -101,8 +122,8 @@ export default class DepositContract extends React.Component{
             {this.props.account!==''?<div>you are approved to withdraw from CDP: <b>{this.state.approvedFromCDP}</b></div>:''}
             {this.state.approvedFromCDP>0 && this.props.account!=''?<input type='button' value='transferFrom' onClick={this.transferFrom}/>:''}
             <div>N of deposits: <b>{this.state.depositsCount}</b></div>
-            <div>overall volume: <b>{this.state.overallVolume}</b></div>
-            <div>overall fee payed: <b>{this.state.overallFee}</b></div>
+            <div>overall volume: <b>{this.state.overallVolume} DFC</b></div>
+            <div>overall interest accrued: <b>{this.state.overallFee} DFC</b></div>
             <div>interest rate: <b>{this.state.depositRate}%</b></div>
             {<a className={"small-button pointer orange right"} onClick={()=>this.props.contracts['deposit'].methods.renewContracts().send({from:this.props.account})}>renew contracts</a>}
             <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>

@@ -104,6 +104,32 @@ const STATE_VIEW_ABI = [
   }
 ];
 
+// V4 StateView supports two overloads of getSlot0/getLiquidity:
+//   - by full PoolKey struct (used above for DFC/ETH)
+//   - by precomputed bytes32 poolId (used here for arbitrary pools, e.g. DFC/RLE,
+//     where we know the pool ID but not the exact PoolKey params)
+const STATE_VIEW_BY_ID_ABI = [
+  {
+    "inputs": [{"name": "poolId", "type": "bytes32"}],
+    "name": "getSlot0",
+    "outputs": [
+      {"name": "sqrtPriceX96", "type": "uint160"},
+      {"name": "tick", "type": "int24"},
+      {"name": "protocolFee", "type": "uint24"},
+      {"name": "lpFee", "type": "uint24"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"name": "poolId", "type": "bytes32"}],
+    "name": "getLiquidity",
+    "outputs": [{"name": "liquidity", "type": "uint128"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
 const UNISWAP_V3_POOL_ABI = [
   'function slot0() external view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)',
   'function token0() external view returns (address)',
@@ -377,11 +403,97 @@ export async function getEthPriceInUsd() {
   }
 }
 
+/**
+ * Получить slot0 + liquidity для произвольного V4 пула по его bytes32 poolId.
+ * Не требует знания PoolKey — идеально для пулов, конфиг которых не
+ * захардкожен (например DFC/RLE).
+ */
+async function getV4PoolStateById(poolId) {
+  return withFallback(async (provider) => {
+    const stateView = new Contract(
+      UNISWAP_CONFIG.V4.STATE_VIEW,
+      STATE_VIEW_BY_ID_ABI,
+      provider
+    );
+    const [slot0, liquidity] = await Promise.all([
+      stateView.getSlot0(poolId),
+      stateView.getLiquidity(poolId),
+    ]);
+    return {
+      sqrtPriceX96: slot0[0].toString(),
+      tick: Number(slot0[1]),
+      lpFee: Number(slot0[3]),
+      liquidity: liquidity.toString(),
+    };
+  }, { timeout: 15000 });
+}
+
+/**
+ * Цена 1 RLE в DFC и состав пула DFC/RLE (V4).
+ *
+ * Оба токена ERC20 с 18 decimals, поэтому поправки на decimals не нужны.
+ * Направление (кто currency0) определяем по лексикографическому сравнению
+ * адресов (canonical V4 ordering: currency0 < currency1).
+ *
+ * @param {string} rleAddress - адрес RLE токена (узнаётся из DAO в рантайме)
+ * @returns {Promise<{priceRleInDfc:number, amountRle:number, amountDfc:number, liquidity:string, lpFee:number}>}
+ */
+export async function getRleDfcPoolInfo(rleAddress) {
+  if (!rleAddress) {
+    throw new Error('RLE address is required');
+  }
+  const state = await getV4PoolStateById(UNISWAP_CONFIG.POOLS.DFC_RLE_V4);
+
+  const dfcAddr = UNISWAP_CONFIG.TOKENS.DFC.toLowerCase();
+  const rleAddr = rleAddress.toLowerCase();
+  const rleIsCurrency0 = rleAddr < dfcAddr;
+
+  const sqrtBig = BigInt(state.sqrtPriceX96);
+  const Q96 = BigInt(2) ** BigInt(96);
+
+  if (sqrtBig === BigInt(0)) {
+    return {
+      priceRleInDfc: 0,
+      amountRle: 0,
+      amountDfc: 0,
+      liquidity: '0',
+      lpFee: state.lpFee,
+    };
+  }
+
+  const sqrtPrice = Number(sqrtBig) / Number(Q96);
+  const priceC1PerC0 = sqrtPrice * sqrtPrice;
+
+  // priceC1PerC0 = сколько currency1 за 1 currency0 (в raw units, но decimals равны).
+  const priceRleInDfc = rleIsCurrency0
+    ? priceC1PerC0
+    : (priceC1PerC0 > 0 ? 1 / priceC1PerC0 : 0);
+
+  // Упрощённая оценка активной ликвидности в текущей цене:
+  //   amount0 ≈ liquidity / sqrtPrice, amount1 ≈ liquidity * sqrtPrice.
+  // Это не полная TVL диапазона, а ликвидность, доступная у текущей цены —
+  // достаточно для pool volume / TVL-оценки карточки.
+  const liq = Number(state.liquidity);
+  const amount0 = liq / sqrtPrice / 1e18;
+  const amount1 = liq * sqrtPrice / 1e18;
+  const amountRle = rleIsCurrency0 ? amount0 : amount1;
+  const amountDfc = rleIsCurrency0 ? amount1 : amount0;
+
+  return {
+    priceRleInDfc,
+    amountRle,
+    amountDfc,
+    liquidity: state.liquidity,
+    lpFee: state.lpFee,
+  };
+}
+
 const uniswapQuoterModule = {
   getDfcPriceInEth,
   getPoolLiquidityInfo,
   getDfcTokenInfo,
   getEthPriceInUsd,
+  getRleDfcPoolInfo,
 };
 
 export default uniswapQuoterModule;

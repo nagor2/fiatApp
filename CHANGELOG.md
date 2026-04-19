@@ -7,6 +7,44 @@
 
 ## [Unreleased]
 
+### 2026-04-19 — Страница RLE: burned / price / marketCap / TVL
+
+#### Added
+
+- **`src/utils/uniswap-config.js`** — добавлен poolId V4 пула DFC/RLE
+  (`POOLS.DFC_RLE_V4 = 0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044`).
+- **`src/utils/uniswap-quoter.js`** — helper `getV4PoolStateById(poolId)` и
+  публичная функция `getRleDfcPoolInfo(rleAddress)`. Считывают `slot0` и
+  `liquidity` из Uniswap V4 StateView по bytes32 poolId (не требуется знать
+  PoolKey). Возвращают цену 1 RLE в DFC и упрощённый состав пула
+  (`amountRle`, `amountDfc`). Направление валют вычисляется из
+  лексикографического сравнения адресов DFC и RLE (canonical V4 ordering).
+- **`src/components/RuleToken.js`** — расширен карточный view:
+  - **total burned** — сумма `Transfer` событий с `to = 0x0` за всю историю
+    (именно так RLE утилизируется при buy-back auction).
+  - **price in stableCoins (from pool)** — цена RLE в DFC из V4 пула,
+    дополнительно отображается в USD (через DFC/ETH × ETH/USD).
+  - **marketCap** = `totalSupply_RLE * price_RLE_в_DFC * price_DFC_в_USD`.
+  - **pool volume (TVL)** — обе стороны пула в долларах по текущей цене.
+  - Сброс `NOT_LOADED`-сентинел и `N/A` в render'е: больше не показываем
+    «0» как факт, если котировка пула/цена ETH ещё не подъехали.
+
+#### Changed
+
+- **`src/components/MyPanel.js`** — `RuleToken` теперь получает `web3` и
+  `ethPriceUniswap`, необходимые для оценки marketCap.
+
+#### Fixed
+
+- **`src/utils/cacheApi.js`** — `getPastEventsCached` теперь *не доверяет*
+  пустому ответу Block Watcher'а и всё равно страхуется через Etherscan.
+  Причина: при рестарте/прогреве воркера кеш Redis для контракта может
+  быть пустым — и старый код честно возвращал 0 событий, из-за чего на
+  страницах DFC/RLE периодически «мигало» `N of transactions: 0` и
+  `N of holders: 0`. Если worker вернул непустой массив — доверяем ему
+  без дополнительных запросов (быстрый путь сохранён). Если упал и
+  Etherscan — возвращаем `workerEvents` (обычно пустой) вместо взрыва.
+
 ### 2026-04-19 — Отказоустойчивость при падении Block Watcher и `/api/rpc`
 
 Задача: приложение должно оставаться работоспособным, даже если

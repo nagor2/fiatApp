@@ -124,7 +124,7 @@ export default class MyPanel extends React.Component {
             }
 
             switch (content[1]){
-                case 'RLE':return (content[0]==='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} contract={this.props.contracts['rule']} name={content}/>; break;
+                case 'RLE':return (content[0]==='Balances')?<Transfers web3={this.props.web3} emitter={this.props.emitter} contractName={'rule'} account={this.props.account} contracts={this.props.contracts}/>:<RuleToken explorer={this.props.explorer} emitter={this.props.emitter} web3={this.props.web3} contract={this.props.contracts['rule']} name={content} ethPriceUniswap={this.props.ethPriceUniswap}/>; break;
                 case 'DFC': return (content[0]==='Balances')?<Transfers  web3={this.props.web3} emitter={this.props.emitter} contractName={'flatCoin'} account={this.props.account} contracts={this.props.contracts}/>: <DFC emitter={this.props.emitter} explorer={this.props.explorer} web3={this.props.web3} account={this.props.account} contracts={this.props.contracts} name={content} ethPrice={this.props.ethPrice} ethPriceUniswap={this.props.ethPriceUniswap}/>; break;
                 case 'Dotflat/ETH swap':return <Swap name={content} link={'https://app.uniswap.org/explore/tokens/ethereum/0x1f709cfa0c409e158c68edcd32453809c9eb69ee'}/>; break;
                 case 'Gold':return <Swap name={content} ethPrice={this.props.ethPrice}/>; break;

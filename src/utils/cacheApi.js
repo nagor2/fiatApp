@@ -273,16 +273,38 @@ export async function getPastEventsCached(contract, eventName, options = {}, web
   const contractAddress = contract.options.address;
 
   const workerEvents = await getContractEvents(contractAddress, eventName, 10000);
-  if (workerEvents !== null) {
+
+  // Worker вернул непустой ответ — доверяем, это быстрый путь.
+  if (workerEvents !== null && workerEvents.length > 0) {
     return applyRangeFilters(workerEvents, options).map(normalizeCachedEvent);
   }
 
+  // workerEvents === null: ошибка/таймаут worker'а, падаем в Etherscan.
+  // workerEvents === []: worker ответил, но кеш пустой — возможно прогрев
+  // воркера после рестарта или промах. Для активных контрактов (DFC/RLE)
+  // пустой ответ в 99% случаев означает именно промах, поэтому
+  // перестраховываемся и всё равно дёргаем Etherscan. Если реальных событий
+  // нет — получим пустой массив; если есть — вернём корректные данные
+  // вместо ложного нуля.
+  const workerReturnedEmpty = workerEvents !== null && workerEvents.length === 0;
+
   try {
-    console.log(`[Etherscan fallback] ${eventName || 'all events'} on ${contractAddress}`);
+    if (workerReturnedEmpty) {
+      console.log(
+        `[Etherscan double-check] worker returned empty for ${eventName || 'all'} on ${contractAddress}`
+      );
+    } else {
+      console.log(`[Etherscan fallback] ${eventName || 'all events'} on ${contractAddress}`);
+    }
     const events = await fetchEtherscanEvents(contract, eventName, options);
     return applyRangeFilters(events, options).map(normalizeCachedEvent);
   } catch (error) {
     console.error(`[Etherscan fallback] failed: ${error.message}`);
+    // Etherscan тоже лёг — возвращаем что есть (пустой worker-ответ лучше,
+    // чем бросок, иначе рушится весь компонент).
+    if (workerEvents !== null) {
+      return workerEvents.map(normalizeCachedEvent);
+    }
     return [];
   }
 }
