@@ -1,5 +1,5 @@
 import React from "react";
-import {getHolders, getTransfers, toFloat} from "../utils/utils";
+import {getHolders, getTransfers, toFloat, formatNumber} from "../utils/utils";
 import Button from "./Button";
 import {cachedContractCall, cachedEthBalance} from "../utils/cachedContractCall";
 
@@ -70,11 +70,12 @@ export default class DFC extends React.Component{
             console.log('   sharePrice:', sharePrice);
             
             const ethBalanceETH = toFloat(ethBalance)/10**18;
-            const collateral = (ethBalanceETH * effectiveEthPrice).toFixed(3);
+            const collateralNum = ethBalanceETH * effectiveEthPrice;
+            const collateral = collateralNum.toFixed(3);
             const supplyDFC = supply/10**18;
             const sharePriceNormalized = sharePrice/10**6;
-            const percent = supplyDFC > 0 && sharePriceNormalized > 0 
-                ? parseFloat(100 * collateral / supplyDFC / sharePriceNormalized).toFixed(2)
+            const percent = supplyDFC > 0 && sharePriceNormalized > 0
+                ? parseFloat(100 * collateralNum / supplyDFC / sharePriceNormalized).toFixed(2)
                 : '0.00';
             
             console.log('   collateral (USD):', collateral);
@@ -112,13 +113,13 @@ export default class DFC extends React.Component{
                     console.log('🔍 DFC: poolInfo =', poolInfo);
                     
                     if (poolInfo.amountETH !== undefined && poolInfo.amountDFC !== undefined) {
-                        const ethUSD = (poolInfo.amountETH * ethPriceUniswap).toFixed(0);
-                        const dfcUSD = dfcPriceInETH 
-                            ? (poolInfo.amountDFC * dfcPriceInETH * ethPriceUniswap).toFixed(0)
-                            : '?';
-                        
-                        etherPoolValue = `${poolInfo.amountETH.toFixed(4)} ETH ($${ethUSD})`;
-                        tscPoolValue = `${poolInfo.amountDFC.toFixed(2)} DFC ($${dfcUSD})`;
+                        const ethUSD = poolInfo.amountETH * ethPriceUniswap;
+                        const dfcUSD = dfcPriceInETH
+                            ? poolInfo.amountDFC * dfcPriceInETH * ethPriceUniswap
+                            : null;
+
+                        etherPoolValue = `${formatNumber(poolInfo.amountETH, 4)} ETH ($${formatNumber(ethUSD, 0)})`;
+                        tscPoolValue = `${formatNumber(poolInfo.amountDFC, 2)} DFC (${dfcUSD !== null ? '$' + formatNumber(dfcUSD, 0) : '?'})`;
                         poolTVL = poolInfo.tvlUSD > 0 ? poolInfo.tvlUSD : null;
                         
                         console.log(`✅ Pool: ${etherPoolValue}, ${tscPoolValue}, TVL: $${poolTVL}`);
@@ -138,11 +139,15 @@ export default class DFC extends React.Component{
                 tscPoolValue = 'waiting for ETH price...';
             }
 
+            // stubFundDemand — raw wei для кнопки initCoinsBuyOut, но в рендере
+            // показываем округлённо до центов.
+            const stubFundDemandWei = supply * stabilizationFundPercent / 100 - stub;
+
             this.setState({
-                supply: (supply/10**18).toFixed(2),
-                stubFund: (stub/10**18).toFixed(8),
-                stubFundDemand: (supply * stabilizationFundPercent / 100 - stub),
-                indicative: (sharePrice/10**6).toFixed(4),
+                supply: supply / 10**18,
+                stubFund: stub / 10**18,
+                stubFundDemand: stubFundDemandWei,
+                indicative: sharePrice / 10**6,
                 collateral: collateral,
                 collateralPercent: percent,
                 allowedToAuction: allowedToAuction,
@@ -271,11 +276,11 @@ export default class DFC extends React.Component{
             <div align='center'><b>Dotflat coin</b></div>
             {this.props.account!==''?<Button emitter={this.props.emitter} action={'Dotflat/ETH swap'} name={"Buy"}/>:''}
 
-            <div>total supply:         <b>{this.state.supply} DFC</b></div>
+            <div>total supply: <b>{formatNumber(this.state.supply, 2)} DFC</b></div>
 
-            <div>N of transactions (iterate transfers): <b>{this.state.transfers}</b></div>
+            <div>N of transactions (iterate transfers): <b>{formatNumber(this.state.transfers, 0)}</b></div>
 
-            <div>N of holders: <b>{this.state.holders}</b></div>
+            <div>N of holders: <b>{formatNumber(this.state.holders, 0)}</b></div>
             {this.props.account!==''&&this.state.stubFundDemand>0?
                 <a className={"small-button pointer green right"} onClick={()=>this.initCoinsBuyOut()}>init auction to top up stubFund</a>: ''
             }
@@ -285,7 +290,7 @@ export default class DFC extends React.Component{
             }
             <div>price vs USD (pool): <b>{this.state.pricePool}</b></div>
 
-            <div>price vs USD (indicative): <b>{this.state.indicative}</b></div>
+            <div>price vs USD (indicative): <b>{formatNumber(this.state.indicative, 4)}</b></div>
 
             {this.props.account!==''&&this.state.allowedToAuction>0?<a className={"small-button pointer green right"} onClick={()=>this.initRuleBuyOut()}>init Rule buyOut</a>:''
             }
@@ -293,15 +298,15 @@ export default class DFC extends React.Component{
             <div>ETH in pool: <b>{this.state.etherPool}</b></div>
             <div>DFC in pool: <b>{this.state.tscPool}</b>{this.props.account!==''?<Button emitter={this.props.emitter} action={'Borrow'} name={"Borrow"}/>:''}</div>
             {this.state.poolTVL && (
-                <div>TVL in pool: <b>${this.state.poolTVL.toFixed(2)}</b></div>
+                <div>TVL in pool: <b>${formatNumber(this.state.poolTVL, 2)}</b></div>
             )}
-            <div>overall collateral: <b>{this.state.collateral} USD ({this.state.collateralPercent}% of DFC supply)</b></div>
-            <div>stabilization fund: <b>{this.state.stubFund}</b></div>
-            <div>stabilization fund demand: <b>{this.state.stubFundDemand/10**18}</b></div>
-            <div>allowed to auction: <b>{toFloat(this.state.allowedToAuction)/10**18}</b></div>
+            <div>overall collateral: <b>${formatNumber(this.state.collateral, 2)} ({formatNumber(this.state.collateralPercent, 2)}% of DFC supply)</b></div>
+            <div>stabilization fund: <b>{formatNumber(this.state.stubFund, 2)} DFC</b></div>
+            <div>stabilization fund demand: <b>{formatNumber(this.state.stubFundDemand/10**18, 2)} DFC</b></div>
+            <div>allowed to auction: <b>{formatNumber(toFloat(this.state.allowedToAuction)/10**18, 2)} DFC</b></div>
 
-            <div>address:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
-            <div>code:         <a target='_blank' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>
+            <div>address: <a target='_blank' rel='noreferrer' href={this.props.explorer+'address/'+this.state.address}>{this.state.address}</a></div>
+            <div>code: <a target='_blank' rel='noreferrer' href={this.props.explorer+'address/'+this.state.address+'#code'}>view code</a></div>
         </div>
     }
 }

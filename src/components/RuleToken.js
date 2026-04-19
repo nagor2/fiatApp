@@ -1,6 +1,6 @@
 /* global BigInt */
 import React from "react";
-import {getHolders, getTransfers, toFloat} from "../utils/utils";
+import {getHolders, getTransfers, toFloat, formatNumber} from "../utils/utils";
 import {cachedContractCall} from "../utils/cachedContractCall";
 import {getDfcPriceInEth, getRleDfcPoolInfo} from "../utils/uniswap-quoter";
 
@@ -122,14 +122,14 @@ export default class RuleToken extends React.Component{
                 : null;
 
             this.setState({
-                supply: supplyRle.toFixed(2),
+                supply: supplyRle,
                 transfers: transfers.length,
                 holders: holders.length,
-                burned: burnedRle.toFixed(2),
-                priceInDfc: priceRleInDfc !== null ? priceRleInDfc.toFixed(4) : NOT_LOADED,
-                priceInUsd: rlePriceInUsd !== null ? rlePriceInUsd.toFixed(4) : NOT_LOADED,
-                marketCap: marketCap !== null ? marketCap.toFixed(2) : NOT_LOADED,
-                poolVolume: poolVolume !== null ? poolVolume.toFixed(2) : NOT_LOADED,
+                burned: burnedRle,
+                priceInDfc: priceRleInDfc,
+                priceInUsd: rlePriceInUsd,
+                marketCap: marketCap,
+                poolVolume: poolVolume,
                 address: rleAddress,
                 loading: false,
             });
@@ -141,39 +141,37 @@ export default class RuleToken extends React.Component{
         }
     }
 
-    renderValue(value, suffix = '') {
-        if (value === NOT_LOADED) return <b>N/A</b>;
-        return <b>{value}{suffix}</b>;
-    }
-
     render() {
         if (this.state.loading) {
             return <div align='center'>Loading rule token data...</div>;
         }
 
+        const priceInDfc = this.state.priceInDfc;
+        const priceInUsd = this.state.priceInUsd;
+
         return <div align='left'>
             <div align='center'><b>Rule token</b></div>
-            <div>total supply: {this.renderValue(this.state.supply, ' RLE')}</div>
+            <div>total supply: <b>{formatNumber(this.state.supply, 2)} RLE</b></div>
 
-            <div>N of transactions (iterate transfers): {this.renderValue(this.state.transfers)}</div>
-            <div>N of holders: {this.renderValue(this.state.holders)}</div>
-            <div>total burned: {this.renderValue(this.state.burned, ' RLE')}</div>
+            <div>N of transactions (iterate transfers): <b>{formatNumber(this.state.transfers, 0)}</b></div>
+            <div>N of holders: <b>{formatNumber(this.state.holders, 0)}</b></div>
+            <div>total burned: <b>{formatNumber(this.state.burned, 2)} RLE</b></div>
 
             <div>price in stableCoins (from pool): {
-                this.state.priceInDfc !== NOT_LOADED
-                    ? <b>{this.state.priceInDfc} DFC{this.state.priceInUsd !== NOT_LOADED ? ` ($${this.state.priceInUsd})` : ''}</b>
+                priceInDfc !== NOT_LOADED
+                    ? <b>{formatNumber(priceInDfc, 4)} DFC{priceInUsd !== NOT_LOADED ? ` ($${formatNumber(priceInUsd, 4)})` : ''}</b>
                     : <b>N/A</b>
             }</div>
 
             <div>marketCap: {
                 this.state.marketCap !== NOT_LOADED
-                    ? <b>${this.state.marketCap}</b>
+                    ? <b>${formatNumber(this.state.marketCap, 2)}</b>
                     : <b>N/A</b>
             }</div>
 
             <div>pool volume (TVL): {
                 this.state.poolVolume !== NOT_LOADED
-                    ? <b>${this.state.poolVolume}</b>
+                    ? <b>${formatNumber(this.state.poolVolume, 2)}</b>
                     : <b>N/A</b>
             }</div>
 

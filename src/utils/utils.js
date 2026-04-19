@@ -10,6 +10,31 @@ export function toFloat(value) {
     return parseFloat(value);
 }
 
+// Форматирование числа с разделителями разрядов (en-US: запятые — тысячи,
+// точка — десятичная). Применяется во всех карточках контрактов, чтобы
+// длинные суммы вида 5572106.82 читались как 5,572,106.82.
+//
+// decimals:
+//   - если передан — фиксированное число знаков после запятой
+//   - если null — автоматический режим (до 4 знаков, хвостовые нули режутся)
+// Для значений, которые не являются конечным числом, возвращает 'N/A' —
+// удобно как сентинел для полей, которые не успели загрузиться.
+export function formatNumber(value, decimals = 2) {
+    if (value === null || value === undefined || value === '') return 'N/A';
+    const n = Number(value);
+    if (!isFinite(n)) return 'N/A';
+    if (decimals === null) {
+        return n.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 4,
+        });
+    }
+    return n.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
+}
+
 export async function getTransfers(contract, web3) {
     const txs = await getPastEventsCached(
         contract, 

@@ -1,6 +1,6 @@
 import React from "react";
 import {Loader} from "../utils/utils";
-import {cachedContractCall} from "../utils/cachedContractCall";
+import {cachedContractCall, renewWorkerCache} from "../utils/cachedContractCall";
 
 export default class OpenDeposit extends React.Component{
 
@@ -49,8 +49,11 @@ export default class OpenDeposit extends React.Component{
             .on('receipt', (receipt) => {
                 this.setState({'loader':true})
             })
-            .on('confirmation', (confirmationNumber, receipt) => {
+            .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
+                // Воркер обрабатывает блоки с задержкой — без явной инвалидации
+                // кэша свежий депозит не появится в списке после reload'а.
+                await renewWorkerCache('deposit');
                 window.location.reload();
             })
             .on('error', console.error)
@@ -66,8 +69,9 @@ export default class OpenDeposit extends React.Component{
             .on('receipt', (receipt) => {
                 this.setState({'loader':true})
             })
-            .on('confirmation', (confirmationNumber, receipt) => {
+            .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
+                await renewWorkerCache('deposit');
                 window.location.reload();
             })
             .on('error', console.error)

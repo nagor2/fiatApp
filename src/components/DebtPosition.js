@@ -1,5 +1,5 @@
 import React from "react";
-import {dateFromTimestamp, toFloat} from "../utils/utils";
+import {dateFromTimestamp, toFloat, formatNumber} from "../utils/utils";
 import Button from "./Button";
 import CDP from "./CDP";
 import {cachedContractCall} from "../utils/cachedContractCall";
@@ -28,7 +28,7 @@ export default class DebtPosition extends React.Component{
         this.payInterest = this.payInterest.bind(this);
     }
 
-    async loadData() {
+    async loadData({silent = false} = {}) {
         const { contracts, web3 } = this.props;
         
         if (!contracts || !contracts['cdp'] || !contracts['dao']) {
@@ -37,7 +37,7 @@ export default class DebtPosition extends React.Component{
             return;
         }
 
-        this.setState({ loading: true });
+        if (!silent) this.setState({ loading: true });
         const startTime = performance.now();
 
         try {
@@ -76,6 +76,19 @@ export default class DebtPosition extends React.Component{
 
     componentDidMount() {
         this.loadData();
+        // Accumulated interest растёт каждый блок (~12s). Делаем тихий рефреш
+        // раз в 15s, чтобы цифра не залипала. setState с loading=true не
+        // триггерится, так что визуально экран не моргает.
+        this.refreshTimer = setInterval(() => {
+            this.loadData({silent: true});
+        }, 15000);
+    }
+
+    componentWillUnmount() {
+        if (this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+            this.refreshTimer = null;
+        }
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -120,14 +133,14 @@ export default class DebtPosition extends React.Component{
             <Button emitter={this.props.emitter} action={'payInterest'} id={this.props.id} name={"payInterest"} item={this.state.position}/>
             <div>opened: <b>{this.state.timeOpened}</b></div>
             <div>updated: <b>{this.state.lastTimeUpdated}</b></div>
-            <div>coinsMinted (red/yellow/green): <b>{this.state.coinsMinted}</b></div>
+            <div>coinsMinted (red/yellow/green): <b>{formatNumber(this.state.coinsMinted, 2)} DFC</b></div>
             <Button emitter={this.props.emitter} action={'updateCDP'} id={this.props.id} name={"Update position"} item={this.state.position}/>
             <div>interest rate: <b>{this.state.interestRate}%</b></div>
-            <div>ethereum locked: <b>{this.state.ethLocked}</b></div>
-            <div>maxCoinsToMint : <b>{this.state.maxStableCoinsToMint}</b></div>
+            <div>ethereum locked: <b>{formatNumber(this.state.ethLocked, 4)} ETH</b></div>
+            <div>maxCoinsToMint: <b>{formatNumber(this.state.maxStableCoinsToMint, 2)} DFC</b></div>
             <Button emitter={this.props.emitter} action={'closeCDP'} id={this.props.id} name={"Close position"} item={this.state.position}/>
-            <div>recorded fee: <b>{this.state.feeGeneratedRecorded}</b></div>
-            <div>accumulated interest: <b>{this.state.fee}</b></div>
+            <div>recorded fee: <b>{formatNumber(this.state.feeGeneratedRecorded, 2)} DFC</b></div>
+            <div>accumulated interest: <b>{formatNumber(this.state.fee, 2)} DFC</b></div>
             <div>liquidationStatus: <b>{this.state.liquidationStatus}</b></div>
             <br/>
             <Button emitter={this.props.emitter} action={'withdrawEther'} id={this.props.id} name={"withdraw ether"} item={this.state.position}/>

@@ -72,10 +72,13 @@ function getWorkerBaseUrl() {
   return '/api/worker';
 }
 
-function getWorkerApiUrl(contractKey, methodName, args) {
+function getWorkerApiUrl(contractKey, methodName, args, options = {}) {
   const apiUrl = `${getWorkerBaseUrl()}/api/call/${contractKey}/${methodName}`;
-  const params = args.length > 0 ? `?args=${encodeURIComponent(JSON.stringify(args))}` : '';
-  return apiUrl + params;
+  const search = new URLSearchParams();
+  if (args.length > 0) search.set('args', JSON.stringify(args));
+  if (options.noCache) search.set('noCache', '1');
+  const qs = search.toString();
+  return qs ? `${apiUrl}?${qs}` : apiUrl;
 }
 
 async function callFallback(contractKey, methodName, args, fallbackContract) {
@@ -104,10 +107,10 @@ async function callFallback(contractKey, methodName, args, fallbackContract) {
   });
 }
 
-export async function cachedContractCall(contractKey, methodName, args = [], fallbackContract = null) {
+export async function cachedContractCall(contractKey, methodName, args = [], fallbackContract = null, options = {}) {
   if (!isWorkerCircuitOpen()) {
     try {
-      const url = getWorkerApiUrl(contractKey, methodName, args);
+      const url = getWorkerApiUrl(contractKey, methodName, args, options);
       const response = await fetchWorkerWithTimeout(url, {}, WORKER_CALL_TIMEOUT_MS);
 
       if (!response.ok) {
@@ -149,6 +152,48 @@ export async function batchCachedContractCalls(calls) {
     cachedContractCall(contractKey, methodName, args, fallbackContract)
   );
   return Promise.all(promises);
+}
+
+/**
+ * Принудительно попросить воркер перечитать состояние контракта.
+ *
+ * Вызываем после успешного write-tx (openCDP / closeCDP / deposit / topUp / etc),
+ * чтобы UI сразу увидел свежие данные, не дожидаясь, пока воркер сам обработает
+ * блок с транзакцией (это может занять 10-30 секунд при polling-режиме).
+ *
+ * Никогда не бросает — это best-effort инвалидация. Если воркер лежит,
+ * клиент потом всё равно свалится на direct RPC в своём cachedContractCall.
+ *
+ * @param {string} contractKeyOrName - Ключ контракта ('cdp', 'deposit', etc)
+ * @returns {Promise<boolean>} true — воркер подтвердил инвалидацию.
+ */
+export async function renewWorkerCache(contractKeyOrName) {
+  if (!contractKeyOrName) return false;
+  if (isWorkerCircuitOpen()) {
+    console.log(`[Worker] Circuit open, skipping renewCache for ${contractKeyOrName}`);
+    return false;
+  }
+  try {
+    const url = `${getWorkerBaseUrl()}/api/renewCache/${encodeURIComponent(contractKeyOrName)}`;
+    const response = await fetchWorkerWithTimeout(
+      url,
+      { method: 'POST' },
+      WORKER_CALL_TIMEOUT_MS
+    );
+    if (!response.ok) {
+      console.warn(`[Worker] renewCache(${contractKeyOrName}) HTTP ${response.status}`);
+      return false;
+    }
+    const data = await response.json().catch(() => ({}));
+    recordWorkerSuccess();
+    console.log(`[Worker] renewCache(${contractKeyOrName}) ok`, data);
+    return true;
+  } catch (error) {
+    const reason = classifyWorkerError(error);
+    recordWorkerFailure(reason);
+    console.warn(`[Worker] renewCache(${contractKeyOrName}) failed (${reason})`);
+    return false;
+  }
 }
 
 /**

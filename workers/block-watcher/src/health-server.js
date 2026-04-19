@@ -1,5 +1,37 @@
 const http = require('http');
 
+// Web3 v4 возвращает результат структурного вызова как Result-объект,
+// array-like с ЧИСЛОВЫМИ и ИМЕНОВАННЫМИ ключами одновременно.
+// Стандартный JSON.stringify видит "массив" и выкидывает named keys — на клиенте
+// position.interestAmountRecorded превращается в undefined.
+// Здесь явно разворачиваем такие структуры в plain object, сохраняя оба вида ключей.
+function toSerializable(value) {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'bigint') return value.toString();
+  if (typeof value !== 'object') return value;
+
+  if (Array.isArray(value)) {
+    const namedKeys = Object.keys(value).filter(k => !/^\d+$/.test(k) && k !== 'length');
+    if (namedKeys.length === 0) {
+      return value.map(toSerializable);
+    }
+    const obj = {};
+    for (let i = 0; i < value.length; i++) {
+      obj[i] = toSerializable(value[i]);
+    }
+    for (const k of namedKeys) {
+      obj[k] = toSerializable(value[k]);
+    }
+    return obj;
+  }
+
+  const out = {};
+  for (const k of Object.keys(value)) {
+    out[k] = toSerializable(value[k]);
+  }
+  return out;
+}
+
 class HealthServer {
   constructor(port, getHealthStatus, getWatchedContracts, getContractTransactions, getContractEvents, renewContractCache, web3, redisClient, contracts, settings = {}) {
     this.port = port;
@@ -224,8 +256,11 @@ class HealthServer {
         try {
           const argsParam = url.searchParams.get('args');
           const args = argsParam ? JSON.parse(argsParam) : [];
-          
-          const { value, fromCache } = await this.callContractMethod(contractKey, methodName, args);
+          // noCache=1 — байпас Redis для time-dependent методов (totalCurrentFee,
+          // overallInterest и др., зависящих от block.timestamp).
+          const noCache = url.searchParams.get('noCache') === '1';
+
+          const { value, fromCache } = await this.callContractMethod(contractKey, methodName, args, { noCache });
           
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
@@ -312,20 +347,26 @@ class HealthServer {
     return { value: balanceStr, fromCache: false };
   }
 
-  async callContractMethod(contractKey, methodName, args = []) {
-    // Формируем cache key
+  async callContractMethod(contractKey, methodName, args = [], options = {}) {
+    const { noCache = false } = options;
+
+    // Формируем cache key.
+    // Префикс v2: — принудительная инвалидация старого кэша, в котором для
+    // структурных возвратов (positions(), etc) были потеряны named keys.
     const argsHash = args.length > 0 ? `:${args.join(':')}` : '';
-    const cacheKey = `contract:${contractKey}:${methodName}${argsHash}`;
-    
-    // Проверяем кэш
-    try {
-      const cached = await this.redisClient.get(cacheKey);
-      if (cached) {
-        const result = JSON.parse(cached);
-        return { value: result, fromCache: true };
+    const cacheKey = `contract:v2:${contractKey}:${methodName}${argsHash}`;
+
+    // Проверяем кэш (если клиент явно не попросил байпас).
+    if (!noCache) {
+      try {
+        const cached = await this.redisClient.get(cacheKey);
+        if (cached) {
+          const result = JSON.parse(cached);
+          return { value: result, fromCache: true };
+        }
+      } catch (error) {
+        console.error(`Cache read error for ${cacheKey}:`, error.message);
       }
-    } catch (error) {
-      console.error(`Cache read error for ${cacheKey}:`, error.message);
     }
     
     // Получаем контракт (this.contracts это Map: contractKey -> Web3Contract)
@@ -340,28 +381,29 @@ class HealthServer {
     }
     
     const result = await contractInstance.methods[methodName](...args).call();
-    
-    // Сохраняем в кэш (с BigInt replacer)
-    try {
-      const serialized = JSON.stringify(result, (key, value) =>
-        typeof value === 'bigint' ? value.toString() : value
-      );
-      
-      // Если TTL = 0, сохраняем без expiration (инвалидация только event-driven)
-      if (this.cacheTTL > 0) {
-        await this.redisClient.setEx(cacheKey, this.cacheTTL, serialized);
-      } else {
-        await this.redisClient.set(cacheKey, serialized);
+
+    // Разворачиваем Web3 Result в plain-объект с сохранением именованных ключей.
+    const responseResult = toSerializable(result);
+
+    // Сохраняем в кэш уже развёрнутую структуру — без самодельного replacer'а:
+    // toSerializable уже обработал BigInt.
+    // При noCache пропускаем запись, чтобы не плодить устаревшие значения
+    // для time-dependent методов (totalCurrentFee и т.п.).
+    if (!noCache) {
+      try {
+        const serialized = JSON.stringify(responseResult);
+
+        // Если TTL = 0, сохраняем без expiration (инвалидация только event-driven)
+        if (this.cacheTTL > 0) {
+          await this.redisClient.setEx(cacheKey, this.cacheTTL, serialized);
+        } else {
+          await this.redisClient.set(cacheKey, serialized);
+        }
+      } catch (error) {
+        console.error(`Cache write error for ${cacheKey}:`, error.message);
       }
-    } catch (error) {
-      console.error(`Cache write error for ${cacheKey}:`, error.message);
     }
-    
-    // Конвертируем BigInt для ответа
-    const responseResult = JSON.parse(JSON.stringify(result, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    ));
-    
+
     return { value: responseResult, fromCache: false };
   }
 

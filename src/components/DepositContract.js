@@ -59,8 +59,10 @@ export default class DepositContract extends React.Component{
             // по всем депозитам контракта.
             const interestPromises = [];
             for (let i = 1; i <= depositsCount; i++) {
+                // noCache=true: overallInterest зависит от block.timestamp и растёт
+                // каждый блок. Кешировать бессмысленно — всегда получим устаревшее.
                 interestPromises.push(
-                    cachedContractCall('deposit', 'overallInterest', [i], contracts['deposit'])
+                    cachedContractCall('deposit', 'overallInterest', [i], contracts['deposit'], { noCache: true })
                 );
             }
             const interestResults = await Promise.allSettled(interestPromises);

@@ -7,6 +7,229 @@
 
 ## [Unreleased]
 
+### 2026-04-19 — Воркер: HTTP polling, backup-индекс событий, restore lastRelevantBlock
+
+#### Fixed
+
+- **Воркер (`workers/block-watcher/src/index.js`)** — главная причина «кэш
+  не подхватывает новые блоки»: публичный WebSocket у `publicnode.com`
+  регулярно рвался с `PendingRequestsOnReconnectingError`, из-за чего:
+  - события свежих транзакций не попадали в Redis (`receipt.logs` декодились
+    молча с падением, уровень лога `debug` → в никуда);
+  - catch-up после каждого реконнекта падал на `Cannot read properties of
+    null (reading 'number')` — `getBlock(blockNum)` возвращал null во время
+    реконнекта и полностью останавливал цикл подгонки.
+- По умолчанию воркер подключается через **HTTP polling каждые 5 секунд**
+  (стабильно, никаких реконнектов). WebSocket можно принудительно включить
+  через `USE_WS=1`, иначе используется HTTP даже при наличии `RPC_WS_URL`.
+- Polling-цикл теперь идёт с чекпойнтом `lastPolledBlock`: при лаге между
+  `getBlockNumber` и `getBlock` один и тот же блок не обрабатывается дважды,
+  а при `null` из `getBlock` мы не двигаем чекпойнт и повторим на следующей
+  итерации.
+- Null-safe catch-up на WS-reconnect: `getBlock(blockNum)` теперь проверяется
+  на `null`, что защищает от обрыва цикла подгонки.
+- **`indexBlockEventsForContract()`** — после индексации watched-tx
+  дополнительно дёргается `getPastEvents(eventName, { fromBlock: bn,
+  toBlock: bn })` для backup-индекса. Это отдельный `eth_getLogs` запрос,
+  устойчивый к сбоям декодинга `receipt.logs`; `indexEvent` идемпотентен
+  по `eventKey`, так что дублирования не возникает.
+- Ошибки `_decodeEventABI` в `processReceiptEvents` подняты с `debug` до
+  `warn` — раньше они уходили в `/dev/null`, из-за чего пропущенные события
+  было невозможно диагностировать.
+- **`lastRelevantBlock` / `lastRelevantBlockTime` восстанавливаются при
+  старте** из последней (по score) транзакции в `txs:{address}:list`.
+  Раньше после рестарта воркера эти поля показывали прочерк на
+  `/block-watcher` до первой новой watched-tx.
+
+### 2026-04-19 — CDP: позиции индексируются с 0 (фикс агрегированного fee)
+
+#### Fixed
+
+- **`src/components/CDP.js`** — цикл агрегации fee по всем позициям шёл
+  `for (let i = 1; i <= numPositions; i++)`, тогда как `posID` выдаётся
+  пост-инкрементом в `openCDP` и стартует с 0. При `numPositions = 1`
+  цикл попадал на пустую позицию (`owner = 0x0`, `coinsMinted = 0`) и
+  клал в `feeAccruedSum` и `feeRecordedSum` нули. В результате
+  `overall fee earned` = только исторические переводы в аукцион,
+  `outstanding` всегда 0. Теперь `for (let i = 0; i < numPositions; i++)`.
+
+#### Changed
+
+- **`src/components/CDP.js`** — `overall fee recorded` переименован в
+  `of which recorded on-chain` и перемещён под `overall fee earned`, чтобы
+  было ясно: это **часть** outstanding (уже кристаллизованная в
+  `interestAmountRecorded`), а не отдельное слагаемое. Складывать recorded
+  и accumulated interest — это double counting той же закристаллизованной
+  части долга.
+
+### 2026-04-19 — Deposit: авторефреш accumulated interest каждые 15с
+
+#### Changed
+
+- **`src/components/Deposit.js`** — `overallInterest(id)` теперь вызывается
+  с `noCache: true` (метод time-dependent, растёт каждый блок от
+  `block.timestamp`). Добавлен тихий таймер `setInterval(15s)` с
+  `silent: true` для периодического обновления без мерцания `loading`-стейта;
+  таймер чистится в `componentWillUnmount`. Все числа форматируются через
+  `formatNumber` (coinsDeposited — 2 знака, accumulated interest — 8,
+  чтобы видно было приращение на каждом блоке при ~8% годовых).
+
+### 2026-04-19 — Откат noCache для user-specific чтений (чиним воркер, не обходим)
+
+#### Changed
+
+- Откачены все `noCache: true`, добавленные ранее для user-specific данных
+  (`flatCoin.allowance`, `flatCoin.balanceOf`, `rule.balanceOf`,
+  `rule.allowance`, `dao.pooled`, `deposit.deposits(id)`, списки событий
+  `DepositOpened` в `MyPanel`). Причина: обход кэша воркера маскировал
+  настоящую проблему — WS-подписка теряла события и вообще не обновляла
+  Redis. После фикса воркера (см. выше) он инвалидирует кэш по событиям
+  надёжно, и обходить его на каждом чтении не нужно. Остаётся `noCache` только
+  для реально time-dependent методов (`cdp.totalCurrentFee`, `cdp.positions`
+  с учётом начисленного интереса, `deposit.overallInterest`) — они
+  пересчитываются каждый блок от `block.timestamp`, их кешировать
+  бессмысленно.
+- Затронутые файлы: `src/components/Product.js`, `src/components/MyPanel.js`,
+  `src/components/DepositContract.js`, `src/components/DAO.js`,
+  `src/components/CDP.js` (только allowance пользователя),
+  `src/components/DebtPosition.js` (кроме time-dependent),
+  `src/components/OpenDeposit.js`, `src/utils/cacheApi.js`.
+
+### 2026-04-19 — DebtPosition авторефреш + noCache для balanceOf пользователя
+
+#### Changed
+
+- **`src/components/DebtPosition.js`** — `positions(id)`, `totalCurrentFee(id)`
+  и `getMaxFlatCoinsToMintForPos(id)` теперь вызываются с `noCache: true`.
+  `accumulated interest` пересчитывается каждый блок от `block.timestamp`,
+  а воркер мог отдавать застывшее значение из Redis. Дополнительно компонент
+  раз в 15 секунд тихо (`silent: true`, без флага `loading`) перезапрашивает
+  данные позиции, чтобы цифра шла в реальном времени без ручного обновления
+  страницы. Таймер чистится в `componentWillUnmount`.
+- **`src/components/Product.js`** — `balanceOf(account)` для DFC и RLE в
+  левой панели Balances теперь дёргается с `noCache: true`. Кэш воркера
+  инвалидируется по событиям, но между событием и фактической инвалидацией
+  бывает лаг 10–30 сек, что приводит к залипшему балансу пользователя
+  после его собственных транзакций. Для own-account balance это было
+  особенно заметно — теперь баланс читается напрямую из RPC при каждом
+  ремаунте/смене аккаунта.
+
+### 2026-04-19 — DebtPosition formatting + разбивка fee + renewWorkerCache
+
+#### Added
+
+- **`renewWorkerCache(contractKeyOrName)`** в `src/utils/cachedContractCall.js` —
+  best-effort хелпер: после успешной write-tx дёргает `POST /api/renewCache/{key}`
+  на воркере, чтобы сразу очистить все кэши этого контракта (events, txs,
+  индивидуальные вызовы методов, зависимости, ETH-баланс). Без него фронт
+  после reload всё равно получает кэш, пока воркер не обработает блок с
+  транзакцией (~10–30 сек задержки).
+- **`renewContractCache` в воркере (`workers/block-watcher/src/index.js`)** —
+  теперь чистит не только события/транзакции, но и:
+  - `contract:v2:{contractKey}:*` — все кэши индивидуальных вызовов методов;
+  - `contract:v2:{depKey}:*` — зависимые контракты из `cacheDependencies`;
+  - `eth:balance:{contractAddress}` — ETH-баланс самого контракта.
+- **OpenDeposit / WithDrawDeposit** вызывают `renewWorkerCache('deposit')`
+  на событии `confirmation` до `window.location.reload()` — свежий депозит
+  появляется сразу, без «не отображается после открытия».
+
+#### Changed
+
+- **DebtPosition (`src/components/DebtPosition.js`)** — все численные поля
+  (coinsMinted, ethereum locked, maxCoinsToMint, recorded fee, accumulated
+  interest) форматируются через `formatNumber` с разделителями тысяч и
+  фиксированными 2–4 знаками.
+- **CDP (`src/components/CDP.js`)** — `overall fee earned` теперь
+  сопровождается явной разбивкой: `paid to auction: X + outstanding: Y`,
+  чтобы не возникало иллюзии, что накопленный fee не учтён. Под
+  `overall fee recorded` — пояснение, что это часть outstanding, уже
+  кристаллизованная в `interestAmountRecorded`. `positions(i)` в агрегате
+  теперь читается с `noCache: true` — раньше залипал старый снимок от
+  момента `openCDP`, если событие `PositionUpdated` не инвалидировало кэш.
+
+### 2026-04-19 — CDP: overall fee earned включает переводы в auction
+
+#### Changed
+
+- **CDP (`src/components/CDP.js`)** — `overall fee earned` теперь считается как
+  сумма исторических переводов DFC с CDP → auction контракт (реализованная
+  часть, уже отправленная в аукцион) плюс текущий начисленный fee по активным
+  позициям (`totalCurrentFee`). Раньше учитывали только начисленный, что давало
+  заниженную (часто нулевую) картину для контракта, который большую часть
+  комиссий уже давно отдал в аукцион. Transfer-события тянутся через
+  `getPastEventsCached` с фильтром `{ from: cdpAddress, to: auctionAddress }`;
+  результат дополнительно верифицируется на клиенте (не все воркеры/RPC честно
+  применяют filter по indexed-параметрам).
+
+### 2026-04-19 — Фикс CDP fees (worker теряет именованные ключи структур)
+
+#### Fixed
+
+- **Воркер (`workers/block-watcher/src/health-server.js`, `src/index.js`)** —
+  `callContractMethod` сериализовал Web3 `Result` через голый
+  `JSON.stringify`, который видел array-like и ВЫБРАСЫВАЛ именованные ключи.
+  В итоге на клиенте `position.interestAmountRecorded`, `coinsMinted` и др.
+  превращались в `undefined` → `overall fee recorded` всегда был `0`. Добавлен
+  хелпер `toSerializable`, который разворачивает такие структуры в plain-object
+  с сохранением и числовых, и именованных ключей. Cache prefix поднят до
+  `contract:v2:` — автоматическая инвалидация старых «битых» записей.
+- **CDP (`src/components/CDP.js`)** — чтение `positions(i)` теперь устойчиво:
+  сначала пытаемся взять `position.interestAmountRecorded`, при `undefined`
+  — индексом `[2]` (на случай старого воркера или прямого RPC fallback'а,
+  где формат отличается). Добавлен отладочный лог позиций в консоль.
+
+#### Added
+
+- **noCache в cachedContractCall** — `cachedContractCall(..., { noCache: true })`
+  пробрасывает `?noCache=1` воркеру; воркер в этом режиме обходит Redis и на
+  чтение, и на запись. Применено для time-dependent методов:
+  `cdp.totalCurrentFee(i)` и `deposit.overallInterest(i)` — их значение
+  зависит от `block.timestamp` и растёт каждый блок, кеш с TTL=0 (как было)
+  замораживал бы их навсегда.
+
+#### Changed
+
+- **CDP (`src/components/CDP.js`)** — `total coins minted`, `overall fee earned`,
+  `overall fee recorded` теперь отображаются с 2 знаками после запятой
+  (вместо 4).
+
+### 2026-04-19 — Числовое форматирование + INTDAO параметры
+
+#### Added
+
+- **`formatNumber(value, decimals)`** в `src/utils/utils.js` — единый хелпер
+  форматирования чисел через `Intl.NumberFormat('en-US')`. Запятые как
+  разделители тысяч, точка как десятичная. `decimals = null` — авто до 4 знаков.
+  Для невалидных значений возвращает `'N/A'` (удобный сентинел для «ещё не
+  загрузилось»).
+- **Карточка INTDAO (`src/components/DAO.js`)** — новая collapsable-секция
+  **Contract parameters** (паттерн из `ExchangeRateContract.Price Updates History`):
+  - **Governance params**: stabilizationFundPercent, collateralDiscount,
+    interestRate, depositRate, minAuctionPriceMove, maxRuleEmissionPercent,
+    auctionTurnDuration. Проценты показываются как `N%`, секунды — с
+    человекочитаемой декомпозицией (`86400s (1d)`).
+  - **Linked contracts**: rule, flatCoin, cdp, oracle, deposit, basket,
+    auction — адреса как ссылки на explorer. Пустые / не заполненные —
+    серым `N/A`.
+  - Все значения читаются параллельно через `cachedContractCall('dao',
+    'params'/'addresses', [name])`, каждая ошибка ловится индивидуально и
+    не ломает остальные строки.
+
+#### Changed
+
+- **`src/components/DFC.js`** — все числовые показатели выводятся через
+  `formatNumber` с запятыми. `stabilization fund` и `stabilization fund demand`
+  округлены до центов (`7,285.49`, `-55.46`) вместо длинных хвостов типа
+  `240.95629528158297`. `overall collateral` показывается как `$7,285.49`.
+  Состояние `supply`/`stubFund`/`indicative` теперь числовые, форматирование
+  только в render.
+- **`src/components/CDP.js`** — `stubFund`, `exceed`, `tscSupply`, `wethBalance`,
+  `collateral`, `feeEarned`, `feePayed`, `RuleBalanceOfCDP`, `userAllowence`,
+  `positionsCount` теперь форматируются с тысячными разделителями.
+- **`src/components/RuleToken.js`** — `total supply`, `burned`, `marketCap`,
+  `pool volume`, price in DFC/USD форматируются через `formatNumber`, вместо
+  собственных `.toFixed()` в setState.
+
 ### 2026-04-19 — Страница RLE: burned / price / marketCap / TVL
 
 #### Added

@@ -163,7 +163,14 @@ class BlockWatcher {
   }
   
   async connectWeb3() {
-    if (this.rpcWsUrl) {
+    // По умолчанию используем HTTP polling — WebSocket у публичных RPC
+    // (publicnode, llamarpc) регулярно обрывается, в web3.js v4 это
+    // проявляется как PendingRequestsOnReconnectingError и потеря блоков
+    // между реконнектами. HTTP polling скучнее (latency 5s), но стабилен.
+    // Принудительно включить WS можно через USE_WS=1.
+    const forceWs = process.env.USE_WS === '1' || process.env.USE_WS === 'true';
+
+    if (this.rpcWsUrl && forceWs) {
       try {
         this.web3 = new Web3(new Web3.providers.WebsocketProvider(this.rpcWsUrl, {
           reconnect: {
@@ -172,19 +179,26 @@ class BlockWatcher {
             maxAttempts: 10
           }
         }));
-        
+
         await this.web3.eth.getBlockNumber();
-        logger.info('Connected to Ethereum via WebSocket');
+        logger.info('Connected to Ethereum via WebSocket (USE_WS=1)');
         return;
       } catch (error) {
         logger.warn('WebSocket connection failed, falling back to HTTP:', error.message);
       }
     }
-    
+
     if (this.rpcHttpUrl) {
       this.web3 = new Web3(this.rpcHttpUrl);
       await this.web3.eth.getBlockNumber();
       logger.info('Connected to Ethereum via HTTP (polling mode)');
+    } else if (this.rpcWsUrl) {
+      // Последний резерв: WS если HTTP не настроен.
+      this.web3 = new Web3(new Web3.providers.WebsocketProvider(this.rpcWsUrl, {
+        reconnect: { auto: true, delay: 5000, maxAttempts: 10 },
+      }));
+      await this.web3.eth.getBlockNumber();
+      logger.warn('Connected to Ethereum via WebSocket (no HTTP URL configured)');
     } else {
       throw new Error('No RPC URL configured');
     }
@@ -347,14 +361,42 @@ class BlockWatcher {
   
   async loadCountersFromRedis() {
     try {
-      // Подсчитываем транзакции для каждого контракта
+      // Подсчитываем транзакции для каждого контракта и параллельно
+      // восстанавливаем lastRelevantBlock — максимальный score в
+      // txs:{address}:list это и есть блок последней watched-tx.
+      // Без восстановления после рестарта health.lastRelevantBlock = null
+      // пока не произойдёт новая транзакция к watched-контракту,
+      // и на UI отображается прочерк.
       let totalTxs = 0;
+      let maxRelevantBlock = 0;
       for (const [address] of this.watchedAddresses.entries()) {
         const txsListKey = `txs:${address}:list`;
         const count = await this.redisClient.zCard(txsListKey);
         totalTxs += count;
+
+        if (count > 0) {
+          const top = await this.redisClient.zRange(txsListKey, 0, 0, { REV: true });
+          if (top && top.length > 0) {
+            const lastTx = await this.redisClient.get(`tx:${top[0]}`);
+            if (lastTx) {
+              try {
+                const parsed = JSON.parse(lastTx);
+                const bn = Number(parsed.blockNumber);
+                if (bn > maxRelevantBlock) {
+                  maxRelevantBlock = bn;
+                  if (parsed.blockTimestamp) {
+                    this.health.lastRelevantBlockTime = new Date(Number(parsed.blockTimestamp) * 1000).toISOString();
+                  }
+                }
+              } catch (_) { /* skip malformed */ }
+            }
+          }
+        }
       }
       this.health.transactionsIndexed = totalTxs;
+      if (maxRelevantBlock > 0) {
+        this.health.lastRelevantBlock = maxRelevantBlock;
+      }
       
       // Подсчитываем события по контрактам
       let totalEvents = 0;
@@ -720,7 +762,15 @@ class BlockWatcher {
           const catchUpFrom = Math.max(lastProcessed + 1, currentBlock - 100);
           for (let blockNum = catchUpFrom; blockNum < currentBlock; blockNum++) {
             try {
+              // getBlock может вернуть null если node ещё не увидел блок
+              // (реплика отстала) или если WS реконнектится в этот момент.
+              // Без null-чека получим "Cannot read properties of null (reading 'number')"
+              // и прервём весь catch-up-цикл.
               const blockHeader = await this.web3.eth.getBlock(blockNum);
+              if (!blockHeader) {
+                logger.warn(`getBlock(${blockNum}) returned null during catch-up, skipping`);
+                continue;
+              }
               await this.processBlockHeader(blockHeader);
             } catch (error) {
               logger.error(`Failed to catch up block ${blockNum}:`, error.message);
@@ -748,15 +798,28 @@ class BlockWatcher {
       
       logger.info('Subscribed to new block headers (WebSocket)');
     } else {
-      // Fallback polling
+      // Fallback polling с защитой от дубликатов.
+      // Без `lastPolledBlock` один и тот же блок обрабатывается каждые 5s,
+      // пока в цепочке не появится следующий — это засоряет RPC и кидает
+      // лишние зависимые инвалидации кэша.
       logger.warn('Using polling mode (HTTP provider)');
+      let lastPolledBlock = this.health.lastProcessedBlock || 0;
       setInterval(async () => {
         try {
-          const blockNumber = await this.web3.eth.getBlockNumber();
-          const blockHeader = await this.web3.eth.getBlock(blockNumber);
-          await this.processBlockHeader(blockHeader);
+          const latest = Number(await this.web3.eth.getBlockNumber());
+          if (latest <= lastPolledBlock) return;
+
+          for (let n = lastPolledBlock + 1; n <= latest; n++) {
+            const blockHeader = await this.web3.eth.getBlock(n);
+            if (!blockHeader) {
+              logger.warn(`getBlock(${n}) returned null during polling, will retry`);
+              return; // не двигаем lastPolledBlock — повторим на следующей итерации
+            }
+            await this.processBlockHeader(blockHeader);
+            lastPolledBlock = n;
+          }
         } catch (error) {
-          logger.error('Polling error:', error);
+          logger.error('Polling error:', error.message);
         }
       }, 5000);
     }
@@ -817,9 +880,18 @@ class BlockWatcher {
           await this.processReceiptEvents(receipt, contractInfo, toAddress, blockNumber);
           
         } catch (error) {
-          logger.warn(`Failed to get receipt for ${tx.hash}`);
+          logger.warn(`Failed to get receipt for ${tx.hash}: ${error.message}`);
         }
-        
+
+        // Backup-индексация событий через getPastEvents для текущего блока.
+        // Когда WebSocket ретёрнится в reconnect-loop'е (видим
+        // PendingRequestsOnReconnectingError), receipt.logs может прийти
+        // частичным или decodeEventABI молча провалиться — в результате
+        // событие НЕ попадает в Redis. Дублирующий вызов getPastEvents для
+        // ровно одного блока надёжен (отдельный JSON-RPC запрос eth_getLogs)
+        // и идемпотентен (indexEvent перезаписывает по eventKey).
+        await this.indexBlockEventsForContract(contractInfo, toAddress, blockNumber);
+
         // Индексируем транзакцию
         await this.indexTransaction(fullTxData, toAddress);
         
@@ -876,11 +948,51 @@ class BlockWatcher {
         logger.debug(`Indexed ${event.event} for ${contractInfo.name}`);
         
       } catch (decodeError) {
-        logger.debug(`Failed to decode log: ${decodeError.message}`);
+        // warn (не debug) — чтобы эти ошибки были видны в обычном логе.
+        // В debug-режиме проблемы с decodeEventABI (вроде несовпадения ABI
+        // или обрезанного receipt'а) уходили в /dev/null и пользователь
+        // не видел, что свежие события не попадают в индекс.
+        logger.warn(`Failed to decode log for ${contractInfo.name}: ${decodeError.message}`);
       }
     }
   }
-  
+
+  // Подхват событий контракта ровно для одного блока через getPastEvents.
+  // Надёжнее, чем парсинг receipt.logs на нестабильном WebSocket: это
+  // отдельный JSON-RPC запрос (eth_getLogs), который не страдает от
+  // PendingRequestsOnReconnectingError. Вызывается как backup после
+  // processReceiptEvents чтобы гарантировать, что ни одно событие watched
+  // контракта не потерялось.
+  async indexBlockEventsForContract(contractInfo, contractAddress, blockNumber) {
+    const contractKey = contractInfo.contractKey;
+    const eventNames = this.contractEvents[contractKey];
+    if (!eventNames || eventNames.length === 0) return;
+
+    const contractInstance = this.contracts.get(contractKey);
+    if (!contractInstance) return;
+
+    for (const eventName of eventNames) {
+      try {
+        const events = await contractInstance.getPastEvents(eventName, {
+          fromBlock: blockNumber,
+          toBlock: blockNumber,
+        });
+        for (const event of events) {
+          await this.indexEvent(event, contractKey, contractAddress);
+        }
+        if (events.length > 0) {
+          logger.info(
+            `Backup-indexed ${events.length} ${eventName} events for ${contractInfo.name} at block ${blockNumber}`
+          );
+        }
+      } catch (error) {
+        logger.warn(
+          `Backup getPastEvents failed for ${contractKey}.${eventName} @${blockNumber}: ${error.message}`
+        );
+      }
+    }
+  }
+
   async invalidateBackendCache(address) {
     try {
       const contractInfo = this.watchedAddresses.get(address);
@@ -891,8 +1003,9 @@ class BlockWatcher {
       
       // Инвалидируем по contractKey (cdp, oracle, etc) для совместимости с backend API
       const contractKey = contractInfo.contractKey;
-      const cachePrefix = `contract:${contractKey}`;
-      
+      // v2: — новый префикс после фикса сериализации структур (positions() etc).
+      const cachePrefix = `contract:v2:${contractKey}`;
+
       // Удаляем все backend кэши для этого контракта
       const keys = await this.redisClient.keys(`${cachePrefix}:*`);
       
@@ -911,7 +1024,7 @@ class BlockWatcher {
       // Инвалидируем зависимые контракты
       if (this.cacheDependencies && this.cacheDependencies[contractKey]) {
         for (const depKey of this.cacheDependencies[contractKey]) {
-          const depPrefix = `contract:${depKey}`;
+          const depPrefix = `contract:v2:${depKey}`;
           const depKeys = await this.redisClient.keys(`${depPrefix}:*`);
           
           if (depKeys.length > 0) {
@@ -1197,7 +1310,30 @@ class BlockWatcher {
       }
 
       await this.redisClient.del(`contract:${contractAddress}`);
-      
+
+      // Очищаем кэш индивидуальных вызовов контракта (positions, totalCurrentFee,
+      // balanceOf, ...). Без этого после write-tx frontend ещё видит старые
+      // значения, даже если события/транзакции уже обновлены.
+      const callCacheKeys = await this.redisClient.keys(`contract:v2:${contractKey}:*`);
+      if (callCacheKeys.length > 0) {
+        await this.redisClient.del(callCacheKeys);
+        logger.info(`Cleared ${callCacheKeys.length} method-call cache keys for ${contractKey}`);
+      }
+
+      // Зависимые контракты: balanceOf/allowance для DFC, ETH-balance и т.п.
+      if (this.cacheDependencies && this.cacheDependencies[contractKey]) {
+        for (const depKey of this.cacheDependencies[contractKey]) {
+          const depKeys = await this.redisClient.keys(`contract:v2:${depKey}:*`);
+          if (depKeys.length > 0) {
+            await this.redisClient.del(depKeys);
+            logger.info(`Cleared ${depKeys.length} dependent cache keys for ${depKey}`);
+          }
+        }
+      }
+
+      // ETH-баланс контракта тоже стал устаревшим после любой tx.
+      await this.redisClient.del(`eth:balance:${contractAddress}`);
+
       logger.info(`Cleared cache for ${contractInfo.name}`);
 
       const currentBlock = await this.web3.eth.getBlockNumber();
