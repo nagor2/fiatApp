@@ -155,7 +155,7 @@ export const Web3Provider = ({ children }) => {
     // Если нет window.ethereum или пользователь отклонил - открываем Web3Modal
     try {
       console.log('🔄 Opening Web3Modal for WalletConnect...');
-      const { connectWithWalletConnect } = await import('../utils/walletconnect');
+      const { connectWithWalletConnect } = await import(/* webpackPrefetch: true */ '../utils/walletconnect');
       const result = await connectWithWalletConnect();
       
       if (result && result.address) {

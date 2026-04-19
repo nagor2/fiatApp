@@ -12,10 +12,10 @@ import config from "../utils/config";
 const Commodity = lazy(() => import("./Commodity"));
 const Transaction = lazy(() => import("./Transaction"));
 const Auction = lazy(() => import("./Auction"));
-const Basket = lazy(() => import("./Basket"));
+const Basket = lazy(() => import(/* webpackPrefetch: true */ "./Basket"));
 const Transfers = lazy(() => import("./Transfers"));
 const RuleToken = lazy(() => import("./RuleToken"));
-const DFC = lazy(() => import("./DFC"));
+const DFC = lazy(() => import(/* webpackPrefetch: true */ "./DFC"));
 const Borrow = lazy(() => import("./Borrow"));
 const UpdateCDP = lazy(() => import("./UpdateCDP"));
 const CDP = lazy(() => import("./CDP"));
@@ -31,7 +31,7 @@ const WithdrawEtherCDP = lazy(() => import("./WithdrawEtherCDP"));
 const DAO = lazy(() => import("./DAO"));
 const ImproveBid = lazy(() => import("./ImproveBid"));
 const AuctionContract = lazy(() => import("./AuctionContract"));
-const ExchangeRateContract = lazy(() => import("./ExchangeRateContract"));
+const ExchangeRateContract = lazy(() => import(/* webpackPrefetch: true */ "./ExchangeRateContract"));
 
 const ContentFallback = () => <div align="center">Loading...</div>;
 
