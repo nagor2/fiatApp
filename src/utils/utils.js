@@ -75,16 +75,34 @@ export class Loader extends React.Component{
 
 export class Address extends React.Component {
     render() {
-        return <div className="right" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div className="button address">
+        // .button имеет `position: absolute` в App.css, поэтому оба
+        // вложенных элемента прыгали в одну точку (right:30px от header'а)
+        // и перекрывали друг друга и логотип. Здесь: обёртку делаем
+        // абсолютно-позиционированной сами, а у детей принудительно
+        // сбрасываем position в static, чтобы flex раскладывал их в ряд.
+        return <div style={{
+            position: 'absolute',
+            right: '30px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+        }}>
+            <div className="button address" style={{ position: 'static', margin: 0 }}>
                 {this.props.account.slice(0, 6) +
                 '...' +this.props.account.slice(-4)}
             </div>
             {this.props.onDisconnect && (
-                <a 
-                    className="button pointer red" 
+                <a
+                    className="button pointer red"
                     onClick={this.props.onDisconnect}
-                    style={{ fontSize: '11px', padding: '4px 8px' }}
+                    style={{
+                        position: 'static',
+                        margin: 0,
+                        fontSize: '11px',
+                        padding: '6px 10px',
+                    }}
                 >
                     disconnect
                 </a>

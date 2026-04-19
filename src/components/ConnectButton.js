@@ -9,8 +9,15 @@ export default class ConnectButton extends React.Component{
     }
 
     handleClick = async () => {
-        if (this.state.loading) return;
-        
+        // Повторный клик по "connecting..." разблокирует кнопку — страховка
+        // на случай, если промис подключения по какой-то причине завис
+        // (закрытая модалка, сетевой сбой и т.п.). Саму сессию WalletConnect
+        // это не трогает, только состояние UI.
+        if (this.state.loading) {
+            this.setState({ loading: false });
+            return;
+        }
+
         this.setState({ loading: true });
         try {
             await this.props.getAccount();

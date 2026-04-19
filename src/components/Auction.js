@@ -130,12 +130,17 @@ export default class Auction extends React.Component{
                     const event = sortedEvents[i];
                     bids.push(event)
 
-                    const [blockData, bid] = await Promise.all([
-                        web3.eth.getBlock(event.blockHash),
-                        cachedContractCall('auction', 'bids', [event.returnValues.bidID], contracts['auction']),
-                    ]);
+                    const bid = await cachedContractCall(
+                        'auction', 'bids', [event.returnValues.bidID], contracts['auction']
+                    );
 
-                    event.block = blockData;
+                    // blockHash воркер не индексирует, зато blockTimestamp
+                    // приходит прямо в событии (или timeStamp из Etherscan-
+                    // fallback; см. normalizeCachedEvent). Имитируем старый
+                    // формат `event.block.timestamp`, чтобы не трогать Bids.
+                    if (event.blockTimestamp) {
+                        event.block = { timestamp: event.blockTimestamp };
+                    }
                     event.bid = bid;
                 }
             }

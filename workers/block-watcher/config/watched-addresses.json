@@ -26,6 +26,15 @@
     "rule": ["dao"],
     "flatCoin": ["dao"]
   },
+  "eventDependencies": {
+    "_comment": "После renewCache(X) нужно дополнительно переиндексировать события Y-контрактов. Это отличается от cacheDependencies (который про method-call кэш): здесь — про события, которые эмиттятся на Y-контракте в рамках tx к X (типичный кейс — tx к deposit/cdp/auction/pool триггерит Transfer на flatCoin). Без этого Transfer DFC/RLE пропадают из `Your FlatCoin/Rule transfers` после write-tx к не-токен-контрактам.",
+    "deposit": ["flatCoin"],
+    "cdp": ["flatCoin"],
+    "auction": ["flatCoin", "rule"],
+    "pool": ["flatCoin"],
+    "basket": ["flatCoin"],
+    "dao": ["rule"]
+  },
   "wallets": [],
   "settings": {
     "blockConfirmations": 1,

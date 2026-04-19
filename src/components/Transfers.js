@@ -12,82 +12,42 @@ export default class Transfers extends React.Component{
         this.state = {txs:[], wethBalance:0}
     }
 
-    async componentDidMount() {
-
+    // События приходят из воркера (blockTimestamp) либо Etherscan-fallback
+    // (timeStamp); normalizeCachedEvent в cacheApi.js приводит к общему
+    // `blockTimestamp`. Раньше тут для каждого события дёргался
+    // web3.eth.getBlock(blockHash) — но воркер не сохраняет blockHash
+    // в индексе, поэтому getBlock(undefined) возвращал latest-block и ВСЕ
+    // транзакции показывались с текущим временем. Используем блочный
+    // таймстамп из самого события — один запрос к цепи меньше, и корректно.
+    async loadTransfers() {
         const {contracts} = this.props;
-        let txs = [];
-        this.setState({txs:txs})
-        
-        getPastEventsCached(
-            contracts[this.props.contractName], 
-            'Transfer', 
-            {filter: { from: this.props.account }, fromBlock: fromBlock},
-            this.props.web3
-        ).then((res)=> {
-            for (let i=0; i<res.length; i++) {
-                this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
-                    res[i].block = b;
-                    this.setState({a:true})
-                });
-            }
-            txs.push.apply(txs,res);
-            this.setState({txs:txs})
-        })
-        
-        getPastEventsCached(
-            contracts[this.props.contractName], 
-            'Transfer', 
-            {filter: { to: this.props.account }, fromBlock: fromBlock},
-            this.props.web3
-        ).then((res)=> {
-            for (let i=0; i<res.length; i++) {
-                this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
-                    res[i].block = b;
-                    this.setState({a:true})
-                });
-            }
-            txs.push.apply(txs,res);
-            this.setState({txs:txs})
-        })
+        this.setState({txs: []});
+
+        const [fromEvents, toEvents] = await Promise.all([
+            getPastEventsCached(
+                contracts[this.props.contractName],
+                'Transfer',
+                {filter: { from: this.props.account }, fromBlock},
+                this.props.web3,
+            ),
+            getPastEventsCached(
+                contracts[this.props.contractName],
+                'Transfer',
+                {filter: { to: this.props.account }, fromBlock},
+                this.props.web3,
+            ),
+        ]);
+        this.setState({txs: [...fromEvents, ...toEvents]});
     }
 
-    componentDidUpdate(nextProps, nextContext) {
-        if (nextProps.contractName==this.props.contractName) return;
-        const {contracts} = this.props;
-        let txs = [];
-        this.setState({txs:txs})
-        
-        getPastEventsCached(
-            contracts[this.props.contractName], 
-            'Transfer', 
-            {filter: { from: this.props.account }, fromBlock: fromBlock},
-            this.props.web3
-        ).then((res)=> {
-            for (let i=0; i<res.length; i++) {
-                this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
-                    res[i].block = b;
-                    this.setState({a:true})
-                });
-            }
-            txs.push.apply(txs,res);
-            this.setState({txs:txs})
-        })
-        
-        getPastEventsCached(
-            contracts[this.props.contractName], 
-            'Transfer', 
-            {filter: { to: this.props.account }, fromBlock: fromBlock},
-            this.props.web3
-        ).then((res)=> {
-            for (let i=0; i<res.length; i++) {
-                this.props.web3.eth.getBlock(res[i].blockHash).then((b)=>{
-                    res[i].block = b;
-                    this.setState({a:true})
-                });
-            }
-            txs.push.apply(txs,res);
-            this.setState({txs:txs})
-        })
+    async componentDidMount() {
+        await this.loadTransfers();
+    }
+
+    async componentDidUpdate(prevProps) {
+        if (prevProps.contractName === this.props.contractName
+            && prevProps.account === this.props.account) return;
+        await this.loadTransfers();
     }
 
     render(){
@@ -96,7 +56,7 @@ export default class Transfers extends React.Component{
                      iconType={(product.returnValues.to.toLowerCase() == this.props.account.toLowerCase())? 'in' : 'out'}
                      title={(product.returnValues.to.toLowerCase() == this.props.account.toLowerCase() ? product.returnValues.from : product.returnValues.to)}
                      balance={(toFloat(product.returnValues.value)/10**18).toFixed(2)}
-                     name={product.block==undefined?'':dateFromTimestamp(product.block.timestamp)}
+                     name={product.blockTimestamp ? dateFromTimestamp(product.blockTimestamp) : ''}
                      hash={product.transactionHash}
             />):'';
         return <><div className={'flex-col'}><b>Your {this.props.contractName.replace(/\b\w/g, l => l.toUpperCase())} transfers</b><p></p><Paginator items={items} perPage={10}/></div>

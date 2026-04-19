@@ -73,6 +73,10 @@
 
   font-size: calc(10px + 2vmin);
   color: #606060;
+
+  /* Чтобы абсолютно-позиционированные дети (ETH price слева, адрес/disconnect
+     справа) пристыковывались к самому хедеру, а не уезжали в viewport. */
+  position: relative;
 }
 
 .address{

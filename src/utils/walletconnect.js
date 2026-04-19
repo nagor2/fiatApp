@@ -92,36 +92,67 @@ export async function connectWithWalletConnect() {
     }
 
     console.log('🔄 Opening WalletConnect modal...');
-    
+
+    // Отдельный setInterval раньше гонял проверку провайдера независимо от
+    // состояния модалки. При закрытии диалога без подключения провайдера
+    // никогда не было — promise висел до 120-секундного таймаута, а кнопка
+    // connect на фронте оставалась залипшей на "connecting...". Теперь:
+    //  - сначала сами ждём первого `open === true` (модалка открылась),
+    //  - затем при `open === false` проверяем провайдер:
+    //      есть — resolve, нет — reject ("User closed modal"), сразу
+    //      освобождая UI.
+    let checkProvider = null;
     const connectionPromise = new Promise((resolve, reject) => {
+      let wasOpen = false;
       const timeout = setTimeout(() => {
+        cleanup();
         reject(new Error('Connection timeout'));
       }, 120000);
-      
+
       const unsubscribe = web3modal.subscribeState((state) => {
         console.log('📊 WalletConnect state:', state);
-        
-        if (state.open === false && walletConnectProvider) {
-          clearTimeout(timeout);
-          unsubscribe();
-          resolve();
+
+        if (state.open === true) {
+          wasOpen = true;
+          return;
+        }
+
+        if (state.open === false && wasOpen) {
+          // Даём небольшой grace-period: у Reown провайдер иногда появляется
+          // буквально через один тик после закрытия модалки.
+          setTimeout(() => {
+            const provider = walletConnectProvider || web3modal.getWalletProvider();
+            if (provider) {
+              walletConnectProvider = provider;
+              cleanup();
+              resolve();
+            } else {
+              cleanup();
+              reject(new Error('User closed the wallet connection dialog'));
+            }
+          }, 300);
         }
       });
+
+      function cleanup() {
+        clearTimeout(timeout);
+        if (checkProvider) clearInterval(checkProvider);
+        unsubscribe();
+      }
     });
-    
+
     await web3modal.open();
-    
-    const checkProvider = setInterval(() => {
+
+    checkProvider = setInterval(() => {
       const provider = web3modal.getWalletProvider();
       if (provider) {
         walletConnectProvider = provider;
         clearInterval(checkProvider);
+        checkProvider = null;
       }
     }, 500);
-    
+
     await connectionPromise;
-    
-    clearInterval(checkProvider);
     
     if (!walletConnectProvider) {
       throw new Error('Provider not received from Web3Modal');

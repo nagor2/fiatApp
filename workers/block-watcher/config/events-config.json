@@ -10,5 +10,9 @@
     "auction": ["newAuction", "newBid", "auctionFinished"],
     "pool": ["Swap", "Mint", "Burn", "Sync", "Transfer"]
   },
-  "comment": "Список событий для индексации через getPastEvents"
+  "fullScanContracts": {
+    "flatCoin": ["Transfer"],
+    "rule": ["Transfer"]
+  },
+  "comment": "contractEvents — события для первичной/backup-индексации при релевантной tx. fullScanContracts — контракты, чьи события индексируются на КАЖДОМ блоке, независимо от tx.to. Нужно для токенов (DFC/RLE), где юзер может делать Transfer через внешние протоколы (DEX, мосты), и tx.to в этом случае не наш контракт, но Transfer-лог всё равно должен попасть в кэш."
 }

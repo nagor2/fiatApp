@@ -218,9 +218,20 @@ async function fetchEtherscanEvents(contract, eventName, options) {
 // ======== Общие хелперы ========
 
 export function normalizeCachedEvent(cachedEvent) {
+  // Воркер отдаёт `blockTimestamp` (секунды unix), Etherscan-fallback —
+  // `timeStamp`. Приводим к единому `blockTimestamp`, чтобы компоненты
+  // не гадали, что там. Также выставляем `address` из `contractAddress`
+  // для консистентности со старым форматом web3.
+  const timestamp =
+    cachedEvent.blockTimestamp != null
+      ? Number(cachedEvent.blockTimestamp)
+      : cachedEvent.timeStamp != null
+        ? Number(cachedEvent.timeStamp)
+        : null;
   return {
     ...cachedEvent,
     address: cachedEvent.contractAddress || cachedEvent.address,
+    blockTimestamp: timestamp,
   };
 }
 

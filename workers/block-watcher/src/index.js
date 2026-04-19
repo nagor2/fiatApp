@@ -209,11 +209,17 @@ class BlockWatcher {
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     this.settings = config.settings;
     this.cacheDependencies = config.cacheDependencies || {};
+    this.eventDependencies = config.eventDependencies || {};
     
     // Загружаем список событий для индексации
     const eventsConfigPath = path.join(__dirname, '../config/events-config.json');
     const eventsConfig = JSON.parse(fs.readFileSync(eventsConfigPath, 'utf8'));
     this.contractEvents = eventsConfig.contractEvents;
+    // Контракты, чьи события индексируются на КАЖДОМ блоке (не только
+    // когда в блоке есть watched tx). Нужно для DFC/RLE, где Transfer может
+    // быть инициирован внешним контрактом (DEX-роутер, bridge), а мы обязаны
+    // всё равно увидеть этот перевод и показать юзеру.
+    this.fullScanContracts = eventsConfig.fullScanContracts || {};
     
     // Загружаем полные ABI из contract-abis.js
     const contractAbis = require('../config/contract-abis.js');
@@ -883,28 +889,66 @@ class BlockWatcher {
           logger.warn(`Failed to get receipt for ${tx.hash}: ${error.message}`);
         }
 
-        // Backup-индексация событий через getPastEvents для текущего блока.
-        // Когда WebSocket ретёрнится в reconnect-loop'е (видим
-        // PendingRequestsOnReconnectingError), receipt.logs может прийти
-        // частичным или decodeEventABI молча провалиться — в результате
-        // событие НЕ попадает в Redis. Дублирующий вызов getPastEvents для
-        // ровно одного блока надёжен (отдельный JSON-RPC запрос eth_getLogs)
-        // и идемпотентен (indexEvent перезаписывает по eventKey).
-        await this.indexBlockEventsForContract(contractInfo, toAddress, blockNumber);
-
         // Индексируем транзакцию
         await this.indexTransaction(fullTxData, toAddress);
-        
+
         // Инвалидируем старый кэш backend API
         await this.invalidateBackendCache(toAddress);
       }
     }
-    
+
     if (hasRelevantTx) {
       this.health.lastRelevantBlock = blockNumber;
       this.health.lastRelevantBlockTime = new Date(blockTimestamp * 1000).toISOString();
+
+      // Backup-индексация: проходимся по ВСЕМ watched-контрактам и
+      // дёргаем getPastEvents для текущего блока. Это страхует от двух
+      // сценариев:
+      //   1) WebSocket-реконнект / частичный receipt → processReceiptEvents
+      //      мог молча пропустить событие.
+      //   2) Кросс-контрактный вызов: tx.to = A (deposit), но событие
+      //      (Transfer) живёт на B (flatCoin). Раньше B не индексировался
+      //      вообще, из-за чего перевод на депозит не появлялся в
+      //      `Your FlatCoin transfers`.
+      // getPastEvents идёт через eth_getLogs (один RPC-вызов на контракт),
+      // и indexEvent идемпотентен по eventKey — дублей не будет.
+      for (const [watchedAddress, watchedInfo] of this.watchedAddresses.entries()) {
+        try {
+          await this.indexBlockEventsForContract(watchedInfo, watchedAddress, blockNumber);
+        } catch (error) {
+          logger.warn(`Backup-index for ${watchedInfo.name} at block ${blockNumber} failed: ${error.message}`);
+        }
+      }
     }
-    
+
+    // Full-scan контракты (DFC/RLE): индексируем Transfer на КАЖДОМ блоке,
+    // даже если в блоке нет tx к нашим адресам. Это покрывает случаи, когда
+    // юзер делает Transfer DFC/RLE через сторонний протокол (DEX-роутер,
+    // bridge, multisig) — tx.to в этом случае не watched, но перевод должен
+    // отображаться в `Your FlatCoin/Rule transfers`. Один eth_getLogs на
+    // контракт на блок (2 RPC-вызова на блок при DFC+RLE) — вполне ок.
+    //
+    // Если в этом блоке была релевантная tx, backup-индекс уже прошёлся
+    // по ВСЕМ watched-контрактам с их полным списком событий — повторно
+    // дёргать full-scan для тех же контрактов не нужно.
+    if (!hasRelevantTx) {
+      for (const [contractKey, eventNames] of Object.entries(this.fullScanContracts)) {
+        const contractInstance = this.contracts.get(contractKey);
+        if (!contractInstance) continue;
+        const contractAddress = contractInstance.options.address?.toLowerCase();
+        if (!contractAddress) continue;
+        const contractInfo = this.watchedAddresses.get(contractAddress)
+          || { contractKey, name: contractKey };
+        try {
+          await this.indexBlockEventsForContract(
+            contractInfo, contractAddress, blockNumber, eventNames
+          );
+        } catch (error) {
+          logger.warn(`Full-scan ${contractKey} at block ${blockNumber} failed: ${error.message}`);
+        }
+      }
+    }
+
     await this.saveCheckpoint(blockNumber);
   }
   
@@ -912,29 +956,38 @@ class BlockWatcher {
     if (!receipt.logs || receipt.logs.length === 0) {
       return;
     }
-    
-    const contractInstance = this.contracts.get(contractInfo.contractKey);
-    if (!contractInstance) {
-      return;
-    }
-    
+
+    // Раньше здесь стоял `if (log.address !== contractAddress) continue;`,
+    // из-за чего при tx-вызове контракта A эмиттнутые внутри Transfer/других
+    // события из контракта B (типичный кейс: Deposit.openDeposit → внутри
+    // FlatCoin.transferFrom) не индексировались НИ в A (событие не его),
+    // НИ в B (indexBlockEventsForContract зовётся только для A). Результат —
+    // перевод DFC на deposit-контракт пропадал из списка Transfers.
+    //
+    // Теперь: для каждого лога определяем watched-контракт по log.address
+    // и декодируем его ABI'ем. Если адрес не watched — пропускаем без шума.
     for (const log of receipt.logs) {
-      if (log.address.toLowerCase() !== contractAddress) {
+      const logAddress = log.address.toLowerCase();
+      const logContractInfo = this.watchedAddresses.get(logAddress);
+      if (!logContractInfo) {
         continue;
       }
-      
+
+      const logContractInstance = this.contracts.get(logContractInfo.contractKey);
+      if (!logContractInstance) {
+        continue;
+      }
+
       try {
-        // Декодируем event через Web3
-        const decodedEvent = contractInstance._decodeEventABI.call({
+        const decodedEvent = logContractInstance._decodeEventABI.call({
           name: 'ALLEVENTS',
-          jsonInterface: contractInstance.options.jsonInterface
+          jsonInterface: logContractInstance.options.jsonInterface
         }, log);
-        
+
         if (!decodedEvent || !decodedEvent.event) {
           continue;
         }
-        
-        // Создаем объект события
+
         const event = {
           event: decodedEvent.event,
           returnValues: decodedEvent.returnValues,
@@ -942,17 +995,16 @@ class BlockWatcher {
           transactionHash: receipt.transactionHash,
           logIndex: log.logIndex
         };
-        
-        // Индексируем событие
-        await this.indexEvent(event, contractInfo.contractKey, contractAddress);
-        logger.debug(`Indexed ${event.event} for ${contractInfo.name}`);
-        
+
+        await this.indexEvent(event, logContractInfo.contractKey, logAddress);
+        logger.debug(`Indexed ${event.event} for ${logContractInfo.name} (via tx to ${contractInfo.name})`);
+
       } catch (decodeError) {
         // warn (не debug) — чтобы эти ошибки были видны в обычном логе.
         // В debug-режиме проблемы с decodeEventABI (вроде несовпадения ABI
         // или обрезанного receipt'а) уходили в /dev/null и пользователь
         // не видел, что свежие события не попадают в индекс.
-        logger.warn(`Failed to decode log for ${contractInfo.name}: ${decodeError.message}`);
+        logger.warn(`Failed to decode log for ${logContractInfo.name}: ${decodeError.message}`);
       }
     }
   }
@@ -963,9 +1015,9 @@ class BlockWatcher {
   // PendingRequestsOnReconnectingError. Вызывается как backup после
   // processReceiptEvents чтобы гарантировать, что ни одно событие watched
   // контракта не потерялось.
-  async indexBlockEventsForContract(contractInfo, contractAddress, blockNumber) {
+  async indexBlockEventsForContract(contractInfo, contractAddress, blockNumber, eventNamesOverride = null) {
     const contractKey = contractInfo.contractKey;
-    const eventNames = this.contractEvents[contractKey];
+    const eventNames = eventNamesOverride || this.contractEvents[contractKey];
     if (!eventNames || eventNames.length === 0) return;
 
     const contractInstance = this.contracts.get(contractKey);
@@ -1259,6 +1311,44 @@ class BlockWatcher {
     }
   }
   
+  // Переиндексация событий контракта через getPastEvents без чистки его
+  // существующих данных. Используется как "dep-reindex" после renewCache(X)
+  // для контрактов, на которых эмиттятся события в рамках tx к X
+  // (см. eventDependencies). Идемпотентно: indexEvent перезаписывает по
+  // eventKey = `event:{contractKey}:{eventName}:{txHash}:{logIndex}`.
+  async reindexContractEvents(contractKey, fromBlock, toBlock) {
+    const contract = this.contracts.get(contractKey);
+    if (!contract) {
+      logger.warn(`reindexContractEvents: contract ${contractKey} not loaded, skipping`);
+      return 0;
+    }
+    const eventNames = this.contractEvents[contractKey];
+    if (!eventNames || eventNames.length === 0) return 0;
+
+    const contractAddress = contract.options.address?.toLowerCase();
+    if (!contractAddress) return 0;
+
+    const MAX_BLOCK_RANGE = 49999;
+    let indexed = 0;
+
+    logger.info(`Reindexing ${contractKey} events [${eventNames.join(',')}] from ${fromBlock} to ${toBlock}`);
+    for (let from = fromBlock; from <= toBlock; from += MAX_BLOCK_RANGE + 1) {
+      const to = Math.min(from + MAX_BLOCK_RANGE, toBlock);
+      for (const eventName of eventNames) {
+        try {
+          const events = await contract.getPastEvents(eventName, { fromBlock: from, toBlock: to });
+          for (const event of events) {
+            await this.indexEvent(event, contractKey, contractAddress);
+            indexed++;
+          }
+        } catch (error) {
+          logger.error(`reindexContractEvents ${contractKey}.${eventName} ${from}-${to} failed: ${error.message}`);
+        }
+      }
+    }
+    return indexed;
+  }
+
   async renewContractCache(contractNameOrAddress) {
     try {
       let contractInfo = null;
@@ -1381,12 +1471,33 @@ class BlockWatcher {
 
       logger.info(`Cache renewed for ${contractInfo.name}: +${txsAdded} txs, +${eventsAdded} events`);
 
+      // Event-dependencies: после write-tx на X (deposit/cdp/auction/...)
+      // Transfer-события могли быть эмиттированы на Y (flatCoin/rule). Y живёт
+      // на другом адресе → renewCache(X) их не захватывает. Здесь догоняем
+      // события Y через getPastEvents (без чистки Y — чтобы не потерять его
+      // историю транзакций; indexEvent идемпотентен по eventKey, так что
+      // дубли не создадутся). Ограничиваемся startBlock..currentBlock, что
+      // покрывает любой случай независимо от того, когда была сделана tx.
+      const depsEventsBefore = this.health.eventsIndexed;
+      const depList = this.eventDependencies[contractKey] || [];
+      for (const depKey of depList) {
+        try {
+          await this.reindexContractEvents(depKey, this.startBlock, toBlock);
+        } catch (error) {
+          logger.warn(`Dep-reindex ${depKey} after renew(${contractKey}) failed: ${error.message}`);
+        }
+      }
+      const depsEventsAdded = this.health.eventsIndexed - depsEventsBefore;
+      if (depList.length > 0) {
+        logger.info(`Event-deps for ${contractInfo.name} [${depList.join(',')}]: +${depsEventsAdded} events`);
+      }
+
       return {
         success: true,
         contract: contractInfo.name,
         address: contractAddress,
         transactionsAdded: txsAdded,
-        eventsAdded: eventsAdded
+        eventsAdded: eventsAdded + depsEventsAdded
       };
 
     } catch (error) {
