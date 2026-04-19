@@ -50,13 +50,19 @@ export default class DFC extends React.Component{
             const sharePrice = toFloat(sharePriceRaw);
             const allowedToAuction = toFloat(allowanceRaw);
             
-            // Используем любую доступную цену ETH (предпочтительно Uniswap)
-            const effectiveEthPrice = ethPriceUniswap || ethPrice || 0;
-            
+            // Collateral считаем по on-chain цене (oracle) — это единственный
+            // ценовой источник, от которого зависит сам CDP контракт.
+            // Uniswap/Etherscan оставляем только как last-resort fallback, если
+            // oracle ещё не ответил.
+            const ethPriceNumeric = parseFloat(ethPrice);
+            const effectiveEthPrice = (isFinite(ethPriceNumeric) && ethPriceNumeric > 0)
+                ? ethPriceNumeric
+                : (ethPriceUniswap || 0);
+
             console.log('🔍 DFC collateral calculation:');
             console.log('   ethBalance (wei):', ethBalance);
             console.log('   ethBalance (ETH):', toFloat(ethBalance)/10**18);
-            console.log('   ethPrice (prop):', ethPrice);
+            console.log('   ethPrice (contract, prop):', ethPrice);
             console.log('   ethPriceUniswap (prop):', ethPriceUniswap);
             console.log('   effectiveEthPrice (used):', effectiveEthPrice);
             console.log('   supply (wei):', supply);
@@ -183,12 +189,18 @@ export default class DFC extends React.Component{
             this.loadData();
         }
         
-        // Перезагрузка когда любая цена ETH становится доступной
-        const prevEthPrice = prevProps.ethPriceUniswap || prevProps.ethPrice;
-        const currentEthPrice = this.props.ethPriceUniswap || this.props.ethPrice;
-        
-        if (!prevEthPrice && currentEthPrice && currentContractsReady) {
+        // Перезагрузка когда любая цена ETH становится доступной.
+        // Отдельно триггерим на появление contract price, т.к. именно по ней
+        // считается collateral — если сначала пришёл Uniswap, перерасчёт
+        // обязателен когда подтянется oracle.
+        const prevAnyEthPrice = prevProps.ethPriceUniswap || prevProps.ethPrice;
+        const currentAnyEthPrice = this.props.ethPriceUniswap || this.props.ethPrice;
+
+        if (!prevAnyEthPrice && currentAnyEthPrice && currentContractsReady) {
             console.log('DFC: ETH price available, reloading data...');
+            this.loadData();
+        } else if (!prevProps.ethPrice && this.props.ethPrice && currentContractsReady) {
+            console.log('DFC: Oracle ETH price arrived, recalculating collateral...');
             this.loadData();
         }
     }
