@@ -25,21 +25,25 @@ export const Web3Provider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const initWeb3 = async () => {
+    // Приоритет: MetaMask на mainnet → публичный RPC напрямую → /api/rpc (nginx proxy).
+    // Публичный RPC выше nginx-прокси, потому что в проде /api/rpc может быть
+    // 503 (упал pod / нет deploy), а ethereum-rpc.publicnode.com работает из браузера
+    // с включённым CORS — независимо от нашей инфраструктуры.
     let web3Instance;
-    
+
     try {
       if (window.ethereum && Number(await window.ethereum.request({ method: "eth_chainId" })) === 1) {
         web3Instance = new Web3(window.ethereum);
-        console.log('using window web3');
+        console.log('using window web3 (MetaMask)');
       } else {
-        web3Instance = new Web3(config.rpc);
-        console.log('using HTTP RPC:', config.rpc);
+        web3Instance = new Web3(config.publicRpc || 'https://ethereum-rpc.publicnode.com');
+        console.log('using public RPC directly:', config.publicRpc);
       }
     } catch (error) {
-      console.log('Error initializing web3, using fallback RPC:', error.message);
-      web3Instance = new Web3(config.rpc);
+      console.log('Error initializing web3, using public RPC fallback:', error.message);
+      web3Instance = new Web3(config.publicRpc || 'https://ethereum-rpc.publicnode.com');
     }
-    
+
     setWeb3(web3Instance);
     return web3Instance;
   };

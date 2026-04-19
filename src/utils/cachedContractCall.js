@@ -17,6 +17,7 @@
  * @returns {Promise} - Результат вызова метода
  */
 
+import Web3 from 'web3';
 import {
   isWorkerCircuitOpen,
   recordWorkerSuccess,
@@ -26,6 +27,40 @@ import {
 } from './workerCircuitBreaker';
 
 const WORKER_CALL_TIMEOUT_MS = 3000;
+
+// Публичные RPC для fallback (CORS-enabled, работают прямо из браузера).
+// Критически важно: эти URL не идут через /api/rpc прокси nginx,
+// так что если nginx / watcher / всё вместе недоступны — fallback всё равно работает.
+const PUBLIC_FALLBACK_RPCS = [
+  'https://ethereum-rpc.publicnode.com',
+  'https://eth.llamarpc.com',
+];
+
+const directWeb3Cache = new Map();
+function getDirectWeb3(rpcUrl) {
+  if (!directWeb3Cache.has(rpcUrl)) {
+    directWeb3Cache.set(rpcUrl, new Web3(rpcUrl));
+  }
+  return directWeb3Cache.get(rpcUrl);
+}
+
+/**
+ * Выполнить callback (принимающий web3) по списку публичных RPC,
+ * перебирая их по очереди на любой ошибке. Возвращает результат первого успешного.
+ */
+async function withPublicRpc(fn) {
+  let lastError = null;
+  for (const rpcUrl of PUBLIC_FALLBACK_RPCS) {
+    try {
+      const w3 = getDirectWeb3(rpcUrl);
+      return await fn(w3, rpcUrl);
+    } catch (error) {
+      lastError = error;
+      console.warn(`[DirectRPC] ${rpcUrl} failed: ${error.message || error}`);
+    }
+  }
+  throw lastError || new Error('All public RPC providers failed');
+}
 
 function getWorkerBaseUrl() {
   // В dev без прокси nginx — обращаемся напрямую. В проде — относительный путь,
@@ -49,12 +84,24 @@ async function callFallback(contractKey, methodName, args, fallbackContract) {
       `Worker unavailable for ${contractKey}.${methodName} and no fallback contract provided`
     );
   }
-  if (!fallbackContract.methods || !fallbackContract.methods[methodName]) {
+  const abi = fallbackContract.options && fallbackContract.options.jsonInterface;
+  const address = fallbackContract._address || (fallbackContract.options && fallbackContract.options.address);
+  if (!abi || !address) {
     throw new Error(
-      `Worker unavailable and fallback contract has no method ${methodName}`
+      `Worker unavailable and fallback contract lacks ABI/address for ${contractKey}.${methodName}`
     );
   }
-  return fallbackContract.methods[methodName](...args).call();
+
+  // Fallback НЕ использует web3 из fallbackContract, потому что тот может быть
+  // привязан к мёртвому /api/rpc (nginx → watcher). Всегда идём напрямую
+  // в публичные RPC — CORS у publicnode/llamarpc включён.
+  return withPublicRpc(async (w3) => {
+    const contract = new w3.eth.Contract(abi, address);
+    if (!contract.methods[methodName]) {
+      throw new Error(`Method ${methodName} not found in ABI`);
+    }
+    return contract.methods[methodName](...args).call();
+  });
 }
 
 export async function cachedContractCall(contractKey, methodName, args = [], fallbackContract = null) {
@@ -146,9 +193,8 @@ export async function cachedEthBalance(address, web3) {
     console.log(`[Worker] Circuit open, skipping worker for eth.getBalance(${address})`);
   }
 
-  if (!web3) {
-    throw new Error('Worker unavailable and no web3 instance for eth.getBalance fallback');
-  }
-  const balance = await web3.eth.getBalance(address);
+  // Игнорируем переданный web3 (он может идти через мёртвый /api/rpc),
+  // всегда бьём в публичные RPC напрямую.
+  const balance = await withPublicRpc((w3) => w3.eth.getBalance(address));
   return balance.toString();
 }

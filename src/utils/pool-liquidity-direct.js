@@ -9,6 +9,48 @@ import { UNISWAP_CONFIG } from './uniswap-config';
 
 const { ZeroAddress } = ethers;
 
+// Публичные RPC как fallback на случай, если /api/rpc (nginx прокси) вернёт 503.
+// Порядок: nginx-прокси (быстрее, если жив), затем напрямую в публичные ноды.
+const RPC_ENDPOINTS = [
+  '/api/rpc',
+  'https://ethereum-rpc.publicnode.com',
+  'https://eth.llamarpc.com',
+];
+
+async function rpcCall(body, timeoutMs = 5000) {
+  let lastError = null;
+  for (const endpoint of RPC_ENDPOINTS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('json')) {
+        throw new Error(`Non-JSON response (content-type: ${ct})`);
+      }
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error.message || 'RPC error');
+      }
+      return data;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[RPC] ${endpoint} failed: ${error.message}`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastError || new Error('All RPC endpoints failed');
+}
+
 const STATE_VIEW_ABI = [
   {
     "inputs": [
@@ -50,48 +92,26 @@ export async function getPoolSwaps(limit = 10) {
     // Swap event signature
     const swapEventSignature = ethers.id('Swap(bytes32,address,int128,int128,uint160,uint128,int24,uint24)');
     
-    // Получаем текущий блок
-    const blockResponse = await fetch('/api/rpc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'eth_blockNumber',
-        params: [],
-        id: 1
-      })
+    const blockResult = await rpcCall({
+      jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1,
     });
-    
-    const blockResult = await blockResponse.json();
     const currentBlock = parseInt(blockResult.result, 16);
     const fromBlock = Math.max(0, currentBlock - 49999);
-    
+
     console.log(`   Fetching from block ${fromBlock} to ${currentBlock}...`);
-    
-    // Получаем логи
-    const logsResponse = await fetch('/api/rpc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'eth_getLogs',
-        params: [{
-          address: poolManagerAddress,
-          topics: [swapEventSignature, poolId],
-          fromBlock: '0x' + fromBlock.toString(16),
-          toBlock: 'latest'
-        }],
-        id: 2
-      })
+
+    const logsResult = await rpcCall({
+      jsonrpc: '2.0',
+      method: 'eth_getLogs',
+      params: [{
+        address: poolManagerAddress,
+        topics: [swapEventSignature, poolId],
+        fromBlock: '0x' + fromBlock.toString(16),
+        toBlock: 'latest',
+      }],
+      id: 2,
     });
-    
-    const logsResult = await logsResponse.json();
-    
-    if (logsResult.error) {
-      console.error('❌ Error getting logs:', logsResult.error);
-      throw new Error('eth_getLogs: ' + logsResult.error.message);
-    }
-    
+
     const logs = logsResult.result || [];
     console.log(`   Found ${logs.length} Swap events`);
     
@@ -143,43 +163,23 @@ export async function getPoolLiquidityDirect(ethPriceUSD = null) {
     const getLiquidityData = iface.encodeFunctionData('getLiquidity', [poolId]);
     
     console.log('   getSlot0 calldata:', getSlot0Data);
-    console.log('   Calling eth_call via /api/rpc...');
-    
-    const [slot0Res, liquidityRes] = await Promise.all([
-      fetch('/api/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'eth_call',
-          params: [{ to: stateViewAddress, data: getSlot0Data }, 'latest'],
-          id: 1
-        })
+    console.log('   Calling eth_call via RPC chain (/api/rpc → publicnode → llamarpc)...');
+
+    const [slot0Result, liquidityResult] = await Promise.all([
+      rpcCall({
+        jsonrpc: '2.0',
+        method: 'eth_call',
+        params: [{ to: stateViewAddress, data: getSlot0Data }, 'latest'],
+        id: 1,
       }),
-      fetch('/api/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'eth_call',
-          params: [{ to: stateViewAddress, data: getLiquidityData }, 'latest'],
-          id: 2
-        })
-      })
+      rpcCall({
+        jsonrpc: '2.0',
+        method: 'eth_call',
+        params: [{ to: stateViewAddress, data: getLiquidityData }, 'latest'],
+        id: 2,
+      }),
     ]);
-    
-    const slot0Result = await slot0Res.json();
-    const liquidityResult = await liquidityRes.json();
-    
-    if (slot0Result.error) {
-      console.error('❌ getSlot0 error:', slot0Result.error);
-      throw new Error('getSlot0: ' + slot0Result.error.message);
-    }
-    if (liquidityResult.error) {
-      console.error('❌ getLiquidity error:', liquidityResult.error);
-      throw new Error('getLiquidity: ' + liquidityResult.error.message);
-    }
-    
+
     const slot0 = iface.decodeFunctionResult('getSlot0', slot0Result.result);
     const liq = iface.decodeFunctionResult('getLiquidity', liquidityResult.result);
     
