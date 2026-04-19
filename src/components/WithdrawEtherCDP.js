@@ -1,8 +1,6 @@
 import React from "react";
 import {Loader} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class WithdrawEtherCDP extends React.Component{
 
@@ -15,15 +13,17 @@ export default class WithdrawEtherCDP extends React.Component{
     async componentDidMount() {
         const { contracts } = this.props;
 
-        const maxCoinsRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMintForPos?args=[${this.props.id}]`);
-        const maxCoinsData = await maxCoinsRes.json();
-        const maxCoins = maxCoinsData.result;
-        
+        const maxCoins = await cachedContractCall(
+            'cdp', 'getMaxFlatCoinsToMintForPos', [this.props.id], contracts?.['cdp']
+        );
+
         const coinsDifference = maxCoins - this.props.position.coinsMinted;
-        
-        const coinsPerEtherRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMint?args=["${this.props.web3.utils.toWei('0.000001', 'ether')}"]`);
-        const coinsPerEtherData = await coinsPerEtherRes.json();
-        const coinsPerEther = coinsPerEtherData.result;
+
+        const coinsPerEther = await cachedContractCall(
+            'cdp', 'getMaxFlatCoinsToMint',
+            [this.props.web3.utils.toWei('0.000001', 'ether')],
+            contracts?.['cdp'],
+        );
         
         console.log(coinsDifference)
         console.log(coinsPerEther)

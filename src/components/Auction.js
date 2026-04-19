@@ -3,10 +3,8 @@ import Bids from "./Bids";
 import {fromBlock} from "../utils/config"
 import {Loader, toFloat} from "../utils/utils"
 import {getPastEventsCached} from "../utils/cacheApi";
-import config from "../utils/config";
+import {cachedContractCall} from "../utils/cachedContractCall";
 /* global BigInt */
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class Auction extends React.Component{
     constructor(props) {
@@ -47,9 +45,9 @@ export default class Auction extends React.Component{
         try {
             console.log(`🔄 Auction: Loading auction ${this.props.id} via Block Watcher API...`);
 
-            const auctionRes = await fetch(`${BLOCK_WATCHER_API}/api/call/auction/auctions?args=[${this.props.id}]`);
-            const auctionData = await auctionRes.json();
-            const auction = auctionData.result;
+            const auction = await cachedContractCall(
+                'auction', 'auctions', [this.props.id], contracts['auction']
+            );
 
             this.setState({auction: auction, address: contracts['auction']._address});
 
@@ -58,21 +56,16 @@ export default class Auction extends React.Component{
             this.setState({paymentTokenContract: paymentContract})
 
             const auctionAddress = contracts['auction']._address;
-            
-            try {
-                const [allowanceRes, balanceRes] = await Promise.all([
-                    fetch(`${BLOCK_WATCHER_API}/api/call/${paymentContractName}/allowance?args=["${this.props.account}","${auctionAddress}"]`),
-                    fetch(`${BLOCK_WATCHER_API}/api/call/${paymentContractName}/balanceOf?args=["${this.props.account}"]`)
-                ]);
 
-                const [allowanceData, balanceData] = await Promise.all([
-                    allowanceRes.json(),
-                    balanceRes.json()
+            try {
+                const [allowance, balance] = await Promise.all([
+                    cachedContractCall(paymentContractName, 'allowance', [this.props.account, auctionAddress], paymentContract),
+                    cachedContractCall(paymentContractName, 'balanceOf', [this.props.account], paymentContract),
                 ]);
 
                 this.setState({
-                    allowanceToAuction: allowanceData.result,
-                    paymentBalance: balanceData.result
+                    allowanceToAuction: allowance,
+                    paymentBalance: balance,
                 });
             } catch (e) {
                 console.error('Failed to load payment token data:', e);
@@ -85,41 +78,37 @@ export default class Auction extends React.Component{
             }
 
             const block = await web3.eth.getBlock('latest');
-            const durationRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["auctionTurnDuration"]`);
-            const durationData = await durationRes.json();
-            const auctionTurnDuration = durationData.result;
-            
+            const auctionTurnDuration = await cachedContractCall(
+                'dao', 'params', ['auctionTurnDuration'], contracts['dao']
+            );
+
             this.setState({
                 block: block,
                 timeLeft: (auctionTurnDuration - (block.timestamp - auction.lastTimeUpdated))
             });
 
             if (auction.bestBidID!=0){
-                const bestBidRes = await fetch(`${BLOCK_WATCHER_API}/api/call/auction/bids?args=[${auction.bestBidID}]`);
-                const bestBidData = await bestBidRes.json();
-                const bestBid = bestBidData.result;
-                
+                const bestBid = await cachedContractCall(
+                    'auction', 'bids', [auction.bestBidID], contracts['auction']
+                );
+
                 this.setState({bestBid: bestBid})
-                
-                const minMoveRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["minAuctionPriceMove"]`);
-                const minMoveData = await minMoveRes.json();
-                const minAuctionPriceMove = minMoveData.result;
-                
+
+                const minAuctionPriceMove = await cachedContractCall(
+                    'dao', 'params', ['minAuctionPriceMove'], contracts['dao']
+                );
+
                 let nextBid = toFloat(bestBid.bidAmount)/10**18 * (100 + this.state.move*toFloat(minAuctionPriceMove))/100;
                 this.setState({nextBid:nextBid})
             }
             else {
                 switch (auction.lotToken){
                     case contracts['rule']._address:
-                        const [supplyRes, maxEmissionRes] = await Promise.all([
-                            fetch(`${BLOCK_WATCHER_API}/api/call/rule/totalSupply`),
-                            fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["maxRuleEmissionPercent"]`)
+                        const [supply, maxEmission] = await Promise.all([
+                            cachedContractCall('rule', 'totalSupply', [], contracts['rule']),
+                            cachedContractCall('dao', 'params', ['maxRuleEmissionPercent'], contracts['dao']),
                         ]);
-                        const [supplyData, maxEmissionData] = await Promise.all([
-                            supplyRes.json(),
-                            maxEmissionRes.json()
-                        ]);
-                        this.setState({nextBid:supplyData.result*maxEmissionData.result/100/10**18-1});
+                        this.setState({nextBid: supply*maxEmission/100/10**18 - 1});
                         break;
                     case contracts['flatCoin']._address: this.setState({nextBid:0.1}); break;
                     case contracts['weth']._address: this.setState({nextBid:0.1}); break;
@@ -140,15 +129,14 @@ export default class Auction extends React.Component{
                 if (!bids.find(e=>e.returnValues.bidID==sortedEvents[i].returnValues.bidID)){
                     const event = sortedEvents[i];
                     bids.push(event)
-                    
-                    const [blockData, bidRes] = await Promise.all([
+
+                    const [blockData, bid] = await Promise.all([
                         web3.eth.getBlock(event.blockHash),
-                        fetch(`${BLOCK_WATCHER_API}/api/call/auction/bids?args=[${event.returnValues.bidID}]`)
+                        cachedContractCall('auction', 'bids', [event.returnValues.bidID], contracts['auction']),
                     ]);
-                    
-                    const bidData = await bidRes.json();
+
                     event.block = blockData;
-                    event.bid = bidData.result;
+                    event.bid = bid;
                 }
             }
             
@@ -186,9 +174,12 @@ export default class Auction extends React.Component{
                 this.setState({'loader':false})
                 const paymentContractName = (this.state.auction.paymentToken==this.props.contracts['flatCoin']._address)?'flatCoin':'rule';
                 const auctionAddress = this.props.contracts['auction']._address;
-                const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/${paymentContractName}/allowance?args=["${this.props.account}","${auctionAddress}"]`);
-                const allowanceData = await allowanceRes.json();
-                this.setState({allowanceToAuction:(allowanceData.result)});
+                const allowance = await cachedContractCall(
+                    paymentContractName, 'allowance',
+                    [this.props.account, auctionAddress],
+                    this.state.paymentTokenContract,
+                );
+                this.setState({allowanceToAuction: allowance});
             })
             .on('error', console.error);
     }

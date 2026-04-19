@@ -1,8 +1,6 @@
 import React from "react";
 import {toFloat} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class DepositContract extends React.Component{
     constructor(props) {
@@ -38,33 +36,31 @@ export default class DepositContract extends React.Component{
             const cdpAddress = contracts['cdp']._address;
 
             const promises = [
-                fetch(`${BLOCK_WATCHER_API}/api/call/deposit/depositsCounter`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${depositAddress}"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["depositRate"]`)
+                cachedContractCall('deposit', 'depositsCounter', [], contracts['deposit']),
+                cachedContractCall('flatCoin', 'balanceOf', [depositAddress], contracts['flatCoin']),
+                cachedContractCall('dao', 'params', ['depositRate'], contracts['dao']),
             ];
 
             if (account) {
                 promises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${account}","${depositAddress}"]`),
-                    fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${account}"]`)
+                    cachedContractCall('flatCoin', 'allowance', [account, depositAddress], contracts['flatCoin']),
+                    cachedContractCall('flatCoin', 'allowance', [cdpAddress, account], contracts['flatCoin']),
                 );
             }
 
-            const responses = await Promise.all(promises);
-            const dataPromises = responses.map(res => res.json());
-            const results = await Promise.all(dataPromises);
+            const results = await Promise.all(promises);
 
             const newState = {
-                depositsCount: results[0].result,
-                overallVolume: (toFloat(results[1].result)/10**18).toFixed(2),
-                depositRate: results[2].result,
+                depositsCount: results[0],
+                overallVolume: (toFloat(results[1])/10**18).toFixed(2),
+                depositRate: results[2],
                 address: depositAddress,
                 loading: false
             };
 
             if (account) {
-                newState.allowanceToDeposit = (toFloat(results[3].result)/10**18).toFixed(5);
-                newState.approvedFromCDP = (toFloat(results[4].result)/10**18).toFixed(5);
+                newState.allowanceToDeposit = (toFloat(results[3])/10**18).toFixed(5);
+                newState.approvedFromCDP = (toFloat(results[4])/10**18).toFixed(5);
             }
 
             this.setState(newState);

@@ -1,8 +1,6 @@
 import React from "react";
 import {Loader, toFloat} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class PayInterestCDP extends React.Component{
     constructor(props) {
@@ -57,22 +55,17 @@ export default class PayInterestCDP extends React.Component{
         try {
             const cdpAddress = contracts['cdp']._address;
 
-            const [feeRes, allowanceRes] = await Promise.all([
-                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/totalCurrentFee?args=[${this.props.id}]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${cdpAddress}"]`)
+            const [feeRaw, allowanceRaw] = await Promise.all([
+                cachedContractCall('cdp', 'totalCurrentFee', [this.props.id], contracts['cdp']),
+                cachedContractCall('flatCoin', 'allowance', [this.props.account, cdpAddress], contracts['flatCoin']),
             ]);
 
-            const [feeData, allowanceData] = await Promise.all([
-                feeRes.json(),
-                allowanceRes.json()
-            ]);
-
-            const fee = toFloat(feeData.result)/10**18;
+            const fee = toFloat(feeRaw)/10**18;
 
             this.setState({
                 fee: fee,
                 needed: fee*1.001,
-                allowance: toFloat(allowanceData.result)/10**18
+                allowance: toFloat(allowanceRaw)/10**18
             });
         } catch (error) {
             console.error('❌ PayInterestCDP: Failed to load data:', error);

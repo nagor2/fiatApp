@@ -4,30 +4,30 @@ import { useWeb3 } from '../contexts/Web3Context';
 import MainLayout from '../layouts/MainLayout';
 import MyPanel from '../components/MyPanel';
 import config from '../utils/config';
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import { cachedContractCall } from '../utils/cachedContractCall';
 
 const CommoditiesPage = ({ emitter }) => {
   const { web3, contracts, account, ethPrice, ethPriceUniswap } = useWeb3();
   const navigate = useNavigate();
   const { commodityName } = useParams();
-  
+
   useEffect(() => {
     const loadCommodity = async () => {
       if (commodityName && contracts && contracts['basket']) {
         try {
-          console.log('🔄 CommoditiesPage: Loading commodity via Block Watcher API...');
-          
-          const itemsCountRes = await fetch(`${BLOCK_WATCHER_API}/api/call/basket/itemsCount`);
-          const itemsCountData = await itemsCountRes.json();
-          const count = parseInt(itemsCountData.result);
+          console.log('🔄 CommoditiesPage: Loading commodity...');
+
+          const itemsCountRaw = await cachedContractCall(
+            'basket', 'itemsCount', [], contracts['basket']
+          );
+          const count = parseInt(itemsCountRaw);
 
           for (let i = 1; i <= count; i++) {
-            const itemRes = await fetch(`${BLOCK_WATCHER_API}/api/call/basket/items?args=[${i}]`);
-            const itemData = await itemRes.json();
-            const item = itemData.result;
+            const item = await cachedContractCall(
+              'basket', 'items', [i], contracts['basket']
+            );
             const normalizedName = commodityName.replace(/-/g, '/');
-            
+
             if (item.symbol === normalizedName || item.symbol.toLowerCase() === normalizedName.toLowerCase()) {
               emitter.emit('change-state', ['Commodities', item.symbol, i, null]);
               console.log(`✅ CommoditiesPage: Found commodity ${item.symbol}`);
@@ -39,7 +39,7 @@ const CommoditiesPage = ({ emitter }) => {
         }
       }
     };
-    
+
     loadCommodity();
   }, [commodityName, contracts, emitter]);
 

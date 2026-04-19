@@ -1,7 +1,5 @@
 import React from "react";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class AuctionContract extends React.Component{
     constructor(props) {
@@ -24,19 +22,14 @@ export default class AuctionContract extends React.Component{
         try {
             console.log('🔄 AuctionContract: Starting data load via Block Watcher API...');
 
-            const [auctionNumRes, bidsNumRes] = await Promise.all([
-                fetch(`${BLOCK_WATCHER_API}/api/call/auction/auctionNum`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/auction/bidsNum`)
-            ]);
-
-            const [auctionNumData, bidsNumData] = await Promise.all([
-                auctionNumRes.json(),
-                bidsNumRes.json()
+            const [auctionNum, bidsNum] = await Promise.all([
+                cachedContractCall('auction', 'auctionNum', [], contracts['auction']),
+                cachedContractCall('auction', 'bidsNum', [], contracts['auction']),
             ]);
 
             this.setState({
-                auctionNum: auctionNumData.result,
-                bidsNum: bidsNumData.result,
+                auctionNum,
+                bidsNum,
                 address: contracts['auction']._address,
                 loading: false
             });

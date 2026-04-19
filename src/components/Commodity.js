@@ -1,8 +1,6 @@
 import React from "react";
 import {dateFromTimestamp, toFloat} from '../utils/utils.js'
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class Commodity extends React.Component{
     constructor(props) {
@@ -49,27 +47,22 @@ export default class Commodity extends React.Component{
         try {
             console.log(`🔄 Commodity: Loading item ${this.props.id} via Block Watcher API...`);
 
-            const itemRes = await fetch(`${BLOCK_WATCHER_API}/api/call/basket/items?args=[${this.props.id}]`);
-            const itemData = await itemRes.json();
-            const item = itemData.result;
+            const item = await cachedContractCall(
+                'basket', 'items', [this.props.id], contracts['basket']
+            );
 
             const symbol = item.symbol || item[0];
-            
-            const [priceRes, timestampRes] = await Promise.all([
-                fetch(`${BLOCK_WATCHER_API}/api/call/basket/getPrice?args=["${encodeURIComponent(symbol)}"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/oracle/timeStamp?args=["${encodeURIComponent(symbol)}"]`)
-            ]);
 
-            const [priceData, timestampData] = await Promise.all([
-                priceRes.json(),
-                timestampRes.json()
+            const [price, timestamp] = await Promise.all([
+                cachedContractCall('basket', 'getPrice', [symbol], contracts['basket']),
+                cachedContractCall('oracle', 'timeStamp', [symbol], contracts['oracle']),
             ]);
 
             this.setState({
                 initialPrice: (toFloat(item.initialPrice || item[2])/10**6).toFixed(5),
                 share: item.share || item[1],
-                price: (toFloat(priceData.result)/10**6).toFixed(5),
-                lastUpdated: dateFromTimestamp(timestampData.result),
+                price: (toFloat(price)/10**6).toFixed(5),
+                lastUpdated: dateFromTimestamp(timestamp),
                 loading: false
             });
 

@@ -2,9 +2,7 @@ import React from "react";
 import {fromBlock} from "../utils/config";
 import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import {getPastEventsCached} from "../utils/cacheApi";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class DAO extends React.Component{
     constructor(props) {
@@ -35,30 +33,28 @@ export default class DAO extends React.Component{
             const daoAddress = contracts['dao']._address;
 
             const promises = [
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/activeVoting`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${daoAddress}"]`)
+                cachedContractCall('dao', 'activeVoting', [], contracts['dao']),
+                cachedContractCall('rule', 'balanceOf', [daoAddress], contracts['rule']),
             ];
 
             if (account && account !== '') {
                 promises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/dao/pooled?args=["${account}"]`),
-                    fetch(`${BLOCK_WATCHER_API}/api/call/rule/allowance?args=["${account}","${daoAddress}"]`)
+                    cachedContractCall('dao', 'pooled', [account], contracts['dao']),
+                    cachedContractCall('rule', 'allowance', [account, daoAddress], contracts['rule']),
                 );
             }
 
-            const responses = await Promise.all(promises);
-            const dataPromises = responses.map(res => res.json());
-            const results = await Promise.all(dataPromises);
+            const results = await Promise.all(promises);
 
             const newState = {
-                isActiveVoting: results[0].result,
-                totalPooled: results[1].result,
+                isActiveVoting: results[0],
+                totalPooled: results[1],
                 address: daoAddress
             };
 
             if (account && account !== '') {
-                newState.userPooled = results[2].result;
-                newState.allowed = results[3].result;
+                newState.userPooled = results[2];
+                newState.allowed = results[3];
             }
 
             const events = await getPastEventsCached(
@@ -71,10 +67,10 @@ export default class DAO extends React.Component{
             if (events && events.length > 0) {
                 const id = toFloat(events[events.length - 1].returnValues.id);
                 newState.votingID = id;
-                
-                const votingRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/votings?args=[${id}]`);
-                const votingData = await votingRes.json();
-                newState.currentVoitng = votingData.result;
+
+                newState.currentVoitng = await cachedContractCall(
+                    'dao', 'votings', [id], contracts['dao']
+                );
             }
 
             newState.loading = false;
@@ -115,9 +111,12 @@ export default class DAO extends React.Component{
             .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
                 const daoAddress = this.props.contracts['dao']._address;
-                const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/rule/allowance?args=["${this.props.account}","${daoAddress}"]`);
-                const allowanceData = await allowanceRes.json();
-                this.setState({allowed:allowanceData.result});
+                const allowed = await cachedContractCall(
+                    'rule', 'allowance',
+                    [this.props.account, daoAddress],
+                    this.props.contracts['rule'],
+                );
+                this.setState({allowed});
             })
             .on('error', console.error);
     }
@@ -134,23 +133,13 @@ export default class DAO extends React.Component{
                 this.setState({'loader':false})
 
                 const daoAddress = this.props.contracts['dao']._address;
-                const [balanceRes, pooledRes, allowanceRes] = await Promise.all([
-                    fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${daoAddress}"]`),
-                    fetch(`${BLOCK_WATCHER_API}/api/call/dao/pooled?args=["${this.props.account}"]`),
-                    fetch(`${BLOCK_WATCHER_API}/api/call/rule/allowance?args=["${this.props.account}","${daoAddress}"]`)
+                const [totalPooled, userPooled, allowed] = await Promise.all([
+                    cachedContractCall('rule', 'balanceOf', [daoAddress], this.props.contracts['rule']),
+                    cachedContractCall('dao', 'pooled', [this.props.account], this.props.contracts['dao']),
+                    cachedContractCall('rule', 'allowance', [this.props.account, daoAddress], this.props.contracts['rule']),
                 ]);
 
-                const [balanceData, pooledData, allowanceData] = await Promise.all([
-                    balanceRes.json(),
-                    pooledRes.json(),
-                    allowanceRes.json()
-                ]);
-
-                this.setState({
-                    totalPooled: balanceData.result,
-                    userPooled: pooledData.result,
-                    allowed: allowanceData.result
-                });
+                this.setState({ totalPooled, userPooled, allowed });
             })
             .on('error', console.error);
     }
@@ -166,20 +155,12 @@ export default class DAO extends React.Component{
             .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
                 const daoAddress = this.props.contracts['dao']._address;
-                const [balanceRes, pooledRes] = await Promise.all([
-                    fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${daoAddress}"]`),
-                    fetch(`${BLOCK_WATCHER_API}/api/call/dao/pooled?args=["${this.props.account}"]`)
+                const [totalPooled, userPooled] = await Promise.all([
+                    cachedContractCall('rule', 'balanceOf', [daoAddress], this.props.contracts['rule']),
+                    cachedContractCall('dao', 'pooled', [this.props.account], this.props.contracts['dao']),
                 ]);
 
-                const [balanceData, pooledData] = await Promise.all([
-                    balanceRes.json(),
-                    pooledRes.json()
-                ]);
-
-                this.setState({
-                    totalPooled: balanceData.result,
-                    userPooled: pooledData.result
-                });
+                this.setState({ totalPooled, userPooled });
             })
             .on('error', console.error);
     }
@@ -214,9 +195,10 @@ export default class DAO extends React.Component{
             })
             .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
-                const votingRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/activeVoting`);
-                const votingData = await votingRes.json();
-                this.setState({isActiveVoting:votingData.result});
+                const isActiveVoting = await cachedContractCall(
+                    'dao', 'activeVoting', [], this.props.contracts['dao']
+                );
+                this.setState({isActiveVoting});
             })
             .on('error', console.error);
 
@@ -232,9 +214,10 @@ export default class DAO extends React.Component{
             })
             .on('confirmation', async (confirmationNumber, receipt) => {
                 this.setState({'loader':false})
-                const votingRes = await fetch(`${BLOCK_WATCHER_API}/api/call/dao/activeVoting`);
-                const votingData = await votingRes.json();
-                this.setState({isActiveVoting:votingData.result});
+                const isActiveVoting = await cachedContractCall(
+                    'dao', 'activeVoting', [], this.props.contracts['dao']
+                );
+                this.setState({isActiveVoting});
             })
             .on('error', console.error);
     }

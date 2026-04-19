@@ -1,9 +1,7 @@
 import React from "react";
 import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import Button from "./Button";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class Deposit extends React.Component{
     constructor(props){
@@ -34,26 +32,18 @@ export default class Deposit extends React.Component{
         this.setState({ loading: true });
 
         try {
-            const [depositRes, interestRes, rateRes] = await Promise.all([
-                fetch(`${BLOCK_WATCHER_API}/api/call/deposit/deposits?args=[${this.props.id}]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/deposit/overallInterest?args=[${this.props.id}]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["depositRate"]`)
+            const [deposit, interest, rate] = await Promise.all([
+                cachedContractCall('deposit', 'deposits', [this.props.id], contracts['deposit']),
+                cachedContractCall('deposit', 'overallInterest', [this.props.id], contracts['deposit']),
+                cachedContractCall('dao', 'params', ['depositRate'], contracts['dao']),
             ]);
-
-            const [depositData, interestData, rateData] = await Promise.all([
-                depositRes.json(),
-                interestRes.json(),
-                rateRes.json()
-            ]);
-
-            const deposit = depositData.result;
 
             this.setState({
                 opened: dateFromTimestamp(deposit.timeOpened),
                 updated: dateFromTimestamp(deposit.lastTimeUpdated),
                 coinsDeposited: (toFloat(deposit.coinsDeposited)/10**18).toFixed(2),
-                accumulatedInterest: toFloat(interestData.result)/10**18,
-                interestRate: rateData.result,
+                accumulatedInterest: toFloat(interest)/10**18,
+                interestRate: rate,
                 loading: false
             });
         } catch (error) {
@@ -73,10 +63,10 @@ export default class Deposit extends React.Component{
     }
 
     async close(){
-        const depositRes = await fetch(`${BLOCK_WATCHER_API}/api/call/deposit/deposits?args=[${this.props.id}]`);
-        const depositData = await depositRes.json();
-        const d = depositData.result;
-        
+        const d = await cachedContractCall(
+            'deposit', 'deposits', [this.props.id], this.props.contracts['deposit']
+        );
+
         this.props.contracts['deposit'].methods.withdraw(this.props.id,d.coinsDeposited).send({from:this.props.account})
                 .on('transactionHash', (hash) => {
                     this.setState({'loader':true})

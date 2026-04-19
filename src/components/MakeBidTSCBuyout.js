@@ -1,8 +1,6 @@
 import React from "react";
 import {Loader, toFloat} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class MakeBidTSCBuyout extends React.Component{
 
@@ -14,29 +12,31 @@ export default class MakeBidTSCBuyout extends React.Component{
     }
 
     async componentDidMount() {
-        if (this.props.account) {
-            const balanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${this.props.account}"]`);
-            const balanceData = await balanceRes.json();
-            this.setState({tscBalance:(balanceData.result/10**18)});
+        const { contracts, account } = this.props;
+
+        if (account) {
+            const balance = await cachedContractCall(
+                'flatCoin', 'balanceOf', [account], contracts?.['flatCoin']
+            );
+            this.setState({tscBalance:(balance/10**18)});
         }
 
-        if (this.props.account) {
-            const cdpAddress = this.props.contracts['cdp']._address;
-            const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${cdpAddress}"]`);
-            const allowanceData = await allowanceRes.json();
-            this.setState({allowed:(allowanceData.result/10**18)});
+        if (account) {
+            const cdpAddress = contracts['cdp']._address;
+            const allowance = await cachedContractCall(
+                'flatCoin', 'allowance', [account, cdpAddress], contracts?.['flatCoin']
+            );
+            this.setState({allowed:(allowance/10**18)});
         }
 
-        if (this.props.contracts !== 'undefined'){
-            const feeRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/totalCurrentFee?args=[${this.props.id}]`);
-            const feeData = await feeRes.json();
-            const fee = feeData.result;
-            
+        if (contracts !== 'undefined'){
+            const fee = await cachedContractCall(
+                'cdp', 'totalCurrentFee', [this.props.id], contracts?.['cdp']
+            );
+
             const minted = toFloat(this.props.web3.utils.fromWei(this.props.position.coinsMinted));
             const feeNeeded = 1.2*toFloat(this.props.web3.utils.fromWei(fee));
             const needed = minted+feeNeeded;
-            console.log(typeof (feeNeeded))
-            console.log(typeof (minted))
 
             this.setState({toAllow:needed});
             this.setState({needed:needed});
@@ -55,9 +55,12 @@ export default class MakeBidTSCBuyout extends React.Component{
                 .on('confirmation', async (confirmationNumber, receipt) => {
                     this.setState({'loader':false})
                     const cdpAddress = this.props.contracts['cdp']._address;
-                    const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${cdpAddress}"]`);
-                    const allowanceData = await allowanceRes.json();
-                    this.setState({allowed:(allowanceData.result/10**18)});
+                    const allowance = await cachedContractCall(
+                        'flatCoin', 'allowance',
+                        [this.props.account, cdpAddress],
+                        this.props.contracts?.['flatCoin'],
+                    );
+                    this.setState({allowed:(allowance/10**18)});
                 })
                 .on('error', console.error);
         }

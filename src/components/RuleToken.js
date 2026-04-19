@@ -1,8 +1,6 @@
 import React from "react";
 import {getHolders, getTransfers, toFloat} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class RuleToken extends React.Component{
     constructor(props) {
@@ -31,9 +29,10 @@ export default class RuleToken extends React.Component{
         try {
             console.log('🔄 RuleToken: Starting data load via Block Watcher API...');
 
-            const supplyRes = await fetch(`${BLOCK_WATCHER_API}/api/call/rule/totalSupply`);
-            const supplyData = await supplyRes.json();
-            this.setState({supply: (toFloat(supplyData.result)/10**18).toFixed(2)});
+            const supplyRaw = await cachedContractCall(
+                'rule', 'totalSupply', [], this.props.contract
+            );
+            this.setState({supply: (toFloat(supplyRaw)/10**18).toFixed(2)});
 
             const [transfers, holders] = await Promise.all([
                 getTransfers(this.props.contract, this.props.web3),

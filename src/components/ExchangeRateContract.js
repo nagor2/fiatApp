@@ -1,8 +1,7 @@
 import React from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
+import {getContractTransactions} from "../utils/cacheApi";
 
 const INVESTING_COM_URLS = {
     'Gold': 'https://www.investing.com/commodities/gold',
@@ -81,36 +80,28 @@ export default class ExchangeRateContract extends React.Component {
             const oracleAddress = contracts['oracle']._address;
             this.setState({ address: oracleAddress });
 
-            const instrumentsCountRes = await fetch(
-                `${BLOCK_WATCHER_API}/api/call/oracle/instrumentsCount`
+            const instrumentsCountRaw = await cachedContractCall(
+                'oracle', 'instrumentsCount', [], contracts['oracle']
             );
-            const instrumentsCountData = await instrumentsCountRes.json();
-            const instrumentsCount = parseInt(instrumentsCountData.result);
+            const instrumentsCount = parseInt(instrumentsCountRaw);
             this.setState({ instrumentsCount });
 
             console.log('Oracle instrumentsCount:', instrumentsCount);
 
-            const basketItemsCountRes = await fetch(
-                `${BLOCK_WATCHER_API}/api/call/basket/itemsCount`
-            );
-            const basketItemsCountData = await basketItemsCountRes.json();
-            const basketItemsCount = parseInt(basketItemsCountData.result);
-
-            const sharesCountRes = await fetch(
-                `${BLOCK_WATCHER_API}/api/call/basket/sharesCount`
-            );
-            const sharesCountData = await sharesCountRes.json();
-            const totalShares = parseInt(sharesCountData.result);
+            const [basketItemsCountRaw, sharesCountRaw] = await Promise.all([
+                cachedContractCall('basket', 'itemsCount', [], contracts['basket']),
+                cachedContractCall('basket', 'sharesCount', [], contracts['basket']),
+            ]);
+            const basketItemsCount = parseInt(basketItemsCountRaw);
+            const totalShares = parseInt(sharesCountRaw);
 
             const basketItems = [];
             const basketPromises = [];
-            
+
             for (let id = 1; id <= basketItemsCount; id++) {
                 basketPromises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/basket/items?args=[${id}]`)
-                        .then(res => res.json())
-                        .then(data => {
-                            const item = data.result;
+                    cachedContractCall('basket', 'items', [id], contracts['basket'])
+                        .then(item => {
                             basketItems.push({
                                 symbol: item.symbol,
                                 share: parseInt(item.share),
@@ -128,13 +119,11 @@ export default class ExchangeRateContract extends React.Component {
 
             const basketSymbolToOracleId = new Map();
             const dictionaryPromises = [];
-            
+
             for (const item of basketItems) {
                 dictionaryPromises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/oracle/dictionary?args=["${encodeURIComponent(item.symbol)}"]`)
-                        .then(res => res.json())
-                        .then(data => {
-                            const dict = data.result;
+                    cachedContractCall('oracle', 'dictionary', [item.symbol], contracts['oracle'])
+                        .then(dict => {
                             const oracleId = parseInt(dict.id);
                             const decimals = parseInt(dict.decimals);
                             if (oracleId > 0) {
@@ -157,16 +146,14 @@ export default class ExchangeRateContract extends React.Component {
 
             const instrumentsMap = new Map();
             const oraclePromises = [];
-            
+
             for (const [symbol, info] of basketSymbolToOracleId) {
                 const id = info.oracleId;
                 oraclePromises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/oracle/instruments?args=[${id}]`)
-                        .then(res => res.json())
-                        .then(data => {
-                            const instrument = data.result;
+                    cachedContractCall('oracle', 'instruments', [id], contracts['oracle'])
+                        .then(instrument => {
                             const decimals = info.decimals;
-                            
+
                             instrumentsMap.set(id, {
                                 id,
                                 symbol,
@@ -181,15 +168,14 @@ export default class ExchangeRateContract extends React.Component {
                         })
                 );
             }
-            
+
             await Promise.all(oraclePromises);
 
-            const txResponse = await fetch(
-                `${BLOCK_WATCHER_API}/api/transactions/${oracleAddress}?limit=100`
-            );
-            const txData = await txResponse.json();
-            const transactions = (txData.transactions || [])
-                .filter(tx => tx.method === 'updateSeveralPrices');
+            // История транзакций — только через worker'а, без Etherscan-fallback.
+            // Если worker недоступен, получим [] и график просто не построится,
+            // зато текущие цены из контракта отобразятся.
+            const txs = await getContractTransactions(oracleAddress, 100);
+            const transactions = txs.filter(tx => tx.method === 'updateSeveralPrices');
 
             console.log('updateSeveralPrices transactions found:', transactions.length);
 

@@ -2,9 +2,7 @@ import React from "react";
 import {dateFromTimestamp, toFloat} from "../utils/utils";
 import Button from "./Button";
 import CDP from "./CDP";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class DebtPosition extends React.Component{
     constructor(props){
@@ -45,22 +43,15 @@ export default class DebtPosition extends React.Component{
         try {
             console.log(`🔄 DebtPosition: Loading position ${this.props.id} via Block Watcher API...`);
 
-            const [positionRes, feeRes, interestRes] = await Promise.all([
-                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/positions?args=[${this.props.id}]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/totalCurrentFee?args=[${this.props.id}]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["interestRate"]`)
+            const [position, fee, interestRate] = await Promise.all([
+                cachedContractCall('cdp', 'positions', [this.props.id], contracts['cdp']),
+                cachedContractCall('cdp', 'totalCurrentFee', [this.props.id], contracts['cdp']),
+                cachedContractCall('dao', 'params', ['interestRate'], contracts['dao']),
             ]);
 
-            const [positionData, feeData, interestData] = await Promise.all([
-                positionRes.json(),
-                feeRes.json(),
-                interestRes.json()
-            ]);
-
-            const position = positionData.result;
-
-            const maxCoinsRes = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMintForPos?args=[${this.props.id}]`);
-            const maxCoinsData = await maxCoinsRes.json();
+            const maxCoins = await cachedContractCall(
+                'cdp', 'getMaxFlatCoinsToMintForPos', [this.props.id], contracts['cdp']
+            );
 
             this.setState({
                 position: position,
@@ -70,9 +61,9 @@ export default class DebtPosition extends React.Component{
                 coinsMinted: toFloat(position.coinsMinted)/10**18,
                 ethLocked: web3.utils.fromWei(position.ethAmountLocked,'ether'),
                 feeGeneratedRecorded: web3.utils.fromWei(position.interestAmountRecorded,'ether'),
-                maxStableCoinsToMint: toFloat(maxCoinsData.result)/10**18,
-                fee: toFloat(feeData.result)/10**18,
-                interestRate: interestData.result,
+                maxStableCoinsToMint: toFloat(maxCoins)/10**18,
+                fee: toFloat(fee)/10**18,
+                interestRate: interestRate,
                 loading: false
             });
 

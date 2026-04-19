@@ -1,9 +1,7 @@
 import React from "react";
 import {getHolders, getTransfers, toFloat} from "../utils/utils";
 import Button from "./Button";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall, cachedEthBalance} from "../utils/cachedContractCall";
 
 export default class DFC extends React.Component{
     constructor(props) {
@@ -30,31 +28,27 @@ export default class DFC extends React.Component{
             const cdpAddress = contracts['cdp']._address;
             const auctionAddress = contracts['auction']._address;
 
-            const [supplyRes, stubRes, stabPercentRes, sharePriceRes, allowanceRes] = await Promise.all([
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/totalSupply`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${cdpAddress}"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["stabilizationFundPercent"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/basket/getCurrentSharePriceChange`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${auctionAddress}"]`)
+            const [
+                supplyRaw,
+                stubRaw,
+                stabPercentRaw,
+                sharePriceRaw,
+                allowanceRaw,
+                ethBalance,
+            ] = await Promise.all([
+                cachedContractCall('flatCoin', 'totalSupply', [], contracts['flatCoin']),
+                cachedContractCall('flatCoin', 'balanceOf', [cdpAddress], contracts['flatCoin']),
+                cachedContractCall('dao', 'params', ['stabilizationFundPercent'], contracts['dao']),
+                cachedContractCall('basket', 'getCurrentSharePriceChange', [], contracts['basket']),
+                cachedContractCall('flatCoin', 'allowance', [cdpAddress, auctionAddress], contracts['flatCoin']),
+                cachedEthBalance(cdpAddress, web3),
             ]);
 
-            const [supplyData, stubData, stabPercentData, sharePriceData, allowanceData] = await Promise.all([
-                supplyRes.json(),
-                stubRes.json(),
-                stabPercentRes.json(),
-                sharePriceRes.json(),
-                allowanceRes.json()
-            ]);
-
-            const supply = toFloat(supplyData.result);
-            const stub = toFloat(stubData.result);
-            const stabilizationFundPercent = toFloat(stabPercentData.result);
-            const sharePrice = toFloat(sharePriceData.result);
-            const allowedToAuction = toFloat(allowanceData.result);
-
-            const ethBalanceRes = await fetch(`${BLOCK_WATCHER_API}/api/eth/getBalance?address=${cdpAddress}`);
-            const ethBalanceData = await ethBalanceRes.json();
-            const ethBalance = ethBalanceData.result;
+            const supply = toFloat(supplyRaw);
+            const stub = toFloat(stubRaw);
+            const stabilizationFundPercent = toFloat(stabPercentRaw);
+            const sharePrice = toFloat(sharePriceRaw);
+            const allowedToAuction = toFloat(allowanceRaw);
             
             // Используем любую доступную цену ETH (предпочтительно Uniswap)
             const effectiveEthPrice = ethPriceUniswap || ethPrice || 0;
@@ -244,9 +238,13 @@ export default class DFC extends React.Component{
                 this.setState({'loader':false})
                 const cdpAddress = this.props.contracts['cdp']._address;
                 const auctionAddress = this.props.contracts['auction']._address;
-                const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${auctionAddress}"]`);
-                const allowanceData = await allowanceRes.json();
-                this.setState({allowedToAuction: toFloat(allowanceData.result)});
+                const allowance = await cachedContractCall(
+                    'flatCoin',
+                    'allowance',
+                    [cdpAddress, auctionAddress],
+                    this.props.contracts['flatCoin'],
+                );
+                this.setState({allowedToAuction: toFloat(allowance)});
             })
             .on('error', console.error);
     }

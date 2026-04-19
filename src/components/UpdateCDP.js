@@ -1,9 +1,7 @@
 import React from "react";
 import {Loader} from "../utils/utils";
-import config from "../utils/config";
+import {cachedContractCall} from "../utils/cachedContractCall";
 /* global BigInt */
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
 export default class UpdateCDP extends React.Component{
     constructor(props){
@@ -38,9 +36,10 @@ export default class UpdateCDP extends React.Component{
         const balance = await this.props.web3.eth.getBalance(this.props.account);
         this.setState({balance: balance});
 
-        const res = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMintForPos?args=[${this.props.id}]`);
-        const data = await res.json();
-        this.setState({maxCoins : this.props.web3.utils.fromWei(data.result,'ether')});
+        const maxCoins = await cachedContractCall(
+            'cdp', 'getMaxFlatCoinsToMintForPos', [this.props.id], this.props.contracts?.['cdp']
+        );
+        this.setState({maxCoins : this.props.web3.utils.fromWei(maxCoins,'ether')});
     }
 
     async changeProportions(e) {
@@ -49,10 +48,10 @@ export default class UpdateCDP extends React.Component{
         }
         if (e.target.name=='amount'){
             const collateralWei = this.props.web3.utils.toWei(this.state.collateral,'ether');
-            const res = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMint?args=["${collateralWei}"]`);
-            const data = await res.json();
-            const result = data.result;
-            
+            const result = await cachedContractCall(
+                'cdp', 'getMaxFlatCoinsToMint', [collateralWei], this.props.contracts?.['cdp']
+            );
+
             this.setState({maxCoins : this.props.web3.utils.fromWei(result,'ether')});
             (e.target.value<=this.state.maxCoins&&this.state.amount>=1&&this.state.collateral<=this.props.web3.utils.fromWei(this.props.position.ethAmountLocked+this.state.balance,'ether'))?this.setState({buttonIsActive:true}):this.setState({buttonIsActive:false});
 
@@ -63,10 +62,10 @@ export default class UpdateCDP extends React.Component{
         }
         else {
             const collateralWei = this.props.web3.utils.toWei(e.target.value,'ether');
-            const res = await fetch(`${BLOCK_WATCHER_API}/api/call/cdp/getMaxFlatCoinsToMint?args=["${collateralWei}"]`);
-            const data = await res.json();
-            const result = data.result;
-            
+            const result = await cachedContractCall(
+                'cdp', 'getMaxFlatCoinsToMint', [collateralWei], this.props.contracts?.['cdp']
+            );
+
             this.setState({maxCoins : this.props.web3.utils.fromWei(result,'ether')})
             this.setState({amount : this.props.web3.utils.fromWei(result, 'ether')})
 

@@ -1,8 +1,6 @@
 import React from "react";
 import {Loader} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class OpenDeposit extends React.Component{
 
@@ -27,9 +25,12 @@ export default class OpenDeposit extends React.Component{
                 .on('confirmation', async (confirmationNumber, receipt) => {
                     this.setState({'loader':false})
                     const depositAddress = this.props.contracts['deposit']._address;
-                    const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${depositAddress}"]`);
-                    const allowanceData = await allowanceRes.json();
-                    this.setState({allowed:this.props.web3.utils.fromWei(allowanceData.result,'ether')});
+                    const allowance = await cachedContractCall(
+                        'flatCoin', 'allowance',
+                        [this.props.account, depositAddress],
+                        this.props.contracts?.['flatCoin'],
+                    );
+                    this.setState({allowed:this.props.web3.utils.fromWei(allowance,'ether')});
                 })
                 .on('error', console.error)
                 .catch(e=>console.error)
@@ -78,23 +79,28 @@ export default class OpenDeposit extends React.Component{
     }
 
     async componentDidMount() {
-        if (this.props.account) {
-            const balanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${this.props.account}"]`);
-            const balanceData = await balanceRes.json();
-            this.setState({DFCBalance:this.props.web3.utils.fromWei(balanceData.result,'ether')});
+        const { contracts, account } = this.props;
+
+        if (account) {
+            const balance = await cachedContractCall(
+                'flatCoin', 'balanceOf', [account], contracts?.['flatCoin']
+            );
+            this.setState({DFCBalance:this.props.web3.utils.fromWei(balance,'ether')});
         }
 
-        if (this.props.account) {
-            const depositAddress = this.props.contracts['deposit']._address;
-            const allowanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${this.props.account}","${depositAddress}"]`);
-            const allowanceData = await allowanceRes.json();
-            this.setState({allowed:this.props.web3.utils.fromWei(allowanceData.result,'ether')});
+        if (account) {
+            const depositAddress = contracts['deposit']._address;
+            const allowance = await cachedContractCall(
+                'flatCoin', 'allowance', [account, depositAddress], contracts?.['flatCoin']
+            );
+            this.setState({allowed:this.props.web3.utils.fromWei(allowance,'ether')});
         }
 
         if (this.props.depositId !== undefined && this.props.depositId !== '') {
-            const depositRes = await fetch(`${BLOCK_WATCHER_API}/api/call/deposit/deposits?args=[${this.props.depositId}]`);
-            const depositData = await depositRes.json();
-            this.setState({coinsDeposited:this.props.web3.utils.fromWei(depositData.result.coinsDeposited,'ether')});
+            const deposit = await cachedContractCall(
+                'deposit', 'deposits', [this.props.depositId], contracts?.['deposit']
+            );
+            this.setState({coinsDeposited:this.props.web3.utils.fromWei(deposit.coinsDeposited,'ether')});
         }
     }
 

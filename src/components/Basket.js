@@ -1,9 +1,7 @@
 import React from "react";
 import BasketItem from "./BasketItem";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class Basket extends React.Component{
     constructor(props) {
@@ -27,16 +25,14 @@ export default class Basket extends React.Component{
             console.log('🔄 Basket: Starting data load via Block Watcher API...');
             
             const t1 = performance.now();
-            const sharesCountRes = await fetch(`${BLOCK_WATCHER_API}/api/call/basket/sharesCount`);
-            const sharesCountData = await sharesCountRes.json();
-            const sharesCount = parseInt(sharesCountData.result);
+            const sharesCountRaw = await cachedContractCall('basket', 'sharesCount', [], contracts['basket']);
+            const sharesCount = parseInt(sharesCountRaw);
             console.log(`✅ Basket: sharesCount loaded in ${(performance.now() - t1).toFixed(0)}ms`);
             this.setState({sharesCount});
 
             const t2 = performance.now();
-            const itemsCountRes = await fetch(`${BLOCK_WATCHER_API}/api/call/basket/itemsCount`);
-            const itemsCountData = await itemsCountRes.json();
-            const count = parseInt(itemsCountData.result);
+            const itemsCountRaw = await cachedContractCall('basket', 'itemsCount', [], contracts['basket']);
+            const count = parseInt(itemsCountRaw);
             console.log(`✅ Basket: itemsCount=${count} loaded in ${(performance.now() - t2).toFixed(0)}ms`);
             this.setState({itemsCount: count});
 
@@ -44,9 +40,7 @@ export default class Basket extends React.Component{
             const itemsPromises = [];
             for (let i = 1; i <= count; i++) {
                 itemsPromises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/basket/items?args=[${i}]`)
-                        .then(res => res.json())
-                        .then(data => data.result)
+                    cachedContractCall('basket', 'items', [i], contracts['basket'])
                         .catch(err => {
                             console.warn(`Failed to load basket item ${i}:`, err);
                             return null;

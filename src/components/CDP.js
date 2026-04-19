@@ -1,9 +1,7 @@
 import React from "react";
 import Button from "./Button";
 import {toFloat} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall, cachedEthBalance} from "../utils/cachedContractCall";
 
 export default class CDP extends React.Component{
     constructor(props) {
@@ -47,50 +45,46 @@ export default class CDP extends React.Component{
             const auctionAddress = contracts['auction']._address;
 
             const promises = [
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/balanceOf?args=["${cdpAddress}"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/totalSupply`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["stabilizationFundPercent"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/rule/balanceOf?args=["${cdpAddress}"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${auctionAddress}"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/cdp/numPositions`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["collateralDiscount"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/call/dao/params?args=["interestRate"]`),
-                fetch(`${BLOCK_WATCHER_API}/api/eth/getBalance?address=${cdpAddress}`)
+                cachedContractCall('flatCoin', 'balanceOf', [cdpAddress], contracts['flatCoin']),
+                cachedContractCall('flatCoin', 'totalSupply', [], contracts['flatCoin']),
+                cachedContractCall('dao', 'params', ['stabilizationFundPercent'], contracts['dao']),
+                cachedContractCall('rule', 'balanceOf', [cdpAddress], contracts['rule']),
+                cachedContractCall('flatCoin', 'allowance', [cdpAddress, auctionAddress], contracts['flatCoin']),
+                cachedContractCall('cdp', 'numPositions', [], contracts['cdp']),
+                cachedContractCall('dao', 'params', ['collateralDiscount'], contracts['dao']),
+                cachedContractCall('dao', 'params', ['interestRate'], contracts['dao']),
+                cachedEthBalance(cdpAddress, web3),
             ];
 
             if (account && account !== '') {
                 promises.push(
-                    fetch(`${BLOCK_WATCHER_API}/api/call/flatCoin/allowance?args=["${cdpAddress}","${account}"]`)
+                    cachedContractCall('flatCoin', 'allowance', [cdpAddress, account], contracts['flatCoin'])
                 );
             }
 
             const results = await Promise.all(promises);
-            
-            const stubFundData = await results[0].json();
-            const totalSupplyData = await results[1].json();
-            const stabFundPercentData = await results[2].json();
-            const ruleBalanceData = await results[3].json();
-            const toAuctionData = await results[4].json();
-            const numPositionsData = await results[5].json();
-            const collateralDiscountData = await results[6].json();
-            const interestRateData = await results[7].json();
-            const ethBalanceData = await results[8].json();
-            const ethBalance = ethBalanceData.result;
 
-            const stubFund = toFloat(stubFundData.result);
-            const totalSupply = toFloat(totalSupplyData.result);
-            const stabFundPercent = toFloat(stabFundPercentData.result);
+            const stubFund = toFloat(results[0]);
+            const totalSupply = toFloat(results[1]);
+            const stabFundPercent = toFloat(results[2]);
+            const ruleBalanceRaw = results[3];
+            const toAuctionRaw = results[4];
+            const numPositionsRaw = results[5];
+            const collateralDiscountRaw = results[6];
+            const interestRateRaw = results[7];
+            const ethBalance = results[8];
+
             const coinsExceed = stubFund - totalSupply * stabFundPercent / 100;
 
             const newState = {
                 stubFund: (stubFund/10**18).toFixed(2),
                 tscSupply: (totalSupply/10**18).toFixed(4),
                 exceed: (coinsExceed/10**18).toFixed(2),
-                RuleBalanceOfCDP: (toFloat(ruleBalanceData.result)/10**18).toFixed(2),
-                toAuction: (toFloat(toAuctionData.result)/10**18).toFixed(2),
-                positionsCount: toFloat(numPositionsData.result),
-                dicount: toFloat(collateralDiscountData.result)+'%',
-                interestRate: toFloat(interestRateData.result)+'%',
+                RuleBalanceOfCDP: (toFloat(ruleBalanceRaw)/10**18).toFixed(2),
+                toAuction: (toFloat(toAuctionRaw)/10**18).toFixed(2),
+                positionsCount: toFloat(numPositionsRaw),
+                dicount: toFloat(collateralDiscountRaw)+'%',
+                interestRate: toFloat(interestRateRaw)+'%',
                 wethBalance: (toFloat(ethBalance)/10**18).toFixed(2),
                 collateral: ((toFloat(ethBalance)/10**18).toFixed(3)*ethPrice).toFixed(3),
                 address: cdpAddress,
@@ -98,8 +92,7 @@ export default class CDP extends React.Component{
             };
 
             if (account && account !== '') {
-                const userAllowanceData = await results[9].json();
-                newState.userAllowence = (toFloat(userAllowanceData.result)/10**18).toFixed(10);
+                newState.userAllowence = (toFloat(results[9])/10**18).toFixed(10);
             }
 
             this.setState(newState);

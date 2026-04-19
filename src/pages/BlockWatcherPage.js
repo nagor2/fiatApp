@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../layouts/MainLayout';
+import { fetchWorkerWithTimeout } from '../utils/workerCircuitBreaker';
 
 // По умолчанию — nginx proxy того же origin (/api/worker). В dev можно переопределить
 // полным URL через REACT_APP_WORKERS_HEALTH_URL (например http://localhost:3002/health).
@@ -8,6 +9,10 @@ const absoluteWorkerUrl = rawWorkerUrl.startsWith('http')
   ? rawWorkerUrl
   : (typeof window !== 'undefined' ? `${window.location.origin}${rawWorkerUrl}` : rawWorkerUrl);
 const BLOCK_WATCHER_API = absoluteWorkerUrl.replace(/\/health$/, '');
+
+// Эта страница — админка для мониторинга worker'а. Минимум — таймаут,
+// чтобы UI не висел, если worker недоступен.
+const WORKER_TIMEOUT_MS = 5000;
 
 function BlockWatcherPage({ emitter }) {
   const [workerHealth, setWorkerHealth] = useState(null);
@@ -32,7 +37,7 @@ function BlockWatcherPage({ emitter }) {
     // Загружаем health status воркера
     const fetchHealth = async () => {
       try {
-        const response = await fetch(`${BLOCK_WATCHER_API}/health`);
+        const response = await fetchWorkerWithTimeout(`${BLOCK_WATCHER_API}/health`, {}, WORKER_TIMEOUT_MS);
         const data = await response.json();
         setWorkerHealth(data);
       } catch (error) {
@@ -47,7 +52,7 @@ function BlockWatcherPage({ emitter }) {
     // Загружаем список контрактов
     const fetchContracts = async () => {
       try {
-        const response = await fetch(`${BLOCK_WATCHER_API}/api/contracts`);
+        const response = await fetchWorkerWithTimeout(`${BLOCK_WATCHER_API}/api/contracts`, {}, WORKER_TIMEOUT_MS);
         const data = await response.json();
         setContractsList(data.contracts || []);
         if (data.contracts && data.contracts.length > 0) {
@@ -89,8 +94,8 @@ function BlockWatcherPage({ emitter }) {
         const eventFilter = eventTypeFilter !== 'all' ? `&event=${eventTypeFilter}` : '';
         
         const [eventsRes, txsRes] = await Promise.all([
-          fetch(`${BLOCK_WATCHER_API}/api/events/${selectedContract}?page=${eventsPage}&limit=${eventsLimit}${eventFilter}`),
-          fetch(`${BLOCK_WATCHER_API}/api/transactions/${selectedContract}?page=${txsPage}&limit=${txsLimit}`)
+          fetchWorkerWithTimeout(`${BLOCK_WATCHER_API}/api/events/${selectedContract}?page=${eventsPage}&limit=${eventsLimit}${eventFilter}`, {}, WORKER_TIMEOUT_MS),
+          fetchWorkerWithTimeout(`${BLOCK_WATCHER_API}/api/transactions/${selectedContract}?page=${txsPage}&limit=${txsLimit}`, {}, WORKER_TIMEOUT_MS),
         ]);
         
         const eventsData = await eventsRes.json();

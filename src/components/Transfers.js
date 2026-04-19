@@ -3,9 +3,7 @@ import {fromBlock} from "../utils/config";
 import Product from "./Product";
 import {dateFromTimestamp, Loader, toFloat} from "../utils/utils";
 import {getPastEventsCached} from "../utils/cacheApi";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class Transfers extends React.Component{
 
@@ -151,9 +149,10 @@ class TransferForm extends React.Component{
     }
 
     async componentDidMount() {
-        const balanceRes = await fetch(`${BLOCK_WATCHER_API}/api/call/${this.props.contractName}/balanceOf?args=["${this.props.account}"]`);
-        const balanceData = await balanceRes.json();
-        this.setState({balance:balanceData.result});
+        const balance = await cachedContractCall(
+            this.props.contractName, 'balanceOf', [this.props.account], this.props.contract
+        );
+        this.setState({balance});
     }
 
     transfer(){

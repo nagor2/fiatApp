@@ -1,8 +1,6 @@
 import React from "react";
 import {Loader} from "../utils/utils";
-import config from "../utils/config";
-
-const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
+import {cachedContractCall} from "../utils/cachedContractCall";
 
 export default class WithDrawDeposit extends React.Component{
 
@@ -39,9 +37,10 @@ export default class WithDrawDeposit extends React.Component{
     }
 
     async componentDidMount() {
-        const depositRes = await fetch(`${BLOCK_WATCHER_API}/api/call/deposit/deposits?args=[${this.props.depositId}]`);
-        const depositData = await depositRes.json();
-        this.setState({coinsDeposited:this.props.web3.utils.fromWei(depositData.result.coinsDeposited,'ether')});
+        const deposit = await cachedContractCall(
+            'deposit', 'deposits', [this.props.depositId], this.props.contracts?.['deposit']
+        );
+        this.setState({coinsDeposited:this.props.web3.utils.fromWei(deposit.coinsDeposited,'ether')});
     }
 
     render(){
