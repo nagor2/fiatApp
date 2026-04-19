@@ -1,36 +1,39 @@
-import React from "react";
-import Commodity from "./Commodity";
-import Transaction from "./Transaction";
-import Auction from "./Auction";
-import Basket from "./Basket";
-import Transfers from "./Transfers";
-import RuleToken from "./RuleToken";
-import DFC from "./DFC";
-import Swap from "./Swap";
-import Borrow from "./Borrow";
+import React, { Suspense, lazy } from "react";
 import {toFloat} from "../utils/utils";
-import UpdateCDP from "./UpdateCDP";
-import CDP from "./CDP";
-import DebtPosition from "./DebtPosition";
-import Deposit from "./Deposit";
-import DepositContract from "./DepositContract";
-import OpenDeposit from "./OpenDeposit";
-import WithDrawDeposit from "./WithDrawDeposit";
-import PayInterestCDP from "./PayInterestCDP";
-import CloseCDP from "./CloseCDP";
-import MakeBidTSCBuyout from "./MakeBidTSCBuyout";
 import {getPastEventsCached} from "../utils/cacheApi";
 import {cachedContractCall} from "../utils/cachedContractCall";
-import WithdrawEtherCDP from "./WithdrawEtherCDP";
-import DAO from "./DAO";
-import ImproveBid from "./ImproveBid";
 import {fromBlock} from "../utils/config";
 import {dateFromTimestamp} from "../utils/utils";
 import Product from "./Product";
 import Plus from "./Plus";
+import Swap from "./Swap";
 import config from "../utils/config";
-import AuctionContract from "./AuctionContract";
-import ExchangeRateContract from "./ExchangeRateContract";
+
+const Commodity = lazy(() => import("./Commodity"));
+const Transaction = lazy(() => import("./Transaction"));
+const Auction = lazy(() => import("./Auction"));
+const Basket = lazy(() => import("./Basket"));
+const Transfers = lazy(() => import("./Transfers"));
+const RuleToken = lazy(() => import("./RuleToken"));
+const DFC = lazy(() => import("./DFC"));
+const Borrow = lazy(() => import("./Borrow"));
+const UpdateCDP = lazy(() => import("./UpdateCDP"));
+const CDP = lazy(() => import("./CDP"));
+const DebtPosition = lazy(() => import("./DebtPosition"));
+const Deposit = lazy(() => import("./Deposit"));
+const DepositContract = lazy(() => import("./DepositContract"));
+const OpenDeposit = lazy(() => import("./OpenDeposit"));
+const WithDrawDeposit = lazy(() => import("./WithDrawDeposit"));
+const PayInterestCDP = lazy(() => import("./PayInterestCDP"));
+const CloseCDP = lazy(() => import("./CloseCDP"));
+const MakeBidTSCBuyout = lazy(() => import("./MakeBidTSCBuyout"));
+const WithdrawEtherCDP = lazy(() => import("./WithdrawEtherCDP"));
+const DAO = lazy(() => import("./DAO"));
+const ImproveBid = lazy(() => import("./ImproveBid"));
+const AuctionContract = lazy(() => import("./AuctionContract"));
+const ExchangeRateContract = lazy(() => import("./ExchangeRateContract"));
+
+const ContentFallback = () => <div align="center">Loading...</div>;
 
 
 export default class MyPanel extends React.Component {
@@ -330,7 +333,9 @@ export default class MyPanel extends React.Component {
                     {this.props.content.expander?(this.props.children || items):''}
                 </div>
 
-                {this.props.displayContent?this.renderContent(this.state.content):''}
+                {this.props.displayContent
+                    ? <Suspense fallback={<ContentFallback />}>{this.renderContent(this.state.content)}</Suspense>
+                    : ''}
 
             </div>
         </div>

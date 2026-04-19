@@ -1,57 +1,98 @@
 /**
  * Кэшированный вызов метода контракта через Block Watcher API
- * 
+ * с автоматическим fallback на прямой RPC при недоступности worker'а.
+ *
+ * Последовательность попыток:
+ *   1. Если цепь circuit breaker'а открыта — сразу fallback, без обращения к worker.
+ *   2. Иначе — HTTP запрос к worker'у с таймаутом (WORKER_CALL_TIMEOUT_MS).
+ *      При успехе — результат из кэша worker'а.
+ *      При любой ошибке (timeout / 5xx / CORS / оффлайн) — fallback.
+ *   3. Fallback: прямой вызов через переданный Web3 contract instance
+ *      (который уже инициализирован с window.ethereum либо с /api/rpc → publicnode).
+ *
  * @param {string} contractKey - Ключ контракта (cdp, oracle, basket, etc)
  * @param {string} methodName - Имя метода контракта
  * @param {Array} args - Аргументы метода (опционально)
- * @param {Object} fallbackContract - Web3 contract instance для fallback если API недоступен
+ * @param {Object} fallbackContract - Web3 contract instance для fallback
  * @returns {Promise} - Результат вызова метода
  */
-export async function cachedContractCall(contractKey, methodName, args = [], fallbackContract = null) {
-  try {
-    // В dev режиме обращаемся напрямую к Block Watcher (порт 3002)
-    // В production это будет проксироваться через nginx
-    const baseUrl = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:3002' 
-      : '';
-    
-    const apiUrl = `${baseUrl}/api/call/${contractKey}/${methodName}`;
-    const params = args.length > 0 ? `?args=${encodeURIComponent(JSON.stringify(args))}` : '';
-    
-    const response = await fetch(apiUrl + params);
-    const data = await response.json();
-    
-    if (data.success) {
-      // API вернул успешный результат (из кэша или RPC)
-      if (data.cached) {
-        console.log(`[Cache HIT] ${contractKey}.${methodName}(${args.join(', ')})`);
-      } else {
-        console.log(`[Cache MISS] ${contractKey}.${methodName}(${args.join(', ')})`);
-      }
-      return data.result;
-    } else {
-      throw new Error(data.error || 'API call failed');
-    }
-  } catch (error) {
-    console.warn(`Cached API failed for ${contractKey}.${methodName}, falling back to direct RPC:`, error.message);
-    
-    // Fallback: прямой вызов через Web3 если API недоступен
-    if (fallbackContract && fallbackContract.methods[methodName]) {
-      return await fallbackContract.methods[methodName](...args).call();
-    }
-    
-    throw error;
+
+import {
+  isWorkerCircuitOpen,
+  recordWorkerSuccess,
+  recordWorkerFailure,
+  fetchWorkerWithTimeout,
+  classifyWorkerError,
+} from './workerCircuitBreaker';
+
+const WORKER_CALL_TIMEOUT_MS = 3000;
+
+function getWorkerApiUrl(contractKey, methodName, args) {
+  const baseUrl = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3002'
+    : '';
+  const apiUrl = `${baseUrl}/api/call/${contractKey}/${methodName}`;
+  const params = args.length > 0 ? `?args=${encodeURIComponent(JSON.stringify(args))}` : '';
+  return apiUrl + params;
+}
+
+async function callFallback(contractKey, methodName, args, fallbackContract) {
+  if (!fallbackContract) {
+    throw new Error(
+      `Worker unavailable for ${contractKey}.${methodName} and no fallback contract provided`
+    );
   }
+  if (!fallbackContract.methods || !fallbackContract.methods[methodName]) {
+    throw new Error(
+      `Worker unavailable and fallback contract has no method ${methodName}`
+    );
+  }
+  return fallbackContract.methods[methodName](...args).call();
+}
+
+export async function cachedContractCall(contractKey, methodName, args = [], fallbackContract = null) {
+  if (!isWorkerCircuitOpen()) {
+    try {
+      const url = getWorkerApiUrl(contractKey, methodName, args);
+      const response = await fetchWorkerWithTimeout(url, {}, WORKER_CALL_TIMEOUT_MS);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Worker API call failed');
+      }
+
+      recordWorkerSuccess();
+      console.log(
+        `[${data.cached ? 'Cache HIT' : 'Cache MISS'}] ${contractKey}.${methodName}(${args.join(', ')})`
+      );
+      return data.result;
+    } catch (error) {
+      const reason = classifyWorkerError(error);
+      recordWorkerFailure(reason);
+      console.warn(
+        `[Worker] ${contractKey}.${methodName} failed (${reason}), falling back to direct RPC`
+      );
+    }
+  } else {
+    console.log(
+      `[Worker] Circuit open, skipping worker for ${contractKey}.${methodName}`
+    );
+  }
+
+  return callFallback(contractKey, methodName, args, fallbackContract);
 }
 
 /**
- * Batch вызов нескольких методов контракта
- * Оптимизация: все вызовы идут параллельно
+ * Batch вызов нескольких методов контракта.
+ * Оптимизация: все вызовы идут параллельно.
  */
 export async function batchCachedContractCalls(calls) {
   const promises = calls.map(({ contractKey, methodName, args, fallbackContract }) =>
     cachedContractCall(contractKey, methodName, args, fallbackContract)
   );
-  
-  return await Promise.all(promises);
+  return Promise.all(promises);
 }

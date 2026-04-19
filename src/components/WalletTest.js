@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
-import {
-  initWalletConnect,
-  connectWithWalletConnect,
-  disconnectWalletConnect,
-  subscribeToWalletConnectEvents,
-} from '../utils/walletconnect';
-import { getDfcPriceInEth, getDfcTokenInfo } from '../utils/uniswap-quoter';
-import { getPoolLiquidityDirect, getPoolSwaps } from '../utils/pool-liquidity-direct';
+import { UNISWAP_CONFIG } from '../utils/uniswap-config';
+
+const dfcTokenInfo = {
+  address: UNISWAP_CONFIG.TOKENS.DFC,
+  symbol: UNISWAP_CONFIG.TOKEN_INFO.DFC.symbol,
+  name: UNISWAP_CONFIG.TOKEN_INFO.DFC.name,
+  decimals: UNISWAP_CONFIG.TOKEN_INFO.DFC.decimals,
+  chainId: UNISWAP_CONFIG.CHAIN_ID,
+  uniswapUrl: `https://app.uniswap.org/explore/tokens/ethereum/${UNISWAP_CONFIG.TOKENS.DFC}`,
+  wethAddress: UNISWAP_CONFIG.TOKENS.WETH,
+  poolId: UNISWAP_CONFIG.POOLS.DFC_ETH_V4,
+};
 
 function WalletTest() {
   const { web3, ethPrice, ethPriceEtherscan, ethPriceUniswap } = useWeb3();
@@ -23,29 +27,38 @@ function WalletTest() {
     : null;
 
   useEffect(() => {
-    initWalletConnect();
-    
-    subscribeToWalletConnectEvents(
-      (accounts) => {
-        console.log('Account changed:', accounts);
-        if (accounts.length === 0) {
+    let cancelled = false;
+    (async () => {
+      const {
+        initWalletConnect,
+        subscribeToWalletConnectEvents,
+      } = await import('../utils/walletconnect');
+      if (cancelled) return;
+      initWalletConnect();
+      subscribeToWalletConnectEvents(
+        (accounts) => {
+          console.log('Account changed:', accounts);
+          if (accounts.length === 0) {
+            setWallet(null);
+          }
+        },
+        (chainId) => {
+          console.log('Chain changed:', chainId);
+        },
+        () => {
+          console.log('Disconnected');
           setWallet(null);
         }
-      },
-      (chainId) => {
-        console.log('Chain changed:', chainId);
-      },
-      () => {
-        console.log('Disconnected');
-        setWallet(null);
-      }
-    );
+      );
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const handleConnect = async () => {
     try {
       setLoading(true);
       setError(null);
+      const { connectWithWalletConnect } = await import('../utils/walletconnect');
       const result = await connectWithWalletConnect();
       setWallet(result);
       console.log('Connected:', result);
@@ -59,6 +72,7 @@ function WalletTest() {
 
   const handleDisconnect = async () => {
     try {
+      const { disconnectWalletConnect } = await import('../utils/walletconnect');
       await disconnectWalletConnect();
       setWallet(null);
     } catch (err) {
@@ -71,6 +85,7 @@ function WalletTest() {
     try {
       setLoading(true);
       setError(null);
+      const { getDfcPriceInEth } = await import('../utils/uniswap-quoter');
       const price = await getDfcPriceInEth();
       setDfcPrice(price);
       console.log('DFC Price:', price);
@@ -86,6 +101,7 @@ function WalletTest() {
     try {
       setLoading(true);
       setError(null);
+      const { getPoolLiquidityDirect } = await import('../utils/pool-liquidity-direct');
       const info = await getPoolLiquidityDirect(ethPriceUniswap);
       setPoolInfo(info);
       console.log('Pool Info:', info);
@@ -101,6 +117,7 @@ function WalletTest() {
     try {
       setLoading(true);
       setError(null);
+      const { getPoolSwaps } = await import('../utils/pool-liquidity-direct');
       const swapsData = await getPoolSwaps(20);
       setSwaps(swapsData);
       console.log('Pool Swaps:', swapsData);
@@ -111,8 +128,6 @@ function WalletTest() {
       setLoading(false);
     }
   };
-
-  const dfcTokenInfo = getDfcTokenInfo();
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>

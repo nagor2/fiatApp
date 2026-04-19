@@ -2,7 +2,6 @@ import React from "react";
 import {getHolders, getTransfers, toFloat} from "../utils/utils";
 import Button from "./Button";
 import config from "../utils/config";
-import { getPoolLiquidityDirect } from "../utils/pool-liquidity-direct";
 
 const BLOCK_WATCHER_API = (config.workersHealthUrl || 'http://localhost:3002/health').replace('/health', '');
 
@@ -108,6 +107,7 @@ export default class DFC extends React.Component{
                 // Get pool liquidity
                 try {
                     console.log('🔄 DFC: Fetching pool liquidity...');
+                    const { getPoolLiquidityDirect } = await import('../utils/pool-liquidity-direct');
                     const poolInfo = await getPoolLiquidityDirect(ethPriceUniswap);
                     console.log('🔍 DFC: poolInfo =', poolInfo);
                     
