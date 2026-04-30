@@ -29,7 +29,7 @@ class BlockWatcher {
     this.rpcHttpUrl = process.env.RPC_HTTP_URL;
     // Дефолт — FQDN Redis'а проекта DotFlat в k8s-неймспейсе `dotflat`.
     // Переопределяется через env REDIS_URL (в k8s задаётся секретом watcher-env).
-    this.redisUrl = process.env.REDIS_URL || 'redis://redis.dotflat.svc.cluster.local:6379';
+    this.redisUrl = process.env.REDIS_URL || 'redis://redis.app-dotflat.svc.cluster.local:6379';
     // Максимальное время ожидания готовности Redis перед fail-fast (мс).
     // Если Redis не поднимается за это время — контейнер падает, kubelet рестартит.
     this.redisReadyTimeoutMs = parseInt(process.env.REDIS_READY_TIMEOUT_MS || '60000', 10);
