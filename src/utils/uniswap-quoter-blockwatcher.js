@@ -4,8 +4,7 @@
  */
 
 import { UNISWAP_CONFIG } from './uniswap-config';
-
-const BLOCK_WATCHER_URL = 'http://localhost:3002';
+import { getWorkerBaseUrl } from './cachedContractCall';
 
 /**
  * Получить информацию о ликвидности пула DFC/ETH через события Swap
@@ -22,7 +21,7 @@ export async function getPoolLiquidityFromBlockWatcher(ethPriceUSD = null) {
     console.log(`   Pool Manager: ${poolManagerAddress}`);
     console.log(`   Pool ID: ${poolId.substring(0, 20)}...`);
     
-    const response = await fetch(`${BLOCK_WATCHER_URL}/api/events/${poolManagerAddress}?event=Swap`);
+    const response = await fetch(`${getWorkerBaseUrl()}/api/events/${poolManagerAddress}?event=Swap`);
     
     if (!response.ok) {
       throw new Error(`Block-watcher API error: ${response.status}`);

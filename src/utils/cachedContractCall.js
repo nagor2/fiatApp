@@ -62,7 +62,7 @@ async function withPublicRpc(fn) {
   throw lastError || new Error('All public RPC providers failed');
 }
 
-function getWorkerBaseUrl() {
+export function getWorkerBaseUrl() {
   // В dev без прокси nginx — обращаемся напрямую. В проде — относительный путь,
   // который nginx маршрутизирует на watcher.app-dotflat.svc.cluster.local:3002.
   // Совместимо с существующими вызовами fetch(BLOCK_WATCHER_API/...) из компонентов.
