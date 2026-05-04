@@ -22,26 +22,27 @@ export default class Worker extends React.Component {
     }
 
     async fetchHealth() {
+        if (this._healthInFlight) return;
+        this._healthInFlight = true;
         try {
-            console.log('🏥 Worker: fetching health from:', this.props.healthUrl);
             const response = await fetch(this.props.healthUrl);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
             const data = await response.json();
-            console.log('✅ Worker: health data received:', data.status);
             this.setState({
                 health: data,
                 error: null,
                 loading: false
             });
         } catch (err) {
-            console.error('❌ Worker: failed to fetch health:', err.message);
             this.setState({
                 error: err.message,
                 health: null,
                 loading: false
             });
+        } finally {
+            this._healthInFlight = false;
         }
     }
 
