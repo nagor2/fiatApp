@@ -126,7 +126,7 @@ services:
     environment:
       - RPC_WS_URL=${RPC_WS_URL:-wss://ethereum.publicnode.com}
       - RPC_HTTP_URL=${RPC_HTTP_URL:-https://ethereum.publicnode.com}
-      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY:-YOUR_ETHERSCAN_API_KEY}
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
       - ETHERSCAN_API_URL=${ETHERSCAN_API_URL:-https://api.etherscan.io/v2/api}
       - START_BLOCK=${START_BLOCK:-21664714}
       - REDIS_URL=redis://redis:6379

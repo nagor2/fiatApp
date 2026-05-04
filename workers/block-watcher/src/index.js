@@ -906,52 +906,34 @@ class BlockWatcher {
       this.health.lastRelevantBlock = blockNumber;
       this.health.lastRelevantBlockTime = new Date(blockTimestamp * 1000).toISOString();
 
-      // Backup-индексация: проходимся по ВСЕМ watched-контрактам и
-      // дёргаем getPastEvents для текущего блока. Это страхует от двух
-      // сценариев:
-      //   1) WebSocket-реконнект / частичный receipt → processReceiptEvents
-      //      мог молча пропустить событие.
-      //   2) Кросс-контрактный вызов: tx.to = A (deposit), но событие
-      //      (Transfer) живёт на B (flatCoin). Раньше B не индексировался
-      //      вообще, из-за чего перевод на депозит не появлялся в
-      //      `Your FlatCoin transfers`.
-      // getPastEvents идёт через eth_getLogs (один RPC-вызов на контракт),
-      // и indexEvent идемпотентен по eventKey — дублей не будет.
-      for (const [watchedAddress, watchedInfo] of this.watchedAddresses.entries()) {
-        try {
-          await this.indexBlockEventsForContract(watchedInfo, watchedAddress, blockNumber);
-        } catch (error) {
-          logger.warn(`Backup-index for ${watchedInfo.name} at block ${blockNumber} failed: ${error.message}`);
-        }
-      }
+      // Backup-индексация всех watched-контрактов параллельно.
+      // Было: sequential for-await → N×RPC_latency per block (10+ seconds).
+      // Теперь: Promise.all → max(RPC_latency) per block (~200ms).
+      await Promise.all(
+        Array.from(this.watchedAddresses.entries()).map(([watchedAddress, watchedInfo]) =>
+          this.indexBlockEventsForContract(watchedInfo, watchedAddress, blockNumber)
+            .catch(error =>
+              logger.warn(`Backup-index for ${watchedInfo.name} at block ${blockNumber} failed: ${error.message}`)
+            )
+        )
+      );
     }
 
-    // Full-scan контракты (DFC/RLE): индексируем Transfer на КАЖДОМ блоке,
-    // даже если в блоке нет tx к нашим адресам. Это покрывает случаи, когда
-    // юзер делает Transfer DFC/RLE через сторонний протокол (DEX-роутер,
-    // bridge, multisig) — tx.to в этом случае не watched, но перевод должен
-    // отображаться в `Your FlatCoin/Rule transfers`. Один eth_getLogs на
-    // контракт на блок (2 RPC-вызова на блок при DFC+RLE) — вполне ок.
-    //
-    // Если в этом блоке была релевантная tx, backup-индекс уже прошёлся
-    // по ВСЕМ watched-контрактам с их полным списком событий — повторно
-    // дёргать full-scan для тех же контрактов не нужно.
     if (!hasRelevantTx) {
-      for (const [contractKey, eventNames] of Object.entries(this.fullScanContracts)) {
-        const contractInstance = this.contracts.get(contractKey);
-        if (!contractInstance) continue;
-        const contractAddress = contractInstance.options.address?.toLowerCase();
-        if (!contractAddress) continue;
-        const contractInfo = this.watchedAddresses.get(contractAddress)
-          || { contractKey, name: contractKey };
-        try {
-          await this.indexBlockEventsForContract(
-            contractInfo, contractAddress, blockNumber, eventNames
-          );
-        } catch (error) {
-          logger.warn(`Full-scan ${contractKey} at block ${blockNumber} failed: ${error.message}`);
-        }
-      }
+      await Promise.all(
+        Object.entries(this.fullScanContracts).map(([contractKey, eventNames]) => {
+          const contractInstance = this.contracts.get(contractKey);
+          if (!contractInstance) return Promise.resolve();
+          const contractAddress = contractInstance.options.address?.toLowerCase();
+          if (!contractAddress) return Promise.resolve();
+          const contractInfo = this.watchedAddresses.get(contractAddress)
+            || { contractKey, name: contractKey };
+          return this.indexBlockEventsForContract(contractInfo, contractAddress, blockNumber, eventNames)
+            .catch(error =>
+              logger.warn(`Full-scan ${contractKey} at block ${blockNumber} failed: ${error.message}`)
+            );
+        })
+      );
     }
 
     await this.saveCheckpoint(blockNumber);
@@ -1050,6 +1032,20 @@ class BlockWatcher {
     }
   }
 
+  // SCAN-based key lookup — non-blocking alternative to KEYS.
+  // KEYS is O(N) and freezes Redis while scanning; SCAN iterates in small
+  // batches, letting other commands run between cursor steps.
+  async scanKeys(pattern) {
+    const keys = [];
+    let cursor = 0;
+    do {
+      const result = await this.redisClient.scan(cursor, { MATCH: pattern, COUNT: 200 });
+      cursor = result.cursor;
+      keys.push(...result.keys);
+    } while (cursor !== 0);
+    return keys;
+  }
+
   async invalidateBackendCache(address) {
     try {
       const contractInfo = this.watchedAddresses.get(address);
@@ -1057,38 +1053,26 @@ class BlockWatcher {
         logger.warn(`No contract info found for ${address}, skipping cache invalidation`);
         return;
       }
-      
-      // Инвалидируем по contractKey (cdp, oracle, etc) для совместимости с backend API
+
       const contractKey = contractInfo.contractKey;
-      // v2: — новый префикс после фикса сериализации структур (positions() etc).
       const cachePrefix = `contract:v2:${contractKey}`;
 
-      // Удаляем все backend кэши для этого контракта
-      const keys = await this.redisClient.keys(`${cachePrefix}:*`);
-      
-      if (keys.length > 0) {
-        await this.redisClient.del(keys);
-        logger.info(`Invalidated ${keys.length} backend cache keys for ${contractInfo.name} (${contractKey})`);
-      }
-      
-      // Инвалидируем ETH баланс для этого адреса
-      const ethBalanceKey = `eth:balance:${address}`;
-      const ethDeleted = await this.redisClient.del(ethBalanceKey);
-      if (ethDeleted > 0) {
-        logger.info(`Invalidated ETH balance cache for ${contractInfo.name} (${address})`);
-      }
-      
-      // Инвалидируем зависимые контракты
-      if (this.cacheDependencies && this.cacheDependencies[contractKey]) {
-        for (const depKey of this.cacheDependencies[contractKey]) {
-          const depPrefix = `contract:v2:${depKey}`;
-          const depKeys = await this.redisClient.keys(`${depPrefix}:*`);
-          
-          if (depKeys.length > 0) {
-            await this.redisClient.del(depKeys);
-            logger.info(`Invalidated ${depKeys.length} dependent cache keys for ${depKey} (depends on ${contractKey})`);
-          }
-        }
+      const [keys, depKeyResults] = await Promise.all([
+        this.scanKeys(`${cachePrefix}:*`),
+        Promise.all(
+          (this.cacheDependencies?.[contractKey] || []).map(async depKey => ({
+            depKey,
+            keys: await this.scanKeys(`contract:v2:${depKey}:*`),
+          }))
+        ),
+      ]);
+
+      const toDelete = [...keys, `eth:balance:${address}`];
+      for (const { keys: dk } of depKeyResults) toDelete.push(...dk);
+
+      if (toDelete.length > 0) {
+        await this.redisClient.del(toDelete);
+        logger.info(`Invalidated ${toDelete.length} cache keys for ${contractInfo.name} (${contractKey})`);
       }
     } catch (error) {
       logger.error('Backend cache invalidation error:', error);
@@ -1187,14 +1171,8 @@ class BlockWatcher {
       // Получаем хэши транзакций для текущей страницы (ZREVRANGE для reverse order)
       const txHashes = await this.redisClient.zRange(listKey, start, end, { REV: true });
       
-      const transactions = [];
-      for (const hash of txHashes) {
-        const txKey = `tx:${hash}`;
-        const txData = await this.redisClient.get(txKey);
-        if (txData) {
-          transactions.push(JSON.parse(txData));
-        }
-      }
+      const txDataList = await Promise.all(txHashes.map(hash => this.redisClient.get(`tx:${hash}`)));
+      const transactions = txDataList.filter(Boolean).map(d => JSON.parse(d));
       
       const totalPages = Math.ceil(total / limit);
       
@@ -1283,13 +1261,8 @@ class BlockWatcher {
       // Получаем ключи событий для текущей страницы (ZREVRANGE для reverse order)
       const eventKeys = await this.redisClient.zRange(listKey, start, end, { REV: true });
       
-      const events = [];
-      for (const key of eventKeys) {
-        const eventData = await this.redisClient.get(key);
-        if (eventData) {
-          events.push(JSON.parse(eventData));
-        }
-      }
+      const eventDataList = await Promise.all(eventKeys.map(key => this.redisClient.get(key)));
+      const events = eventDataList.filter(Boolean).map(d => JSON.parse(d));
       
       const totalPages = Math.ceil(total / limit);
       
@@ -1382,9 +1355,10 @@ class BlockWatcher {
       const contractKey = contractInfo.contractKey;
       const txsListKey = `txs:${contractAddress}:list`;
       
-      // Удаляем события по contractKey (новая схема) и по contractAddress (старая схема)
-      const eventsKeysByKey = await this.redisClient.keys(`events:${contractKey}:*`);
-      const eventsKeysByAddress = await this.redisClient.keys(`events:${contractAddress}:*`);
+      const [eventsKeysByKey, eventsKeysByAddress] = await Promise.all([
+        this.scanKeys(`events:${contractKey}:*`),
+        this.scanKeys(`events:${contractAddress}:*`),
+      ]);
       const eventsKeys = [...eventsKeysByKey, ...eventsKeysByAddress];
       
       const txHashes = await this.redisClient.zRange(txsListKey, 0, -1);
@@ -1406,24 +1380,23 @@ class BlockWatcher {
 
       await this.redisClient.del(`contract:${contractAddress}`);
 
-      // Очищаем кэш индивидуальных вызовов контракта (positions, totalCurrentFee,
-      // balanceOf, ...). Без этого после write-tx frontend ещё видит старые
-      // значения, даже если события/транзакции уже обновлены.
-      const callCacheKeys = await this.redisClient.keys(`contract:v2:${contractKey}:*`);
+      const callCacheKeys = await this.scanKeys(`contract:v2:${contractKey}:*`);
       if (callCacheKeys.length > 0) {
         await this.redisClient.del(callCacheKeys);
         logger.info(`Cleared ${callCacheKeys.length} method-call cache keys for ${contractKey}`);
       }
 
       // Зависимые контракты: balanceOf/allowance для DFC, ETH-balance и т.п.
-      if (this.cacheDependencies && this.cacheDependencies[contractKey]) {
-        for (const depKey of this.cacheDependencies[contractKey]) {
-          const depKeys = await this.redisClient.keys(`contract:v2:${depKey}:*`);
-          if (depKeys.length > 0) {
-            await this.redisClient.del(depKeys);
-            logger.info(`Cleared ${depKeys.length} dependent cache keys for ${depKey}`);
-          }
-        }
+      if (this.cacheDependencies?.[contractKey]?.length) {
+        await Promise.all(
+          this.cacheDependencies[contractKey].map(async depKey => {
+            const depKeys = await this.scanKeys(`contract:v2:${depKey}:*`);
+            if (depKeys.length > 0) {
+              await this.redisClient.del(depKeys);
+              logger.info(`Cleared ${depKeys.length} dependent cache keys for ${depKey}`);
+            }
+          })
+        );
       }
 
       // ETH-баланс контракта тоже стал устаревшим после любой tx.
