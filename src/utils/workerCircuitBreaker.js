@@ -18,7 +18,7 @@
  * недоступность worker'а — общая на всё приложение.
  */
 
-const FAILURE_THRESHOLD = 3;
+const FAILURE_THRESHOLD = 5;
 const OPEN_DURATION_MS = 30_000;
 const DEFAULT_TIMEOUT_MS = 3000;
 

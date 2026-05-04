@@ -271,9 +271,42 @@ class HealthServer {
         return;
       }
       
+      // POST /api/batch — multiple contract calls in one round-trip.
+      // Body: [{ contract, method, args?, noCache? }, ...]
+      // Response: [{ success, result, cached, contract, method, args }, ...]
+      // Each call runs in parallel; individual errors don't fail the whole batch.
+      if (pathname === '/api/batch' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        await new Promise(resolve => req.on('end', resolve));
+
+        let calls;
+        try {
+          calls = JSON.parse(body);
+          if (!Array.isArray(calls)) throw new Error('body must be an array');
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Invalid body: ${e.message}` }));
+          return;
+        }
+
+        const results = await Promise.all(calls.map(async ({ contract, method, args = [], noCache = false }) => {
+          try {
+            const { value, fromCache } = await this.callContractMethod(contract, method, args, { noCache });
+            return { success: true, contract, method, args, result: value, cached: fromCache };
+          } catch (e) {
+            return { success: false, contract, method, args, error: e.message };
+          }
+        }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(results));
+        return;
+      }
+
       res.writeHead(404);
       res.end('Not Found');
-      
+
     } catch (error) {
       console.error('Request handling error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });

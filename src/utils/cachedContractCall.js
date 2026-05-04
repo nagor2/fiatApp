@@ -26,7 +26,7 @@ import {
   classifyWorkerError,
 } from './workerCircuitBreaker';
 
-const WORKER_CALL_TIMEOUT_MS = 3000;
+const WORKER_CALL_TIMEOUT_MS = 8000;
 
 // Публичные RPC для fallback (CORS-enabled, работают прямо из браузера).
 // Критически важно: эти URL не идут через /api/rpc прокси nginx,
@@ -42,6 +42,16 @@ function getDirectWeb3(rpcUrl) {
     directWeb3Cache.set(rpcUrl, new Web3(rpcUrl));
   }
   return directWeb3Cache.get(rpcUrl);
+}
+
+// Injected wallet (MetaMask, etc.) — fastest fallback when user is connected.
+// EIP-1193 provider is already authenticated and has no CORS or rate-limit issues.
+let _injectedWeb3 = null;
+function getInjectedWeb3() {
+  if (!_injectedWeb3 && typeof window !== 'undefined' && window.ethereum) {
+    _injectedWeb3 = new Web3(window.ethereum);
+  }
+  return _injectedWeb3;
 }
 
 /**
@@ -95,9 +105,20 @@ async function callFallback(contractKey, methodName, args, fallbackContract) {
     );
   }
 
-  // Fallback НЕ использует web3 из fallbackContract, потому что тот может быть
-  // привязан к мёртвому /api/rpc (nginx → watcher). Всегда идём напрямую
-  // в публичные RPC — CORS у publicnode/llamarpc включён.
+  // Priority: injected wallet (MetaMask) → public RPC.
+  // Injected provider is already live, no CORS, no rate limits.
+  const injected = getInjectedWeb3();
+  if (injected) {
+    try {
+      const contract = new injected.eth.Contract(abi, address);
+      const result = await contract.methods[methodName](...args).call();
+      console.log(`[InjectedRPC] ${contractKey}.${methodName}(${args.join(', ')}) ok`);
+      return result;
+    } catch (err) {
+      console.warn(`[InjectedRPC] ${contractKey}.${methodName} failed: ${err.message}`);
+    }
+  }
+
   return withPublicRpc(async (w3) => {
     const contract = new w3.eth.Contract(abi, address);
     if (!contract.methods[methodName]) {
@@ -144,14 +165,56 @@ export async function cachedContractCall(contractKey, methodName, args = [], fal
 }
 
 /**
- * Batch вызов нескольких методов контракта.
- * Оптимизация: все вызовы идут параллельно.
+ * Batch — single HTTP round-trip to /api/batch for all calls.
+ * Returns per-item { success, result, error } objects so partial failures
+ * don't break the whole load. Falls back to individual calls if the request itself fails.
+ *
+ * @param {Array<{ contractKey, methodName, args?, noCache?, fallbackContract? }>} calls
+ * @returns {Promise<Array<{ success: boolean, result?: any, error?: string }>>}
  */
 export async function batchCachedContractCalls(calls) {
-  const promises = calls.map(({ contractKey, methodName, args, fallbackContract }) =>
-    cachedContractCall(contractKey, methodName, args, fallbackContract)
+  if (!calls.length) return [];
+
+  if (!isWorkerCircuitOpen()) {
+    try {
+      const body = JSON.stringify(calls.map(({ contractKey, methodName, args = [], noCache = false }) => ({
+        contract: contractKey,
+        method: methodName,
+        args,
+        noCache,
+      })));
+
+      const url = `${getWorkerBaseUrl()}/api/batch`;
+      const response = await fetchWorkerWithTimeout(
+        url,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body },
+        WORKER_CALL_TIMEOUT_MS,
+      );
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const results = await response.json();
+
+      recordWorkerSuccess();
+      // Return per-item results; callers decide how to handle individual failures.
+      return results.map(r => ({ success: r.success, result: r.result, error: r.error }));
+    } catch (error) {
+      const reason = classifyWorkerError(error);
+      recordWorkerFailure(reason);
+      console.warn(`[Worker] batch failed (${reason}), falling back per-call`);
+    }
+  }
+
+  // Fallback: individual calls (injected provider or public RPC per item).
+  return Promise.all(
+    calls.map(async ({ contractKey, methodName, args = [], fallbackContract = null, noCache = false }) => {
+      try {
+        const result = await cachedContractCall(contractKey, methodName, args, fallbackContract, { noCache });
+        return { success: true, result };
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    })
   );
-  return Promise.all(promises);
 }
 
 /**
@@ -238,8 +301,17 @@ export async function cachedEthBalance(address, web3) {
     console.log(`[Worker] Circuit open, skipping worker for eth.getBalance(${address})`);
   }
 
-  // Игнорируем переданный web3 (он может идти через мёртвый /api/rpc),
-  // всегда бьём в публичные RPC напрямую.
+  // Priority: injected wallet → public RPC.
+  const injected = getInjectedWeb3();
+  if (injected) {
+    try {
+      const balance = await injected.eth.getBalance(address);
+      return balance.toString();
+    } catch (err) {
+      console.warn(`[InjectedRPC] eth.getBalance failed: ${err.message}`);
+    }
+  }
+
   const balance = await withPublicRpc((w3) => w3.eth.getBalance(address));
   return balance.toString();
 }

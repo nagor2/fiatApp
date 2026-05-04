@@ -24,8 +24,10 @@ export default class Worker extends React.Component {
     async fetchHealth() {
         if (this._healthInFlight) return;
         this._healthInFlight = true;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         try {
-            const response = await fetch(this.props.healthUrl);
+            const response = await fetch(this.props.healthUrl, { signal: controller.signal });
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
@@ -42,6 +44,7 @@ export default class Worker extends React.Component {
                 loading: false
             });
         } finally {
+            clearTimeout(timeoutId);
             this._healthInFlight = false;
         }
     }

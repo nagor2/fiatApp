@@ -1,6 +1,6 @@
 import React from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import {cachedContractCall} from "../utils/cachedContractCall";
+import {cachedContractCall, batchCachedContractCalls} from "../utils/cachedContractCall";
 import {getContractTransactions} from "../utils/cacheApi";
 
 const INVESTING_COM_URLS = {
@@ -80,96 +80,66 @@ export default class ExchangeRateContract extends React.Component {
             const oracleAddress = contracts['oracle']._address;
             this.setState({ address: oracleAddress });
 
-            const instrumentsCountRaw = await cachedContractCall(
-                'oracle', 'instrumentsCount', [], contracts['oracle']
-            );
-            const instrumentsCount = parseInt(instrumentsCountRaw);
+            // Wave 1: counts — 3 calls → 1 batch request
+            const wave1 = await batchCachedContractCalls([
+                { contractKey: 'oracle', methodName: 'instrumentsCount', args: [], fallbackContract: contracts['oracle'] },
+                { contractKey: 'basket', methodName: 'itemsCount',       args: [], fallbackContract: contracts['basket'] },
+                { contractKey: 'basket', methodName: 'sharesCount',       args: [], fallbackContract: contracts['basket'] },
+            ]);
+            const instrumentsCount = parseInt(wave1[0].success ? wave1[0].result : 0);
+            const basketItemsCount  = parseInt(wave1[1].success ? wave1[1].result : 0);
+            const totalShares       = parseInt(wave1[2].success ? wave1[2].result : 0);
             this.setState({ instrumentsCount });
 
-            console.log('Oracle instrumentsCount:', instrumentsCount);
-
-            const [basketItemsCountRaw, sharesCountRaw] = await Promise.all([
-                cachedContractCall('basket', 'itemsCount', [], contracts['basket']),
-                cachedContractCall('basket', 'sharesCount', [], contracts['basket']),
-            ]);
-            const basketItemsCount = parseInt(basketItemsCountRaw);
-            const totalShares = parseInt(sharesCountRaw);
-
+            // Wave 2: basket items — N calls → 1 batch request
+            const itemIds = Array.from({ length: basketItemsCount }, (_, i) => i + 1);
+            const wave2 = await batchCachedContractCalls(
+                itemIds.map(id => ({ contractKey: 'basket', methodName: 'items', args: [id], fallbackContract: contracts['basket'] }))
+            );
             const basketItems = [];
-            const basketPromises = [];
+            wave2.forEach((r, i) => {
+                if (!r.success) { console.warn(`Failed to load basket item ${itemIds[i]}:`, r.error); return; }
+                basketItems.push({
+                    symbol: r.result.symbol,
+                    share: parseInt(r.result.share),
+                    initialPrice: parseFloat(r.result.initialPrice) / 10**6
+                });
+            });
 
-            for (let id = 1; id <= basketItemsCount; id++) {
-                basketPromises.push(
-                    cachedContractCall('basket', 'items', [id], contracts['basket'])
-                        .then(item => {
-                            basketItems.push({
-                                symbol: item.symbol,
-                                share: parseInt(item.share),
-                                initialPrice: parseFloat(item.initialPrice) / 10**6
-                            });
-                        })
-                        .catch(err => {
-                            console.warn(`Failed to load basket item ${id}:`, err);
-                        })
-                );
-            }
-            await Promise.all(basketPromises);
-
-            console.log('Basket items loaded:', basketItems);
-
+            // Wave 3: dictionary lookups — N calls → 1 batch request
+            const wave3 = await batchCachedContractCalls(
+                basketItems.map(item => ({ contractKey: 'oracle', methodName: 'dictionary', args: [item.symbol], fallbackContract: contracts['oracle'] }))
+            );
             const basketSymbolToOracleId = new Map();
-            const dictionaryPromises = [];
+            wave3.forEach((r, i) => {
+                if (!r.success) { console.warn(`Failed to load dictionary for ${basketItems[i].symbol}:`, r.error); return; }
+                const oracleId = parseInt(r.result.id);
+                const decimals = parseInt(r.result.decimals);
+                if (oracleId > 0) {
+                    basketSymbolToOracleId.set(basketItems[i].symbol, {
+                        oracleId, decimals,
+                        share: basketItems[i].share,
+                        initialPrice: basketItems[i].initialPrice
+                    });
+                }
+            });
 
-            for (const item of basketItems) {
-                dictionaryPromises.push(
-                    cachedContractCall('oracle', 'dictionary', [item.symbol], contracts['oracle'])
-                        .then(dict => {
-                            const oracleId = parseInt(dict.id);
-                            const decimals = parseInt(dict.decimals);
-                            if (oracleId > 0) {
-                                basketSymbolToOracleId.set(item.symbol, {
-                                    oracleId,
-                                    decimals,
-                                    share: item.share,
-                                    initialPrice: item.initialPrice
-                                });
-                            }
-                        })
-                        .catch(err => {
-                            console.warn(`Failed to load dictionary for ${item.symbol}:`, err);
-                        })
-                );
-            }
-            await Promise.all(dictionaryPromises);
-
-            console.log('Symbol to Oracle ID mapping:', Array.from(basketSymbolToOracleId.entries()));
-
+            // Wave 4: instruments — N calls → 1 batch request
+            const symbolEntries = Array.from(basketSymbolToOracleId.entries());
+            const wave4 = await batchCachedContractCalls(
+                symbolEntries.map(([, info]) => ({ contractKey: 'oracle', methodName: 'instruments', args: [info.oracleId], fallbackContract: contracts['oracle'] }))
+            );
             const instrumentsMap = new Map();
-            const oraclePromises = [];
-
-            for (const [symbol, info] of basketSymbolToOracleId) {
-                const id = info.oracleId;
-                oraclePromises.push(
-                    cachedContractCall('oracle', 'instruments', [id], contracts['oracle'])
-                        .then(instrument => {
-                            const decimals = info.decimals;
-
-                            instrumentsMap.set(id, {
-                                id,
-                                symbol,
-                                decimals,
-                                currentPrice: parseFloat(instrument.price) / (10**decimals),
-                                timestamp: parseInt(instrument.timeStamp),
-                                initialPrice: info.initialPrice
-                            });
-                        })
-                        .catch(err => {
-                            console.warn(`Failed to load oracle instrument ${symbol} (ID=${id}):`, err);
-                        })
-                );
-            }
-
-            await Promise.all(oraclePromises);
+            wave4.forEach((r, i) => {
+                const [symbol, info] = symbolEntries[i];
+                if (!r.success) { console.warn(`Failed to load oracle instrument ${symbol}:`, r.error); return; }
+                instrumentsMap.set(info.oracleId, {
+                    id: info.oracleId, symbol, decimals: info.decimals,
+                    currentPrice: parseFloat(r.result.price) / (10 ** info.decimals),
+                    timestamp: parseInt(r.result.timeStamp),
+                    initialPrice: info.initialPrice
+                });
+            });
 
             // Add ETH from oracle — not a basket commodity but tracked by the oracle.
             // Call contract directly (not via cachedContractCall) so failures here
