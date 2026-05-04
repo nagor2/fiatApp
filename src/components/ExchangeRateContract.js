@@ -40,6 +40,11 @@ const INVESTING_COM_URLS = {
     'Oats': 'https://www.investing.com/commodities/oats'
 };
 
+// Deployment month in the historical index dataset (Jan 2025 = START_BLOCK ~21664714)
+const DEPLOYMENT_MONTH = 'Jan-2025';
+
+
+
 export default class ExchangeRateContract extends React.Component {
     constructor(props) {
         super(props);
@@ -51,10 +56,14 @@ export default class ExchangeRateContract extends React.Component {
             instruments: [],
             loading: true,
             currentPricesOpen: false,
-            priceHistoryOpen: false
+            priceHistoryOpen: false,
+            showHistorical: false,
+            historicalData: null,
+            historicalDepPrices: null,
         };
         this.toggleCurrentPrices = this.toggleCurrentPrices.bind(this);
         this.togglePriceHistory = this.togglePriceHistory.bind(this);
+        this.toggleHistorical = this.toggleHistorical.bind(this);
     }
 
     toggleCurrentPrices() {
@@ -63,6 +72,26 @@ export default class ExchangeRateContract extends React.Component {
 
     togglePriceHistory() {
         this.setState({ priceHistoryOpen: !this.state.priceHistoryOpen });
+    }
+
+    async toggleHistorical() {
+        const next = !this.state.showHistorical;
+        if (next && !this.state.historicalData) {
+            try {
+                const res = await fetch('/historical-index.json');
+                const { deploymentPrices, data } = await res.json();
+                const historicalData = data.map(({ date, index, ...commodities }) => ({
+                    date,
+                    DFC_pre: index,
+                    ...commodities,
+                }));
+                this.setState({ showHistorical: true, historicalData, historicalDepPrices: deploymentPrices });
+            } catch (err) {
+                console.error('Failed to load historical index:', err);
+            }
+        } else {
+            this.setState({ showHistorical: next });
+        }
     }
 
     async loadData() {
@@ -349,7 +378,7 @@ export default class ExchangeRateContract extends React.Component {
     }
 
     render() {
-        const { priceHistory, selectedInstrument, instruments, loading } = this.state;
+        const { priceHistory, selectedInstrument, instruments, loading, showHistorical, historicalData, historicalDepPrices } = this.state;
 
         if (loading) {
             return <div align='center'>Loading oracle data...</div>;
@@ -361,11 +390,15 @@ export default class ExchangeRateContract extends React.Component {
             dataKeys.push(selectedInstrument);
         }
 
+        const chartData = showHistorical && historicalData
+            ? [...historicalData, ...priceHistory]
+            : priceHistory;
+
         let minValue = Infinity;
         let maxValue = -Infinity;
-        
-        priceHistory.forEach(entry => {
-            dataKeys.forEach(key => {
+
+        chartData.forEach(entry => {
+            [...dataKeys, ...(showHistorical ? ['DFC_pre'] : [])].forEach(key => {
                 const value = entry[key];
                 if (value !== undefined && value !== null) {
                     minValue = Math.min(minValue, value);
@@ -400,84 +433,117 @@ export default class ExchangeRateContract extends React.Component {
                     <div>instrumentsCount: <b>{this.state.instrumentsCount}</b></div>
                     
                     {/* Instrument Selector */}
-                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                        <label style={{ marginRight: '10px', fontWeight: 'bold' }}>
-                            Additional Instrument:
+                    <div style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+                        <div>
+                            <label style={{ marginRight: '10px', fontWeight: 'bold' }}>
+                                Additional Instrument:
+                            </label>
+                            <select
+                                value={selectedInstrument}
+                                onChange={(e) => this.setState({ selectedInstrument: e.target.value })}
+                                style={{
+                                    padding: '8px 12px',
+                                    background: '#fff',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                <option value="none">None</option>
+                                {instruments.filter(i => i.symbol !== dfcKey && i.symbol !== 'ETH').map(instrument => (
+                                    <option key={instrument.id} value={instrument.symbol}>
+                                        {instrument.symbol}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#555' }}>
+                            <input
+                                type="checkbox"
+                                checked={showHistorical}
+                                onChange={this.toggleHistorical}
+                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                            />
+                            Show pre-launch historical index
                         </label>
-                        <select
-                            value={selectedInstrument}
-                            onChange={(e) => this.setState({ selectedInstrument: e.target.value })}
-                            style={{
-                                padding: '8px 12px',
-                                background: '#fff',
-                                border: '1px solid #ddd',
-                                borderRadius: '4px',
-                                fontSize: '14px'
-                            }}
-                        >
-                            <option value="none">None</option>
-                            {instruments.filter(i => i.symbol !== dfcKey).map(instrument => (
-                                <option key={instrument.id} value={instrument.symbol}>
-                                    {instrument.symbol}
-                                </option>
-                            ))}
-                        </select>
+                        <span style={{ fontSize: '15px', fontStyle: 'italic', fontWeight: 'bold', color: '#f5a800', textShadow: '0 0 8px rgba(245,168,0,0.4)' }}>
+                            Will inflation eat your savings too? Buy DFC →
+                        </span>
                     </div>
 
                     {/* Line Chart */}
-                    {priceHistory.length > 0 && (
+                    {(priceHistory.length > 0 || (showHistorical && historicalData)) && (
                         <div style={{ marginTop: '20px', marginBottom: '30px' }}>
                             <h3 style={{ marginBottom: '15px', color: '#000' }}>Price History</h3>
                             <ResponsiveContainer width="100%" height={400}>
-                                <LineChart data={priceHistory}>
+                                <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis 
-                                        dataKey="date" 
+                                    <XAxis
+                                        dataKey="date"
+                                        interval="preserveStartEnd"
                                         label={{ value: 'Date', position: 'insideBottom', offset: -5 }}
                                     />
-                                    <YAxis 
+                                    <YAxis
                                         label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
                                         domain={[domainMin, domainMax]}
                                         ticks={ticks}
                                     />
-                                    <ReferenceLine 
-                                        y={1} 
-                                        stroke="#666" 
+                                    <ReferenceLine
+                                        y={1}
+                                        stroke="#666"
                                         strokeWidth={2}
                                         strokeDasharray="5 5"
                                     />
-                                    <Tooltip 
+                                    <Tooltip
                                         formatter={(value, name, props) => {
-                                            if (name === 'DFC') {
+                                            if (name === 'DFC' || name === 'DFC (pre-launch)') {
                                                 return [value.toFixed(4), name];
                                             }
+                                            // on-chain entry: use stored original price
                                             const originalPrice = props.payload[`${name}_original`];
                                             if (originalPrice !== undefined) {
                                                 return [`$${originalPrice.toFixed(2)}`, name];
                                             }
+                                            // historical entry: ratio × deployment price = real price
+                                            if (historicalDepPrices && historicalDepPrices[name]) {
+                                                const real = value * historicalDepPrices[name];
+                                                return [`$${real.toFixed(2)}`, name];
+                                            }
                                             return [`$${value.toFixed(2)}`, name];
                                         }}
                                         labelFormatter={(label, payload) => {
-                                            if (payload && payload.length > 0) {
+                                            if (payload && payload.length > 0 && payload[0].payload.time) {
                                                 return `${payload[0].payload.date} ${payload[0].payload.time}`;
                                             }
                                             return label;
                                         }}
                                     />
                                     <Legend />
-                                    <Line 
-                                        type="monotone" 
+                                    {showHistorical && (
+                                        <Line
+                                            type="monotone"
+                                            dataKey="DFC_pre"
+                                            stroke="#e0a800"
+                                            strokeWidth={2}
+                                            strokeDasharray="5 3"
+                                            dot={false}
+                                            name="DFC (pre-launch)"
+                                            connectNulls={false}
+                                        />
+                                    )}
+                                    <Line
+                                        type="monotone"
                                         dataKey={dfcKey}
-                                        stroke="#8884d8" 
+                                        stroke="#8884d8"
                                         strokeWidth={2}
                                         dot={false}
                                         name={dfcKey}
                                     />
                                     {selectedInstrument && selectedInstrument !== 'none' && selectedInstrument !== dfcKey && (
-                                        <Line 
-                                            type="monotone" 
+                                        <Line
+                                            type="monotone"
                                             dataKey={selectedInstrument}
-                                            stroke="#82ca9d" 
+                                            stroke="#82ca9d"
                                             strokeWidth={2}
                                             dot={false}
                                         />

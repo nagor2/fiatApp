@@ -42,7 +42,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - REACT_APP_RPC_URL=/api/rpc
-      - REACT_APP_WORKERS_HEALTH_URL=http://192.168.31.173:3002/health
+      - REACT_APP_WORKERS_HEALTH_URL=${REACT_APP_WORKERS_HEALTH_URL:-http://localhost:3002/health}
       - WDS_SOCKET_PORT=3008
       - DANGEROUSLY_DISABLE_HOST_CHECK=true
     stdin_open: true
@@ -59,6 +59,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    volumes:
+      - ./nginx.local.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8008:80"
     restart: unless-stopped
@@ -84,13 +86,14 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - CORS_ORIGIN=http://localhost:8008,http://localhost:3000
     ports:
-      - "3001:3001"
+      - "3011:3001"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
     profiles:
       - prod
       - backend
@@ -113,6 +116,7 @@ services:
     profiles:
       - prod
       - workers
+      - backend
 
   # Background workers (block-watcher, etc)
   app-workers:
