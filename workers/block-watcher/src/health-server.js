@@ -44,8 +44,30 @@ class HealthServer {
     this.redisClient = redisClient;
     this.contracts = contracts;
     this.server = null;
-    this.cacheTTL = settings.cacheTTL !== undefined ? settings.cacheTTL : 0; // TTL для кэша contract calls (0 = без TTL, event-driven инвалидация)
+    this.cacheTTL = settings.cacheTTL !== undefined ? settings.cacheTTL : 0;
+    this._cachedRedisStats = null;
+    this._redisStatsTimer = null;
     console.log(`HealthServer: cacheTTL = ${this.cacheTTL} (from settings: ${settings.cacheTTL})`);
+  }
+
+  _startRedisStatsPoller() {
+    const poll = async () => {
+      if (!this.redisClient || !this.redisClient.isReady) return;
+      try {
+        const info = await this.redisClient.info('stats');
+        let hits = 0, misses = 0;
+        for (const line of info.split('\n')) {
+          if (line.startsWith('keyspace_hits:')) hits = parseInt(line.split(':')[1]);
+          else if (line.startsWith('keyspace_misses:')) misses = parseInt(line.split(':')[1]);
+        }
+        const total = hits + misses;
+        this._cachedRedisStats = { hits, misses, total, hitRate: `${total > 0 ? ((hits / total) * 100).toFixed(2) : '0.00'}%` };
+      } catch (e) {
+        this._cachedRedisStats = { error: e.message };
+      }
+    };
+    poll();
+    this._redisStatsTimer = setInterval(poll, 10000);
   }
   
   async handleRequest(req, res) {
@@ -64,42 +86,8 @@ class HealthServer {
         // (Exit 137 / CrashLoopBackOff). Поэтому:
         //  1) не трогаем redis, если клиент не ready (isReady=false);
         //  2) даже когда ready — оборачиваем info() в короткий таймаут.
-        if (this.redisClient && this.redisClient.isReady) {
-          try {
-            const infoPromise = this.redisClient.info('stats');
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('redis info timeout')), 1000)
-            );
-            const info = await Promise.race([infoPromise, timeoutPromise]);
-            const lines = info.split('\n');
-
-            let hits = 0;
-            let misses = 0;
-
-            for (const line of lines) {
-              if (line.startsWith('keyspace_hits:')) {
-                hits = parseInt(line.split(':')[1]);
-              } else if (line.startsWith('keyspace_misses:')) {
-                misses = parseInt(line.split(':')[1]);
-              }
-            }
-
-            const total = hits + misses;
-            const hitRate = total > 0 ? ((hits / total) * 100).toFixed(2) : '0.00';
-
-            health.cache = {
-              hits,
-              misses,
-              total,
-              hitRate: `${hitRate}%`
-            };
-          } catch (error) {
-            console.error('Failed to get cache stats:', error.message);
-            health.cache = { error: error.message };
-          }
-        } else {
-          health.cache = { error: 'redis not ready' };
-        }
+        health.cache = this._cachedRedisStats
+          || (this.redisClient && this.redisClient.isReady ? { status: 'warming up' } : { error: 'redis not ready' });
 
         // /health всегда отвечает 200 — это liveness, а не readiness.
         // Отдельный readiness-эндпоинт ниже говорит k8s, готовы ли мы к трафику.
@@ -312,6 +300,7 @@ class HealthServer {
     this.server.listen(this.port, () => {
       console.log(`Health server listening on port ${this.port}`);
     });
+    this._startRedisStatsPoller();
   }
   
   async getEthBalance(address) {
@@ -408,9 +397,8 @@ class HealthServer {
   }
 
   stop() {
-    if (this.server) {
-      this.server.close();
-    }
+    if (this._redisStatsTimer) clearInterval(this._redisStatsTimer);
+    if (this.server) this.server.close();
   }
 }
 
