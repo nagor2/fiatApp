@@ -54,12 +54,10 @@ class CacheService {
 
       await this.client.connect();
     } catch (error) {
-      // Если Redis недоступен на старте — не валим backend: API-эндпоинты
-      // не критичны к кэшу (get/set всё равно проверяют isReady и молча
-      // возвращают null/false). Это даёт админу время починить Service
-      // REDIS_URL без потери доступности /health и /api/contracts.
-      logger.error('Failed to connect to Redis (cache disabled):', error.message);
-      this.enabled = false;
+      // Redis unreachable at startup — keep running without cache.
+      // get/set already guard on isReady, so caching resumes automatically
+      // once the reconnect strategy re-establishes the connection.
+      logger.error('Failed to connect to Redis, will retry in background:', error.message);
     }
   }
 

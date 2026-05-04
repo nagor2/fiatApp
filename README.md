@@ -148,6 +148,10 @@ CI/CD via GitLab pipeline (`.gitlab-ci.yml`):
 
 See [k8s/README.md](k8s/README.md) for cluster setup notes (Redis namespace, FQDN config).
 
+## 🗺️ Roadmap
+
+See [ROADMAP.md](ROADMAP.md).
+
 ## 📚 Documentation
 
 - [Quick Start](docs/QUICK-START.md) — choosing the right dev mode
