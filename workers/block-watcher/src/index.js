@@ -778,6 +778,11 @@ class BlockWatcher {
                 continue;
               }
               await this.processBlockHeader(blockHeader);
+              // Yield the event loop every 10 blocks so HTTP requests aren't
+              // starved while catching up on missed blocks.
+              if ((blockNum - catchUpFrom) % 10 === 9) {
+                await new Promise(resolve => setImmediate(resolve));
+              }
             } catch (error) {
               logger.error(`Failed to catch up block ${blockNum}:`, error.message);
             }

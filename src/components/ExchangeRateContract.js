@@ -171,13 +171,15 @@ export default class ExchangeRateContract extends React.Component {
 
             await Promise.all(oraclePromises);
 
-            // Add ETH from oracle — not a basket commodity but tracked by the oracle
+            // Add ETH from oracle — not a basket commodity but tracked by the oracle.
+            // Call contract directly (not via cachedContractCall) so failures here
+            // don't trip the shared circuit breaker and break getContractTransactions.
             let ethOracleId = null;
             try {
-                const ethDict = await cachedContractCall('oracle', 'dictionary', ['eth'], contracts['oracle']);
+                const ethDict = await contracts['oracle'].methods.dictionary('eth').call();
                 const parsedEthId = parseInt(ethDict.id);
                 if (parsedEthId > 0) {
-                    const ethInstrument = await cachedContractCall('oracle', 'instruments', [parsedEthId], contracts['oracle']);
+                    const ethInstrument = await contracts['oracle'].methods.instruments(parsedEthId).call();
                     const ethDecimals = parseInt(ethDict.decimals);
                     instrumentsMap.set(parsedEthId, {
                         id: parsedEthId,

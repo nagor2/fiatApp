@@ -33,6 +33,16 @@ const absoluteWorkerUrl = rawWorkerUrl.startsWith('http')
   : (typeof window !== 'undefined' ? `${window.location.origin}${rawWorkerUrl}` : rawWorkerUrl);
 const WORKER_API_URL = absoluteWorkerUrl.replace(/\/health$/, '');
 
+// In-flight deduplication: if the same URL is already being fetched, return the
+// same promise instead of firing a second request to the worker.
+const _inFlight = new Map();
+function dedupFetch(key, fn) {
+  if (_inFlight.has(key)) return _inFlight.get(key);
+  const promise = fn().finally(() => _inFlight.delete(key));
+  _inFlight.set(key, promise);
+  return promise;
+}
+
 // ======== Worker API (с таймаутами и circuit breaker) ========
 
 export async function renewContractCache(contractNameOrAddress) {
@@ -52,12 +62,12 @@ async function fetchWorkerEvents(contractAddress, eventName, limit) {
   const url = eventName
     ? `${WORKER_API_URL}/api/events/${contractAddress}?event=${eventName}&limit=${limit}`
     : `${WORKER_API_URL}/api/events/${contractAddress}?limit=${limit}`;
-  const response = await fetchWorkerWithTimeout(url, {}, WORKER_EVENTS_TIMEOUT_MS);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  const data = await response.json();
-  return data.events || [];
+  return dedupFetch(url, async () => {
+    const response = await fetchWorkerWithTimeout(url, {}, WORKER_EVENTS_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return data.events || [];
+  });
 }
 
 async function fetchWorkerTransactions(contractAddress, limit) {
@@ -285,37 +295,20 @@ export async function getPastEventsCached(contract, eventName, options = {}, web
 
   const workerEvents = await getContractEvents(contractAddress, eventName, 10000);
 
-  // Worker вернул непустой ответ — доверяем, это быстрый путь.
-  if (workerEvents !== null && workerEvents.length > 0) {
+  // Worker responded (even with empty array) — trust it, no Etherscan double-check.
+  // Calling Etherscan when worker returns [] causes rate limit errors when multiple
+  // components fire simultaneously during worker warmup.
+  if (workerEvents !== null) {
     return applyRangeFilters(workerEvents, options).map(normalizeCachedEvent);
   }
 
-  // workerEvents === null: ошибка/таймаут worker'а, падаем в Etherscan.
-  // workerEvents === []: worker ответил, но кеш пустой — возможно прогрев
-  // воркера после рестарта или промах. Для активных контрактов (DFC/RLE)
-  // пустой ответ в 99% случаев означает именно промах, поэтому
-  // перестраховываемся и всё равно дёргаем Etherscan. Если реальных событий
-  // нет — получим пустой массив; если есть — вернём корректные данные
-  // вместо ложного нуля.
-  const workerReturnedEmpty = workerEvents !== null && workerEvents.length === 0;
-
+  // workerEvents === null: worker failed or timed out → Etherscan fallback.
   try {
-    if (workerReturnedEmpty) {
-      console.log(
-        `[Etherscan double-check] worker returned empty for ${eventName || 'all'} on ${contractAddress}`
-      );
-    } else {
-      console.log(`[Etherscan fallback] ${eventName || 'all events'} on ${contractAddress}`);
-    }
+    console.log(`[Etherscan fallback] ${eventName || 'all events'} on ${contractAddress}`);
     const events = await fetchEtherscanEvents(contract, eventName, options);
     return applyRangeFilters(events, options).map(normalizeCachedEvent);
   } catch (error) {
     console.error(`[Etherscan fallback] failed: ${error.message}`);
-    // Etherscan тоже лёг — возвращаем что есть (пустой worker-ответ лучше,
-    // чем бросок, иначе рушится весь компонент).
-    if (workerEvents !== null) {
-      return workerEvents.map(normalizeCachedEvent);
-    }
     return [];
   }
 }

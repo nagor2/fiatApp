@@ -238,23 +238,24 @@ export default class MyPanel extends React.Component {
                     this.props.web3
                 );
                 
-                for (let i = 0; i < events.length; i++) {
-                    let event = events[i];
-                    if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
-                        let id = event.returnValues.posID;
-                        const position = await cachedContractCall('cdp', 'positions', [id], contracts['cdp']);
-                        
-                        if (position.liquidationStatus < 2) {
-                            products.push({
-                                iconType: 'loan',
-                                title: 'debt position',
-                                id: id,
-                                name: dateFromTimestamp(position.timeOpened),
-                                balance: (parseFloat(position.coinsMinted) / 10 ** 18).toFixed(2)
-                            });
-                        }
+                const myEvents = events.filter(e =>
+                    e.returnValues.owner.toLowerCase() === this.props.account.toLowerCase()
+                );
+                const positions = await Promise.all(
+                    myEvents.map(e => cachedContractCall('cdp', 'positions', [e.returnValues.posID], contracts['cdp']))
+                );
+                myEvents.forEach((event, i) => {
+                    const position = positions[i];
+                    if (position.liquidationStatus < 2) {
+                        products.push({
+                            iconType: 'loan',
+                            title: 'debt position',
+                            id: event.returnValues.posID,
+                            name: dateFromTimestamp(position.timeOpened),
+                            balance: (parseFloat(position.coinsMinted) / 10 ** 18).toFixed(2)
+                        });
                     }
-                }
+                });
                 this.setState({products: products});
             } catch (error) {
                 console.error('Failed to load loans:', error);
@@ -274,25 +275,26 @@ export default class MyPanel extends React.Component {
                     this.props.web3
                 );
                 
-                for (let i = 0; i < events.length; i++) {
-                    let event = events[i];
-                    if (event.returnValues.owner.toLowerCase() == this.props.account.toLowerCase()) {
-                        let id = event.returnValues.id;
-                        const deposit = await cachedContractCall('deposit', 'deposits', [id], contracts['deposit']);
-                        
-                        if (!deposit.closed) {
-                            let dep = {
-                                iconType: 'deposit',
-                                title: 'deposit',
-                                id: id,
-                                name: dateFromTimestamp(deposit.timeOpened),
-                                balance: (parseFloat(deposit.coinsDeposited) / 10 ** 18).toFixed(2)
-                            }
-                            if (!products.find(a => a.id == dep.id))
-                                products.push(dep);
-                        }
+                const myEvents = events.filter(e =>
+                    e.returnValues.owner.toLowerCase() === this.props.account.toLowerCase()
+                );
+                const deposits = await Promise.all(
+                    myEvents.map(e => cachedContractCall('deposit', 'deposits', [e.returnValues.id], contracts['deposit']))
+                );
+                myEvents.forEach((event, i) => {
+                    const deposit = deposits[i];
+                    if (!deposit.closed) {
+                        const dep = {
+                            iconType: 'deposit',
+                            title: 'deposit',
+                            id: event.returnValues.id,
+                            name: dateFromTimestamp(deposit.timeOpened),
+                            balance: (parseFloat(deposit.coinsDeposited) / 10 ** 18).toFixed(2)
+                        };
+                        if (!products.find(a => a.id == dep.id))
+                            products.push(dep);
                     }
-                }
+                });
                 this.setState({products: products});
             } catch (error) {
                 console.error('Failed to load deposits:', error);
