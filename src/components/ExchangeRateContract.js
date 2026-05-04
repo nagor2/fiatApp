@@ -171,6 +171,28 @@ export default class ExchangeRateContract extends React.Component {
 
             await Promise.all(oraclePromises);
 
+            // Add ETH from oracle — not a basket commodity but tracked by the oracle
+            let ethOracleId = null;
+            try {
+                const ethDict = await cachedContractCall('oracle', 'dictionary', ['eth'], contracts['oracle']);
+                const parsedEthId = parseInt(ethDict.id);
+                if (parsedEthId > 0) {
+                    const ethInstrument = await cachedContractCall('oracle', 'instruments', [parsedEthId], contracts['oracle']);
+                    const ethDecimals = parseInt(ethDict.decimals);
+                    instrumentsMap.set(parsedEthId, {
+                        id: parsedEthId,
+                        symbol: 'ETH',
+                        decimals: ethDecimals,
+                        currentPrice: parseFloat(ethInstrument.price) / (10 ** ethDecimals),
+                        timestamp: parseInt(ethInstrument.timeStamp),
+                        initialPrice: null
+                    });
+                    ethOracleId = parsedEthId;
+                }
+            } catch (err) {
+                console.warn('ETH not available in oracle:', err);
+            }
+
             // История транзакций — только через worker'а, без Etherscan-fallback.
             // Если worker недоступен, получим [] и график просто не построится,
             // зато текущие цены из контракта отобразятся.
@@ -279,6 +301,17 @@ export default class ExchangeRateContract extends React.Component {
                 }
             }
 
+            // Normalize ETH by its first historical price (same approach as DFC)
+            const firstEthEntry = priceHistory.find(e => e['ETH'] !== undefined);
+            const firstETHRaw = firstEthEntry ? firstEthEntry['ETH'] : null;
+            if (firstETHRaw && firstETHRaw > 0) {
+                priceHistory.forEach(entry => {
+                    if (entry['ETH'] !== undefined) {
+                        entry['ETH'] = entry['ETH'] / firstETHRaw;
+                    }
+                });
+            }
+
             console.log('Price history built:', priceHistory.length, 'entries');
             console.log('First DFC (base):', firstDFC);
             console.log('Current DFC from contract:', currentDfcPrice);
@@ -287,6 +320,8 @@ export default class ExchangeRateContract extends React.Component {
                 ? currentDfcPrice / firstDFC
                 : currentDfcPrice;
 
+            const ethInst = ethOracleId !== null ? instrumentsMap.get(ethOracleId) : null;
+
             const instruments = [
                 {
                     id: 0,
@@ -294,13 +329,25 @@ export default class ExchangeRateContract extends React.Component {
                     currentPrice: normalizedCurrentDFC,
                     timestamp: dfcTimestamp
                 },
-                ...Array.from(instrumentsMap.values()).map(inst => ({
-                    ...inst,
-                    originalPrice: inst.currentPrice,
-                    currentPrice: inst.initialPrice && inst.initialPrice > 0 
-                        ? inst.currentPrice / inst.initialPrice 
-                        : inst.currentPrice
-                }))
+                ...(ethInst ? [{
+                    id: ethInst.id,
+                    symbol: 'ETH',
+                    originalPrice: ethInst.currentPrice,
+                    currentPrice: firstETHRaw && firstETHRaw > 0
+                        ? ethInst.currentPrice / firstETHRaw
+                        : ethInst.currentPrice,
+                    timestamp: ethInst.timestamp,
+                    initialPrice: firstETHRaw || undefined
+                }] : []),
+                ...Array.from(instrumentsMap.values())
+                    .filter(inst => inst.symbol !== 'ETH')
+                    .map(inst => ({
+                        ...inst,
+                        originalPrice: inst.currentPrice,
+                        currentPrice: inst.initialPrice && inst.initialPrice > 0
+                            ? inst.currentPrice / inst.initialPrice
+                            : inst.currentPrice
+                    }))
             ];
 
             console.log('Price history built:', priceHistory.length, 'entries');
