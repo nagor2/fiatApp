@@ -44,6 +44,7 @@ services:
       - REACT_APP_RPC_URL=/api/rpc
       - REACT_APP_WORKERS_HEALTH_URL=${REACT_APP_WORKERS_HEALTH_URL:-http://localhost:3002/health}
       - REACT_APP_WALLETCONNECT_PROJECT_ID=${REACT_APP_WALLETCONNECT_PROJECT_ID}
+      - REACT_APP_ZEROEX_API_KEY=${REACT_APP_ZEROEX_API_KEY}
       - WDS_SOCKET_PORT=3008
       - DANGEROUSLY_DISABLE_HOST_CHECK=true
     stdin_open: true
@@ -86,6 +87,7 @@ services:
       - CACHE_ENABLED=true
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - CORS_ORIGIN=http://localhost:8008,http://localhost:3000
+      - ZEROEX_API_KEY=${REACT_APP_ZEROEX_API_KEY}
     ports:
       - "3011:3001"
     restart: unless-stopped

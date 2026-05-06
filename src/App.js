@@ -8,7 +8,8 @@ import DepositsPage from './pages/DepositsPage';
 import BalancesPage from './pages/BalancesPage';
 const CreditsPage = lazy(() => import('./pages/CreditsPage'));
 const AuctionsPage = lazy(() => import('./pages/AuctionsPage'));
-
+const PoolsPage = lazy(() => import('./pages/PoolsPage'));
+const GovernancePage = lazy(() => import('./pages/GovernancePage'));
 
 
 
@@ -30,17 +31,23 @@ function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<Layout />}>
+
+       
               <Route index                   element={<Stub title="Welcome to" accent="DotFlat" sub="Your dashboard for Dotflat-coin, credits, deposits and the commodity basket." />} />
+                             {/* ── Migrated ─────────────────────────────────── */}    
               <Route path="balances"         element={<BalancesPage />} />
               <Route path="/credits" element={<CreditsPage />} />
-              <Route path="cdp"              element={<Stub title="Credit" accent="positions" />} />
-              <Route path="debtPositions/:id" element={<Stub title="Credit" accent="position" />} />
+              <Route path="cdp"                      element={<CreditsPage />} />
+              <Route path="debtPositions/:id"        element={<CreditsPage />} />
               <Route path="deposits"           element={<DepositsPage />} />
               <Route path="deposit/:depositId" element={<DepositsPage />} />
               <Route path="/auctions" element={<AuctionsPage />} />
-              <Route path="auction/:auctionId" element={<Stub title="Auction" accent="detail" />} />
-              <Route path="pools"            element={<Stub title="Liquidity" accent="pools" sub="Provide liquidity and earn fees." />} />
-              <Route path="pool/:token1/:token2" element={<Stub title="Pool" accent="detail" />} />
+              <Route path="auction/:auctionId"       element={<AuctionsPage />} />
+              <Route path="pools"                    element={<PoolsPage />} />
+              <Route path="pool/:token1/:token2"     element={<PoolsPage />} />
+              <Route path="governance"               element={<GovernancePage />} />
+
+             {/* ── Still stubs (next steps) ─────────────────── */}
               <Route path="contracts"        element={<Stub title="Protocol" accent="contracts" />} />
               <Route path="contracts/:contractName" element={<Stub title="Contract" accent="detail" />} />
               <Route path="commodities"      element={<Stub title="Commodity" accent="basket" sub="Real-world commodities backing DFC." />} />

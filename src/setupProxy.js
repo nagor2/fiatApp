@@ -1,6 +1,21 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
+  // Proxy for 0x Swap API — adds 0x-version + API key server-side (CORS blocks both from browser)
+  app.use(
+    '/api/0x',
+    createProxyMiddleware({
+      target: 'https://api.0x.org',
+      changeOrigin: true,
+      secure: true,
+      pathRewrite: { '^/api/0x': '/' },
+      headers: {
+        '0x-api-key': process.env.REACT_APP_ZEROEX_API_KEY || '',
+        '0x-version': 'v2',
+      },
+    })
+  );
+
   // Proxy для RPC запросов в development режиме
   // Это позволяет использовать тот же /api/rpc путь что и в production
   app.use(

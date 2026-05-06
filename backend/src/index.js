@@ -4,6 +4,7 @@ const cors = require('cors');
 const contractService = require('./services/contractService');
 const cacheService = require('./services/cacheService');
 const contractsRouter = require('./routes/contracts');
+const zeroexRouter = require('./routes/zeroex');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -32,6 +33,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/contracts', contractsRouter);
+app.use('/api/0x', zeroexRouter);
 
 // Error handling
 app.use((err, req, res, next) => {

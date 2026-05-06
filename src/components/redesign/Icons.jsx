@@ -40,6 +40,9 @@ export default function Icon({ name, size = 20, ...rest }) {
     case 'alert':    return <svg {...props}><path d="M12 3 2 20h20Z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.6" fill="currentColor"/></svg>;
     case 'edit':     return <svg {...props}><path d="M4 20h4l11-11-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>;
     case 'receipt':  return <svg {...props}><path d="M5 3h14v18l-3-2-3 2-3-2-3 2-2-2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>;
+    case 'clock':    return <svg {...props}><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>;
+    case 'info':     return <svg {...props}><circle cx="12" cy="12" r="8"/><path d="M12 11v5"/><circle cx="12" cy="8" r="0.6" fill="currentColor"/></svg>;
+    case 'check':    return <svg {...props}><path d="m4 12 5 5 11-11"/></svg>;
     default: return <svg {...props}><circle cx="12" cy="12" r="8"/></svg>;
   }
 }

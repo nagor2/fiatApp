@@ -1,275 +1,181 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/* global BigInt */
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../contexts/Web3Context';
-import { usePool, KNOWN_PARAMS, KNOWN_ADDRESSES, VOTING_TYPES, formatParamValue } from '../hooks/usePool';
-import {
-  PoolTokensForm,
-  ReturnTokensForm,
-  VoteForm,
-  ClaimToFinalizeForm,
-  NewVotingForm,
-  ProposalSummary,
-} from '../components/PoolForms';
+import { use0xSwap, ZEROEX_NATIVE_ETH } from '../hooks/use0xSwap';
 import Icon from '../components/redesign/Icons';
 import TokenMark from '../components/redesign/TokenMark';
+import PageHead from '../components/redesign/PageHead';
 import '../styles/balances.css';
-import '../styles/deposits.css';
-import '../styles/credits.css';
 import '../styles/auctions.css';
-import '../styles/pool.css';
+import '../styles/pools.css';
 
-/* ── helpers ───────────────────────────────────────── */
+/* ── tokens & pairs ──────────────────────────────────────────── */
 
-const fmt = (n, dp = 2) => {
+const TOKENS = {
+  ETH: { symbol: 'ETH', name: 'Ether',          decimals: 18, address: ZEROEX_NATIVE_ETH, native: true },
+  DFC: { symbol: 'DFC', name: 'DotFlat coin',   decimals: 18, address: '0x1f709cfa0c409e158c68edcd32453809c9eb69ee' },
+  RLE: { symbol: 'RLE', name: 'Rule token',     decimals: 18, address: null /* injected from web3 contracts */ },
+  GLD: { symbol: 'GOLD', name: 'Gold (planned)',decimals: 18, address: null, comingSoon: true },
+};
+
+const PAIRS = [
+  { id: 'dfc-eth', from: 'DFC', to: 'ETH', label: 'Dotflat / ETH', sub: 'V4 pool · 0.30% fee' },
+  { id: 'rle-dfc', from: 'RLE', to: 'DFC', label: 'Rule / Dotflat', sub: 'V4 pool · 0.30% fee' },
+  { id: 'gld-dfc', from: 'GLD', to: 'DFC', label: 'Gold / Dotflat', sub: 'Coming soon' },
+];
+
+/* ── tiny formatters ─────────────────────────────────────────── */
+
+const fmt = (n, dp = 4) => {
   if (n == null || !Number.isFinite(Number(n))) return '—';
-  return Number(n).toLocaleString(undefined, {
+  const v = Number(n);
+  return v.toLocaleString(undefined, {
     maximumFractionDigits: dp,
-    minimumFractionDigits: dp === 2 ? 2 : 0,
+    minimumFractionDigits: v >= 1 ? 2 : 0,
   });
 };
-const fmtRel = (d) => {
-  if (!d) return '—';
-  const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
-  if (s < 60)        return 'just now';
-  if (s < 3600)      return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400)     return `${Math.floor(s / 3600)}h ago`;
-  if (s < 86400 * 30)return `${Math.floor(s / 86400)}d ago`;
-  if (s < 86400 * 365) return `${Math.floor(s / 86400 / 30)}mo ago`;
-  return `${Math.floor(s / 86400 / 365)}y ago`;
-};
 
-/**
- * PoolPage — DAO governance dashboard.
- *
- * Sections:
- *   1. Stats hero (your stake, total pooled, share, active voting?)
- *   2. Active / latest proposal card with quick actions
- *   3. Tabs: Parameters · Contracts
- *   4. Drawer panes for: pool, return, vote, finalize, propose
- */
-export default function PoolPage() {
-  const { account, explorer } = useWeb3();
-  const { pool, stats, loading, refresh } = usePool();
-  const [tab, setTab]   = useState('params');   // 'params' | 'contracts'
-  const [pane, setPane] = useState(null);       // { kind: ... } | null
+function toUnits(amount, decimals) {
+  if (!amount) return '0';
+  const [w = '0', f = ''] = String(amount).split('.');
+  const frac = (f + '0'.repeat(decimals)).slice(0, decimals);
+  return BigInt(w + frac).toString();
+}
 
-  const onClose = () => setPane(null);
-  const onDone  = () => { setPane(null); refresh(); };
+function fromUnits(units, decimals) {
+  if (units == null) return 0;
+  const s = String(units).padStart(decimals + 1, '0');
+  const w = s.slice(0, -decimals) || '0';
+  const f = s.slice(-decimals).replace(/0+$/, '');
+  return Number(f ? `${w}.${f}` : w);
+}
 
-  if (loading && !pool) {
-    return <div className="df-page"><div className="df-loading">Loading governance state…</div></div>;
-  }
-  if (!pool) {
-    return <div className="df-page"><div className="df-empty">
-      <h3>Wallet not connected</h3>
-      <p>Connect a wallet to see DAO state and pooled tokens.</p>
-    </div></div>;
-  }
+/* ── page ────────────────────────────────────────────────────── */
+
+export default function PoolsPage() {
+  const { contracts } = useWeb3();
+  const [pane, setPane] = useState(null); // { pair }
+
+  // Pull RLE address from contracts at runtime (rule token)
+  const tokens = useMemo(() => {
+    const t = { ...TOKENS };
+    if (contracts?.rule?._address) t.RLE = { ...t.RLE, address: contracts.rule._address };
+    return t;
+  }, [contracts]);
 
   return (
     <div className="df-page">
-      <header className="df-page-head">
+      <PageHead
+        title="Trading"
+        accent="pools"
+        sub="Swap between DotFlat tokens and ETH using on-chain liquidity, routed through 0x for the best price."
+      />
+
+      <section className="df-pools-grid">
+        {PAIRS.map((p) => (
+          <PoolCard
+            key={p.id}
+            pair={p}
+            tokens={tokens}
+            onTrade={() => setPane({ pair: p })}
+          />
+        ))}
+      </section>
+
+      <section className="df-pools-note">
+        <div className="df-pools-note__icon"><Icon name="info" /></div>
         <div>
-          <h1 className="df-page-head__title">Pool & governance</h1>
-          <p className="df-page-head__sub">
-            Pool RLE to vote on protocol parameters, contract upgrades, and
-            pause / authorize actions. Proposals run one at a time.
-          </p>
+          <strong>How swaps work here.</strong> Quotes and routing come from the{' '}
+          <a className="df-link" href="https://0x.org/docs/api" target="_blank" rel="noreferrer">0x Swap API</a>.
+          0x finds the best price across DEXs (including the V4 pools above) and your wallet
+          signs a single transaction. You always remain custodial of your funds.
+        </div>
+      </section>
+
+      {pane && (
+        <SwapDrawer
+          pair={pane.pair}
+          tokens={tokens}
+          onClose={() => setPane(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── pool / pair card ─────────────────────────────────────────── */
+
+function PoolCard({ pair, tokens, onTrade }) {
+  const a = tokens[pair.from];
+  const b = tokens[pair.to];
+  const soon = a?.comingSoon || b?.comingSoon;
+
+  return (
+    <article className={`df-pool-card-v2 ${soon ? 'is-soon' : ''}`}>
+      <header className="df-pool-card-v2__head">
+        <PairMark a={a.symbol} b={b.symbol} />
+        <div className="df-pool-card-v2__title">
+          <h3>{pair.label}</h3>
+          <div className="df-eyebrow">{pair.sub}</div>
         </div>
       </header>
 
-      {/* ── Stats ── */}
-      <section className="df-stat-row df-stat-row--4">
-        <Stat label="Your pooled" value={`${fmt(pool.userPooled, 4)} RLE`} />
-        <Stat label="Your share"   value={`${fmt(stats.sharePct, 2)}%`} muted={pool.userPooled <= 0} />
-        <Stat label="Total pooled" value={`${fmt(pool.totalPooled, 0)} RLE`} />
-        <Stat label="Voting"
-              value={pool.activeVoting ? 'Active' : 'Idle'}
-              highlight={pool.activeVoting} />
-      </section>
-
-      {/* ── Your stake actions ── */}
-      <section className="df-pool-actions">
-        <button type="button" className="df-btn df-btn--primary"
-                disabled={!account}
-                onClick={() => setPane({ kind: 'pool' })}>
-          <Icon name="plus" size={16} /> Pool RLE
-        </button>
-        <button type="button" className="df-btn df-btn--ghost"
-                disabled={!account || pool.userPooled <= 0}
-                onClick={() => setPane({ kind: 'return' })}>
-          <Icon name="minus" size={16} /> Return tokens
-        </button>
-        <button type="button" className="df-btn df-btn--ghost"
-                disabled={!account || pool.userPooled <= 0 || pool.activeVoting}
-                title={pool.activeVoting ? 'Wait for current voting to finalize' : ''}
-                onClick={() => setPane({ kind: 'propose' })}>
-          <Icon name="edit" size={16} /> New proposal
-        </button>
-      </section>
-
-      {/* ── Active / last voting ── */}
-      <ProposalCard
-        pool={pool}
-        onVote={() => setPane({ kind: 'vote' })}
-        onFinalize={() => setPane({ kind: 'finalize' })}
-      />
-
-      {/* ── Parameters / Contracts ── */}
-      <div className="df-auctions-toolbar">
-        <div className="df-tabs" role="tablist">
-          <Tab active={tab === 'params'} onClick={() => setTab('params')}>
-            Parameters <em>{pool.params.filter((p) => p.value != null).length}</em>
-          </Tab>
-          <Tab active={tab === 'contracts'} onClick={() => setTab('contracts')}>
-            Contracts <em>{pool.addresses.filter((a) => a.value).length}</em>
-          </Tab>
+      <div className="df-pool-card-v2__body">
+        <div className="df-pool-card-v2__row">
+          <span className="df-muted">Sell</span>
+          <strong>{a.symbol}</strong>
+          <span className="df-faint">{a.name}</span>
         </div>
-        <div className="df-pool-toolbar-meta">
-          <span className="df-muted">DAO contract:</span>{' '}
-          <a className="df-link"
-             href={`${explorer}address/${pool.daoAddress}`}
-             target="_blank" rel="noreferrer">
-            {pool.daoAddress.slice(0, 6)}…{pool.daoAddress.slice(-4)}
-          </a>
+        <div className="df-pool-card-v2__row">
+          <span className="df-muted">Buy</span>
+          <strong>{b.symbol}</strong>
+          <span className="df-faint">{b.name}</span>
         </div>
       </div>
 
-      {tab === 'params'    && <ParamsGrid    pool={pool} />}
-      {tab === 'contracts' && <ContractsGrid pool={pool} explorer={explorer} />}
-
-      {pane && (
-        <Drawer pool={pool} pane={pane} onClose={onClose} onDone={onDone} setPane={setPane} />
-      )}
-    </div>
-  );
-}
-
-/* ── small bits ────────────────────────────────────── */
-
-function Stat({ label, value, muted, highlight }) {
-  return (
-    <div className={`df-stat${highlight ? ' df-stat--accent' : ''}${muted ? ' df-stat--muted' : ''}`}>
-      <div className="df-stat__label">{label}</div>
-      <div className="df-stat__value">{value}</div>
-    </div>
-  );
-}
-function Tab({ active, onClick, children }) {
-  return (
-    <button type="button" role="tab" aria-selected={active}
-            className={`df-tabs__btn ${active ? 'is-active' : ''}`} onClick={onClick}>
-      {children}
-    </button>
-  );
-}
-
-/* ── Active / latest voting card ──────────────────── */
-
-function ProposalCard({ pool, onVote, onFinalize }) {
-  const v = pool.voting;
-  if (!v) {
-    return (
-      <section className="df-pool-prop df-pool-prop--empty">
-        <div className="df-pool-prop__icon"><Icon name="check" size={28} /></div>
-        <div>
-          <h3>No proposals yet</h3>
-          <p>Pool RLE and submit the first proposal to govern the protocol.</p>
-        </div>
-      </section>
-    );
-  }
-
-  const t = v.typeMeta;
-  const isActive = pool.activeVoting;
-
-  return (
-    <section className={`df-pool-prop ${isActive ? 'is-active' : 'is-finalized'}`}>
-      <header className="df-pool-prop__head">
-        <div className="df-pool-prop__title">
-          <TokenMark symbol="RLE" size={36} />
-          <div>
-            <div className="df-eyebrow">
-              {isActive ? 'Active proposal' : 'Last proposal'} · #{v.id}
-            </div>
-            <h3>{t.label}</h3>
-          </div>
-        </div>
-        <span className={`df-pill df-pill--${isActive ? 'ok' : 'safe'}`}>
-          {isActive ? 'Active' : 'Finalized'}
-        </span>
-      </header>
-
-      <ProposalSummary voting={v} />
-
-      {isActive ? (
-        <div className="df-pool-prop__actions">
-          <button type="button" className="df-btn df-btn--primary"
-                  disabled={pool.userPooled <= 0}
-                  onClick={onVote}>
-            <Icon name="check" size={16} /> Cast vote
+      <footer className="df-pool-card-v2__foot">
+        {soon ? (
+          <button className="df-btn df-btn--ghost" disabled>
+            <Icon name="clock" size={16} /> Coming soon
           </button>
-          <button type="button" className="df-btn df-btn--ghost" onClick={onFinalize}>
-            <Icon name="receipt" size={16} /> Claim to finalize
+        ) : (
+          <button className="df-btn df-btn--primary" onClick={onTrade}>
+            <Icon name="swap" size={16} /> Trade
           </button>
-        </div>
-      ) : (
-        <p className="df-muted" style={{ margin: 0 }}>
-          Opened {fmtRel(v.startTime)} · resolved with{' '}
-          <strong>{fmt(v.totalPositive, 4)} RLE</strong> in favor.
-        </p>
-      )}
-    </section>
+        )}
+      </footer>
+    </article>
   );
 }
 
-/* ── Parameters tab ─────────────────────────────── */
-
-function ParamsGrid({ pool }) {
+function PairMark({ a, b }) {
   return (
-    <div className="df-pool-grid">
-      {pool.params.map((p) => (
-        <div key={p.name} className="df-pool-card">
-          <div className="df-pool-card__head">
-            <div className="df-pool-card__label">{p.label}</div>
-            <code className="df-pool-card__key">{p.name}</code>
-          </div>
-          <div className="df-pool-card__value">{p.display}</div>
-          {p.hint && <p className="df-pool-card__hint">{p.hint}</p>}
-        </div>
-      ))}
+    <div className="df-pair-mark">
+      <TokenMark symbol={a} size={36} />
+      <TokenMark symbol={b} size={36} />
     </div>
   );
 }
 
-/* ── Contracts tab ──────────────────────────────── */
+/* ── swap drawer ──────────────────────────────────────────────── */
 
-function ContractsGrid({ pool, explorer }) {
-  return (
-    <div className="df-pool-grid">
-      {pool.addresses.map((a) => (
-        <div key={a.name} className="df-pool-card">
-          <div className="df-pool-card__head">
-            <div className="df-pool-card__label">{a.label}</div>
-            <code className="df-pool-card__key">{a.name}</code>
-          </div>
-          <div className="df-pool-card__value df-pool-card__value--addr">
-            {a.value ? (
-              <a className="df-link" target="_blank" rel="noreferrer"
-                 href={`${explorer}address/${a.value}`}>
-                {a.value.slice(0, 8)}…{a.value.slice(-6)}
-              </a>
-            ) : <span className="df-muted">unset</span>}
-          </div>
-          {a.hint && <p className="df-pool-card__hint">{a.hint}</p>}
-        </div>
-      ))}
-    </div>
-  );
-}
+function SwapDrawer({ pair, tokens, onClose }) {
+  const { account, walletConnected, getAccount, ethPriceEtherscan } = useWeb3();
+  const [from, setFrom] = useState(pair.from);
+  const [to,   setTo]   = useState(pair.to);
+  const [sellAmount, setSellAmount] = useState('');
+  const [buyInput,   setBuyInput]   = useState('');   // user-typed buy amount
+  const [inputSide,  setInputSide]  = useState('sell'); // 'sell' | 'buy'
+  const [slippage,   setSlippage]   = useState(0.5); // %
+  const [quote,      setQuote]      = useState(null);
+  const [quoting,    setQuoting]    = useState(false);
+  const [quoteErr,   setQuoteErr]   = useState(null);
+  const [doneTx,     setDoneTx]     = useState(null);
 
-/* ── Drawer ──────────────────────────────────────── */
+  const swap0x = use0xSwap();
 
-function Drawer({ pool, pane, onClose, onDone, setPane }) {
+  // Lock body scroll while open
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -281,19 +187,81 @@ function Drawer({ pool, pane, onClose, onDone, setPane }) {
     };
   }, [onClose]);
 
-  const titleByKind = {
-    pool:     'Pool RLE',
-    return:   'Return RLE',
-    vote:     'Vote',
-    finalize: 'Claim to finalize',
-    propose:  'New proposal',
+  const tFrom = tokens[from];
+  const tTo   = tokens[to];
+
+  const flip = () => {
+    setFrom(to); setTo(from);
+    setSellAmount(''); setBuyInput(''); setQuote(null); setQuoteErr(null); setInputSide('sell');
   };
-  const eyebrowByKind = {
-    pool:     'Stake',
-    return:   'Stake',
-    vote:     pool.voting ? `Proposal #${pool.voting.id}` : 'Vote',
-    finalize: pool.voting ? `Proposal #${pool.voting.id}` : 'Finalize',
-    propose:  'Governance',
+
+  const requestQuote = useCallback(async () => {
+    setQuoteErr(null); setQuote(null);
+    const activeAmount = inputSide === 'sell' ? sellAmount : buyInput;
+    if (!activeAmount || Number(activeAmount) <= 0) return;
+    if (!tFrom?.address || !tTo?.address) {
+      setQuoteErr('Token address unavailable.'); return;
+    }
+    setQuoting(true);
+    try {
+      const q = await swap0x.quote({
+        sellToken: tFrom.address,
+        buyToken:  tTo.address,
+        ...(inputSide === 'sell'
+          ? { sellAmount: toUnits(sellAmount, tFrom.decimals) }
+          : { buyAmount:  toUnits(buyInput,   tTo.decimals)   }),
+        taker: account,
+        slippageBps: Math.round(slippage * 100),
+      });
+      setQuote(q);
+    } catch (e) {
+      setQuoteErr(e.message || String(e));
+    } finally {
+      setQuoting(false);
+    }
+  }, [sellAmount, buyInput, inputSide, tFrom, tTo, account, slippage, swap0x.quote]);
+
+  // Auto-quote on amount change (debounced)
+  useEffect(() => {
+    const active = inputSide === 'sell' ? sellAmount : buyInput;
+    if (!active) { setQuote(null); return; }
+    const t = setTimeout(requestQuote, 350);
+    return () => clearTimeout(t);
+  }, [sellAmount, buyInput, inputSide, from, to, slippage, requestQuote]);
+
+  // Derived display values from quote
+  const computedBuy  = quote && tTo   ? fromUnits(quote.buyAmount,  tTo.decimals)   : null;
+  const computedSell = quote && tFrom ? fromUnits(quote.sellAmount, tFrom.decimals) : null;
+
+  const displaySell = inputSide === 'sell' ? sellAmount : (computedSell != null ? fmt(computedSell, 6) : '');
+  const displayBuy  = inputSide === 'buy'  ? buyInput   : (computedBuy  != null ? fmt(computedBuy,  6) : '');
+
+  const price = computedBuy != null && computedSell != null && Number(computedSell) > 0
+    ? computedBuy / Number(computedSell)
+    : null;
+
+  const onConfirm = async () => {
+    if (!walletConnected) { await getAccount(); return; }
+    if (!tFrom?.address || !tTo?.address) return;
+    setDoneTx(null);
+    try {
+      // For buy-side quotes the firm swap still needs a sellAmount;
+      // use the computed one from the price quote.
+      const effectiveSell = inputSide === 'sell'
+        ? sellAmount
+        : (computedSell != null ? String(computedSell) : sellAmount);
+      const sellUnits = toUnits(effectiveSell, tFrom.decimals);
+      const { receipt } = await swap0x.swap({
+        sellToken: tFrom.address,
+        buyToken:  tTo.address,
+        sellAmount: sellUnits,
+        taker: account,
+        slippageBps: Math.round(slippage * 100),
+      });
+      setDoneTx(receipt.transactionHash);
+    } catch (e) {
+      // error surfaced via swap0x.error
+    }
   };
 
   return (
@@ -304,22 +272,129 @@ function Drawer({ pool, pane, onClose, onDone, setPane }) {
             <Icon name="close" />
           </button>
           <div className="df-drawer__title">
-            <TokenMark symbol="RLE" size={36} />
+            <PairMark a={tFrom.symbol} b={tTo.symbol} />
             <div>
-              <div className="df-eyebrow">{eyebrowByKind[pane.kind]}</div>
-              <h3>{titleByKind[pane.kind]}</h3>
+              <div className="df-eyebrow">Swap · routed via 0x</div>
+              <h3>{pair.label}</h3>
             </div>
           </div>
         </header>
 
         <div className="df-drawer__body">
-          {pane.kind === 'pool'     && <PoolTokensForm     pool={pool} onDone={onDone} />}
-          {pane.kind === 'return'   && <ReturnTokensForm   pool={pool} onDone={onDone} />}
-          {pane.kind === 'vote'     && <VoteForm           pool={pool} onDone={onDone} />}
-          {pane.kind === 'finalize' && <ClaimToFinalizeForm pool={pool} onDone={onDone} />}
-          {pane.kind === 'propose'  && <NewVotingForm      pool={pool} onDone={onDone} />}
+          {doneTx ? (
+            <div className="df-empty" style={{ padding: '20px 0' }}>
+              <div className="df-empty__icon"><Icon name="check" /></div>
+              <h3>Swap submitted</h3>
+              <p className="df-mono" style={{ wordBreak: 'break-all' }}>{doneTx}</p>
+              <a className="df-btn df-btn--ghost df-btn--sm"
+                 href={`https://etherscan.io/tx/${doneTx}`}
+                 target="_blank" rel="noreferrer">
+                <Icon name="external" size={16} /> View on Etherscan
+              </a>
+              <button className="df-btn df-btn--primary" style={{ marginLeft: 8 }}
+                      onClick={() => { setDoneTx(null); setSellAmount(''); setQuote(null); }}>
+                Trade again
+              </button>
+            </div>
+          ) : (
+            <>
+              <SwapField
+                label="You sell"
+                token={tFrom}
+                value={displaySell}
+                onChange={(v) => { setSellAmount(v); setInputSide('sell'); setBuyInput(''); }}
+                muted={inputSide === 'buy' && quoting}
+              />
+
+              <div className="df-swap-flip">
+                <button type="button" className="df-icon-btn" onClick={flip} aria-label="Flip direction">
+                  <Icon name="swap" />
+                </button>
+              </div>
+
+              <SwapField
+                label="You receive (estimate)"
+                token={tTo}
+                value={displayBuy}
+                onChange={(v) => { setBuyInput(v); setInputSide('buy'); setSellAmount(''); }}
+                muted={inputSide === 'sell' && quoting}
+              />
+
+              <div className="df-swap-meta">
+                {quoting && <span className="df-muted">Fetching best price…</span>}
+                {!quoting && price != null && (
+                  <span>
+                    1 {tFrom.symbol} ≈ <strong>{fmt(price, 6)}</strong> {tTo.symbol}
+                    {ethPriceEtherscan && (
+                      <span className="df-muted" style={{ marginLeft: 8 }}>
+                        (≈ ${fmt(price * ethPriceEtherscan, 4)})
+                      </span>
+                    )}
+                  </span>
+                )}
+                {quoteErr && <span className="df-error">{quoteErr}</span>}
+              </div>
+
+              <div className="df-swap-slippage">
+                <span className="df-muted">Max slippage</span>
+                {[0.1, 0.5, 1, 2].map((s) => (
+                  <button key={s}
+                          type="button"
+                          className={`df-chip ${slippage === s ? 'is-on' : ''}`}
+                          onClick={() => setSlippage(s)}>
+                    {s}%
+                  </button>
+                ))}
+              </div>
+
+              {!walletConnected ? (
+                <button className="df-btn df-btn--primary df-btn--block" onClick={getAccount}>
+                  Connect wallet to swap
+                </button>
+              ) : (
+                <button className="df-btn df-btn--primary df-btn--block"
+                        disabled={!quote || swap0x.busy}
+                        onClick={onConfirm}>
+                  {swap0x.busy
+                    ? 'Confirming in wallet…'
+                    : quote
+                      ? `Swap ${fmt(computedSell, 6)} ${tFrom.symbol} → ${fmt(computedBuy, 6)} ${tTo.symbol}`
+                      : 'Enter an amount'}
+                </button>
+              )}
+
+              {swap0x.error && <p className="df-error" style={{ marginTop: 12 }}>{swap0x.error}</p>}
+
+              <p className="df-faint" style={{ marginTop: 16 }}>
+                You'll be asked to approve {tFrom.symbol} (one-time) before the swap, unless you're selling ETH.
+              </p>
+            </>
+          )}
         </div>
       </aside>
     </div>
+  );
+}
+
+function SwapField({ label, token, value, onChange, readOnly, muted }) {
+  return (
+    <label className={`df-swap-field ${muted ? 'is-muted' : ''}`}>
+      <div className="df-swap-field__label">{label}</div>
+      <div className="df-swap-field__row">
+        <input
+          className="df-swap-field__input"
+          type="text"
+          inputMode="decimal"
+          placeholder="0.0"
+          value={value}
+          readOnly={readOnly}
+          onChange={(e) => onChange?.(e.target.value.replace(/[^\d.]/g, ''))}
+        />
+        <div className="df-swap-field__token">
+          <TokenMark symbol={token.symbol} size={28} />
+          <strong>{token.symbol}</strong>
+        </div>
+      </div>
+    </label>
   );
 }
