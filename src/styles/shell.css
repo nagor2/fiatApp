@@ -55,6 +55,20 @@
   font-weight: 600;
 }
 .df-eth-pill__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--df-mint-400); box-shadow: 0 0 0 4px var(--df-accent-soft); }
+
+/* DFC index pill in topbar */
+.df-topbar__dfc-index {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--df-r-pill);
+  background: var(--df-bg-soft);
+  border: 1px solid var(--df-line);
+  font-size: 12px;
+  font-weight: 600;
+}
+.df-topbar__dfc-label { color: var(--df-muted); }
+.df-topbar__dfc-value { color: var(--df-ink); font-variant-numeric: tabular-nums; }
+
 .df-icon-btn {
   width: 36px; height: 36px;
   display: inline-flex; align-items: center; justify-content: center;

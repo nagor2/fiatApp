@@ -42,6 +42,7 @@ export default function Topbar({ onMenu, theme, setTheme }) {
 
       {dfcIndex != null && (
         <div className="df-topbar__dfc-index">
+          <span className="df-eth-pill__dot"></span>
           <span className="df-topbar__dfc-label">DFC</span>
           <span className="df-topbar__dfc-value">{dfcIndex.toFixed(4)}</span>
         </div>

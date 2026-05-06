@@ -6,6 +6,9 @@
  * config.contractsList: title='CDP',  name='Collateral...'      → contracts.cdp
  * config.contractsList: title='RLE',  name='Rule token'         → contracts.rule
  * etc.
+ *
+ * NOTE: the on-chain oracle is registered in Web3Context as `contracts.oracle`,
+ * not `exchangeRate`. The config title for it is "ExchangeRateContract".
  */
 export const CONTRACT_KEY_BY_TITLE = {
   DFC: 'flatCoin',
@@ -15,7 +18,7 @@ export const CONTRACT_KEY_BY_TITLE = {
   Auction: 'auction',
   INTDAO: 'dao',
   Basket: 'basket',
-  ExchangeRateContract: 'exchangeRate',
+  ExchangeRateContract: 'oracle',
 };
 
 export function contractKeyForTitle(title) {

@@ -376,7 +376,7 @@ async function loadBasket({ contracts }) {
 
 /* ── Exchange rate oracle ───────────────────────────────────────────── */
 async function loadExchangeRate({ contracts }) {
-  const er = contracts.exchangeRate;
+  const er = contracts.oracle || contracts.exchangeRate;
   if (!er) return { stats: [], address: null };
   const stats = [
     { label: 'Contract', value: 'Exchange rate oracle', accent: true },

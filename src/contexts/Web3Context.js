@@ -166,12 +166,6 @@ export const Web3Provider = ({ children }) => {
         console.log('✅ Connected via WalletConnect:', result.address);
         setAccount(result.address);
         setWalletConnected(true);
-        // result.provider is the raw EIP-1193 WalletConnect provider —
-        // pass it directly to Web3 so transaction signing goes through
-        // the phone wallet, not publicnode.
-        const wcWeb3 = new Web3(result.provider);
-        setWeb3(wcWeb3);
-        await initContracts(wcWeb3);
       }
     } catch (error) {
       console.error('❌ Connection error:', error.message);

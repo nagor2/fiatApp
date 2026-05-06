@@ -146,32 +146,32 @@ function ContractDetail({ selected, onClose, onTrade }) {
               </button>
             )}
             {(selected.title === 'INTDAO') && (
-              <Link className="df-btn df-btn--ghost df-btn--sm" to="/governance">
+              <Link className="df-btn df-btn--primary df-btn--sm" to="/governance">
                 <Icon name="pool" size={16} /> Open governance
               </Link>
             )}
             {(selected.title === 'Auction') && (
-              <Link className="df-btn df-btn--ghost df-btn--sm" to="/auctions">
+              <Link className="df-btn df-btn--primary df-btn--sm" to="/auctions">
                 <Icon name="auction" size={16} /> Open auctions
               </Link>
             )}
             {(selected.title === 'CDP') && (
-              <Link className="df-btn df-btn--ghost df-btn--sm" to="/credits">
+              <Link className="df-btn df-btn--primary df-btn--sm" to="/credits">
                 <Icon name="credit" size={16} /> Open credits
               </Link>
             )}
             {(selected.title === 'Deposit') && (
-              <Link className="df-btn df-btn--ghost df-btn--sm" to="/deposits">
+              <Link className="df-btn df-btn--primary df-btn--sm" to="/deposits">
                 <Icon name="deposit" size={16} /> Open deposits
               </Link>
             )}
             {(selected.title === 'Basket') && (
-              <Link className="df-btn df-btn--ghost df-btn--sm" to="/commodities">
+              <Link className="df-btn df-btn--primary df-btn--sm" to="/commodities">
                 <Icon name="commodity" size={16} /> Open commodities
               </Link>
             )}
             {(selected.title === 'ExchangeRateContract') && (
-              <Link className="df-btn df-btn--ghost df-btn--sm" to="/commodities">
+              <Link className="df-btn df-btn--primary df-btn--sm" to="/commodities">
                 <Icon name="commodity" size={16} /> Open commodities
               </Link>
             )}

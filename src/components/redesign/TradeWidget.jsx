@@ -1,3 +1,4 @@
+/* global BigInt */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWeb3 } from '../../contexts/Web3Context';
 import { use0xSwap, ZEROEX_NATIVE_ETH } from '../../hooks/use0xSwap';
@@ -5,23 +6,14 @@ import Icon from './Icons';
 import TokenMark from './TokenMark';
 
 /**
- * TradeWidget — slide-in right-side trade panel.
+ * TradeWidget — slide-in trade panel shared by Balances, Contracts and
+ * (logically) Pools. This is a refactor of the SwapDrawer that lived
+ * inside PoolsPage.js — same logic, but reusable.
  *
  * Props:
- *   token:    'DFC' | 'RLE' | 'ETH' — the token the user wants to acquire
- *             (or sell). The widget chooses the most natural counter-token
- *             based on which V4 pool exists:
- *
- *               DFC ↔ ETH      (DFC/ETH pool)
- *               RLE ↔ DFC      (RLE/DFC pool)
- *               ETH ↔ DFC      (same DFC/ETH pool, opposite side)
- *
+ *   token:    'DFC' | 'RLE' | 'ETH'  — which token the user wants to trade
  *   onClose:  () => void
- *   uniswapUrl: optional override of the "Open on Uniswap" deep link.
- *
- * This is a thin shell on top of `use0xSwap`. The original SwapDrawer in
- * PoolsPage was inlined; this component pulls the exact same logic out so
- * Balances + Contracts + Pools can all share the experience.
+ *   uniswapUrl: optional override of "Open on Uniswap" deep link
  */
 
 /* ── tokens ──────────────────────────────────────────── */
@@ -29,7 +21,6 @@ import TokenMark from './TokenMark';
 const ETH_ADDR = ZEROEX_NATIVE_ETH;
 const DFC_ADDR = '0x1f709cfa0c409e158c68edcd32453809c9eb69ee';
 
-// Default Uniswap deep links per pair (used when uniswapUrl prop omitted).
 const UNISWAP = {
   'DFC-ETH': 'https://app.uniswap.org/explore/tokens/ethereum/0x1f709cfa0c409e158c68edcd32453809c9eb69ee',
   'RLE-DFC': 'https://app.uniswap.org/explore/pools/ethereum/0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044',
@@ -37,10 +28,10 @@ const UNISWAP = {
 
 function pairFor(token) {
   switch (token) {
-    case 'ETH': return { from: 'ETH', to: 'DFC', label: 'ETH → DFC', uniswap: UNISWAP['DFC-ETH'] };
-    case 'DFC': return { from: 'ETH', to: 'DFC', label: 'Buy DFC',  uniswap: UNISWAP['DFC-ETH'] };
-    case 'RLE': return { from: 'DFC', to: 'RLE', label: 'Buy RLE',  uniswap: UNISWAP['RLE-DFC'] };
-    default:    return { from: 'ETH', to: 'DFC', label: 'Trade',    uniswap: UNISWAP['DFC-ETH'] };
+    case 'ETH': return { from: 'ETH', to: 'DFC', label: 'ETH → DFC',  uniswap: UNISWAP['DFC-ETH'] };
+    case 'DFC': return { from: 'ETH', to: 'DFC', label: 'Buy DFC',    uniswap: UNISWAP['DFC-ETH'] };
+    case 'RLE': return { from: 'DFC', to: 'RLE', label: 'Buy RLE',    uniswap: UNISWAP['RLE-DFC'] };
+    default:    return { from: 'ETH', to: 'DFC', label: 'Trade',      uniswap: UNISWAP['DFC-ETH'] };
   }
 }
 
@@ -49,7 +40,10 @@ function pairFor(token) {
 const fmt = (n, dp = 6) => {
   if (n == null || !Number.isFinite(Number(n))) return '—';
   const v = Number(n);
-  return v.toLocaleString(undefined, { maximumFractionDigits: dp, minimumFractionDigits: v >= 1 ? 2 : 0 });
+  return v.toLocaleString(undefined, {
+    maximumFractionDigits: dp,
+    minimumFractionDigits: v >= 1 ? 2 : 0,
+  });
 };
 
 function toUnits(amount, decimals) {
@@ -68,10 +62,14 @@ function fromUnits(units, decimals) {
 
 /* ── component ──────────────────────────────────────────── */
 
-export default function TradeWidget({ token, onClose, uniswapUrl }) {
-  const { account, walletConnected, getAccount, contracts } = useWeb3();
-
-  const initialPair = useMemo(() => pairFor(token), [token]);
+export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl }) {
+  const { account, walletConnected, getAccount, contracts, ethPriceEtherscan } = useWeb3();
+  // pairProp (from PoolsPage) takes priority over the token-derived default
+  const initialPair = useMemo(
+    () => pairProp ? { ...pairFor(token), ...pairProp } : pairFor(token),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   // Build the token registry — RLE address comes from contracts at runtime.
   const tokens = useMemo(() => ({
@@ -83,6 +81,8 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
   const [from, setFrom] = useState(initialPair.from);
   const [to,   setTo]   = useState(initialPair.to);
   const [sellAmount, setSellAmount] = useState('');
+  const [buyInput,   setBuyInput]   = useState('');
+  const [inputSide,  setInputSide]  = useState('sell'); // 'sell' | 'buy'
   const [slippage,   setSlippage]   = useState(0.5);
   const [quote,      setQuote]      = useState(null);
   const [quoting,    setQuoting]    = useState(false);
@@ -106,44 +106,68 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
   const tFrom = tokens[from];
   const tTo   = tokens[to];
 
-  const flip = () => {
-    setFrom(to); setTo(from);
-    setSellAmount(''); setQuote(null); setQuoteErr(null);
-  };
-
   const requestQuote = useCallback(async () => {
     setQuoteErr(null); setQuote(null);
-    if (!sellAmount || Number(sellAmount) <= 0) return;
+    const activeAmount = inputSide === 'sell' ? sellAmount : buyInput;
+    if (!activeAmount || Number(activeAmount) <= 0) return;
     if (!tFrom?.address || !tTo?.address) {
       setQuoteErr('Token address unavailable.'); return;
     }
     setQuoting(true);
     try {
-      const sellUnits = toUnits(sellAmount, tFrom.decimals);
+      // 0x /price only supports sellAmount. For buy-side input, invert the pair:
+      const inverted = inputSide === 'buy';
       const q = await swap0x.quote({
-        sellToken: tFrom.address,
-        buyToken:  tTo.address,
-        sellAmount: sellUnits,
+        sellToken: inverted ? tTo.address   : tFrom.address,
+        buyToken:  inverted ? tFrom.address : tTo.address,
+        sellAmount: inverted
+          ? toUnits(buyInput,   tTo.decimals)
+          : toUnits(sellAmount, tFrom.decimals),
         taker: account,
         slippageBps: Math.round(slippage * 100),
       });
+      q._inverted = inverted;
       setQuote(q);
     } catch (e) {
       setQuoteErr(e.message || String(e));
     } finally {
       setQuoting(false);
     }
-  }, [sellAmount, tFrom, tTo, account, slippage, swap0x]);
+  }, [sellAmount, buyInput, inputSide, tFrom, tTo, account, slippage, swap0x.quote]);
 
   // Auto-quote on amount change (debounced)
   useEffect(() => {
-    if (!sellAmount) { setQuote(null); return; }
+    const active = inputSide === 'sell' ? sellAmount : buyInput;
+    if (!active) { setQuote(null); return; }
     const t = setTimeout(requestQuote, 350);
     return () => clearTimeout(t);
-  }, [sellAmount, from, to, slippage, requestQuote]);
+  }, [sellAmount, buyInput, inputSide, from, to, slippage, requestQuote]);
 
-  const buyAmount = quote && tTo ? fromUnits(quote.buyAmount, tTo.decimals) : null;
-  const price = quote && buyAmount && Number(sellAmount) ? buyAmount / Number(sellAmount) : null;
+  // Derived display values from quote.
+  const computedBuy = quote && tTo
+    ? fromUnits(quote._inverted ? quote.sellAmount : quote.buyAmount,  tTo.decimals)
+    : null;
+  const computedSell = quote && tFrom
+    ? fromUnits(quote._inverted ? quote.buyAmount  : quote.sellAmount, tFrom.decimals)
+    : null;
+
+  const displaySell = inputSide === 'sell' ? sellAmount : (computedSell != null ? fmt(computedSell, 6) : '');
+  const displayBuy  = inputSide === 'buy'  ? buyInput   : (computedBuy  != null ? fmt(computedBuy,  6) : '');
+
+  const price = computedBuy != null && computedSell != null && Number(computedSell) > 0
+    ? computedBuy / Number(computedSell)
+    : null;
+
+  const flip = () => {
+    // Carry "you receive" over as the new "you sell" amount after flipping.
+    const newSell = inputSide === 'buy'
+      ? buyInput
+      : (computedBuy != null ? String(computedBuy) : '');
+    setFrom(to); setTo(from);
+    setSellAmount(newSell);
+    setBuyInput(''); setQuote(null); setQuoteErr(null); setInputSide('sell');
+  };
+
   const link = uniswapUrl || initialPair.uniswap;
 
   const onConfirm = async () => {
@@ -151,7 +175,12 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
     if (!tFrom?.address || !tTo?.address) return;
     setDoneTx(null);
     try {
-      const sellUnits = toUnits(sellAmount, tFrom.decimals);
+      // For buy-side quotes the firm swap still needs a sellAmount;
+      // use the computed one from the price quote.
+      const effectiveSell = inputSide === 'sell'
+        ? sellAmount
+        : (computedSell != null ? String(computedSell) : sellAmount);
+      const sellUnits = toUnits(effectiveSell, tFrom.decimals);
       const { receipt } = await swap0x.swap({
         sellToken: tFrom.address,
         buyToken:  tTo.address,
@@ -195,14 +224,20 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
                   <Icon name="external" size={16} /> View on Etherscan
                 </a>
                 <button className="df-btn df-btn--primary df-btn--sm"
-                        onClick={() => { setDoneTx(null); setSellAmount(''); setQuote(null); }}>
+                        onClick={() => { setDoneTx(null); setSellAmount(''); setBuyInput(''); setQuote(null); }}>
                   Trade again
                 </button>
               </div>
             </div>
           ) : (
             <>
-              <Field label="You sell" token={tFrom} value={sellAmount} onChange={setSellAmount} />
+              <Field
+                label="You sell"
+                token={tFrom}
+                value={displaySell}
+                onChange={(v) => { setSellAmount(v); setInputSide('sell'); setBuyInput(''); }}
+                muted={inputSide === 'buy' && quoting}
+              />
 
               <div className="df-swap-flip">
                 <button type="button" className="df-icon-btn" onClick={flip} aria-label="Flip direction">
@@ -210,14 +245,30 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
                 </button>
               </div>
 
-              <Field label="You receive (estimate)" token={tTo}
-                     value={buyAmount != null ? fmt(buyAmount, 6) : ''}
-                     readOnly muted={quoting} />
+              <Field
+                label="You receive (estimate)"
+                token={tTo}
+                value={displayBuy}
+                onChange={(v) => { setBuyInput(v); setInputSide('buy'); setSellAmount(''); }}
+                muted={inputSide === 'sell' && quoting}
+              />
 
               <div className="df-swap-meta">
                 {quoting && <span className="df-muted">Fetching best price…</span>}
                 {!quoting && price != null && (
-                  <span>1 {tFrom.symbol} ≈ <strong>{fmt(price, 6)}</strong> {tTo.symbol}</span>
+                  <span>
+                    1 {tFrom.symbol} ≈ <strong>{fmt(price, 6)}</strong> {tTo.symbol}
+                    {ethPriceEtherscan && (() => {
+                      const usd = tFrom.native ? ethPriceEtherscan
+                                : tTo.native   ? price * ethPriceEtherscan
+                                : null;
+                      return usd != null ? (
+                        <span className="df-muted" style={{ marginLeft: 8 }}>
+                          (≈ ${fmt(usd, 2)})
+                        </span>
+                      ) : null;
+                    })()}
+                  </span>
                 )}
                 {quoteErr && <span className="df-error">{quoteErr}</span>}
               </div>
@@ -225,9 +276,12 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
               <div className="df-swap-slippage">
                 <span className="df-muted">Max slippage</span>
                 {[0.1, 0.5, 1, 2].map((s) => (
-                  <button key={s} type="button"
+                  <button key={s}
+                          type="button"
                           className={`df-chip ${slippage === s ? 'is-on' : ''}`}
-                          onClick={() => setSlippage(s)}>{s}%</button>
+                          onClick={() => setSlippage(s)}>
+                    {s}%
+                  </button>
                 ))}
               </div>
 
@@ -242,17 +296,17 @@ export default function TradeWidget({ token, onClose, uniswapUrl }) {
                   {swap0x.busy
                     ? 'Confirming in wallet…'
                     : quote
-                      ? `Swap ${fmt(sellAmount, 6)} ${tFrom.symbol} → ${fmt(buyAmount, 6)} ${tTo.symbol}`
+                      ? `Swap ${fmt(computedSell, 6)} ${tFrom.symbol} → ${fmt(computedBuy, 6)} ${tTo.symbol}`
                       : 'Enter an amount'}
                 </button>
               )}
 
               {swap0x.error && <p className="df-error" style={{ marginTop: 12 }}>{swap0x.error}</p>}
 
-              {/* Open-on-Uniswap escape hatch — replaces the old "pair card"
-                  on Balances. Even if our 0x route fails, users can swap. */}
+              {/* Open-on-Uniswap escape hatch */}
               {link && (
-                <a className="df-btn df-btn--ghost df-btn--block" href={link} target="_blank" rel="noreferrer"
+                <a className="df-btn df-btn--ghost df-btn--block"
+                   href={link} target="_blank" rel="noreferrer"
                    style={{ marginTop: 10 }}>
                   <Icon name="external" size={16} /> Open on Uniswap
                 </a>
@@ -274,9 +328,15 @@ function Field({ label, token, value, onChange, readOnly, muted }) {
     <label className={`df-swap-field ${muted ? 'is-muted' : ''}`}>
       <div className="df-swap-field__label">{label}</div>
       <div className="df-swap-field__row">
-        <input className="df-swap-field__input" type="text" inputMode="decimal" placeholder="0.0"
-               value={value} readOnly={readOnly}
-               onChange={(e) => onChange?.(e.target.value.replace(/[^\d.]/g, ''))} />
+        <input
+          className="df-swap-field__input"
+          type="text"
+          inputMode="decimal"
+          placeholder="0.0"
+          value={value}
+          readOnly={readOnly}
+          onChange={(e) => onChange?.(e.target.value.replace(/[^\d.]/g, ''))}
+        />
         <div className="df-swap-field__token">
           <TokenMark symbol={token.symbol} size={28} />
           <strong>{token.symbol}</strong>
