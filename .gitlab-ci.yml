@@ -23,6 +23,8 @@ variables:
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "${SERVICE_IMAGE}"
+      --build-arg REACT_APP_ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      --build-arg REACT_APP_WALLETCONNECT_PROJECT_ID=${REACT_APP_WALLETCONNECT_PROJECT_ID}
   tags:
     - docker
 
@@ -80,6 +82,7 @@ variables:
   before_script:
     - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
   script:
+    - kubectl set env -n ${NAMESPACE} deployment/backend ZEROEX_API_KEY=${REACT_APP_ZEROEX_API_KEY}
     - kubectl set image -n ${NAMESPACE} deployment/backend backend=${BACKEND_IMAGE}
   tags:
     - docker
