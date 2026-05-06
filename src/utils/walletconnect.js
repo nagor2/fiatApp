@@ -5,7 +5,7 @@ let web3modal = null;
 let walletConnectProvider = null;
 let isInitialized = false;
 
-const WALLETCONNECT_PROJECT_ID = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID';
+const WALLETCONNECT_PROJECT_ID = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '';
 const CHAIN_ID = 1;
 const CHAIN_NAME = 'Ethereum';
 const EXPLORER_URL = 'https://etherscan.io';

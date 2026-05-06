@@ -3136,7 +3136,7 @@ config.about = {
 
 config.workersHealthUrl = workerHealthUrl;
 
-config.etherscanApiKey = 'YOUR_ETHERSCAN_API_KEY';
+config.etherscanApiKey = process.env.REACT_APP_ETHERSCAN_API_KEY || '';
 config.etherscanApiUrl = 'https://api.etherscan.io/v2/api';
 
 export default config;

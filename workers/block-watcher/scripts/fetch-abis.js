@@ -7,7 +7,7 @@ const { Web3 } = require('web3');
 
 // Конфигурация
 const RPC_URL = process.env.RPC_HTTP_URL || 'https://ethereum.publicnode.com';
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'YOUR_ETHERSCAN_API_KEY';
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
 const ETHERSCAN_API_URL = 'https://api.etherscan.io/v2/api';
 const CHAIN_ID = 1; // Ethereum Mainnet
 
