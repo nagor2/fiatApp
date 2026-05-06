@@ -1,0 +1,241 @@
+/* DotFlat — Commodities */
+
+/* ── Tabs ─────────────────────────────────── */
+.df-tabs {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--df-card); border: 1px solid var(--df-border);
+  border-radius: 12px; margin-bottom: 18px; width: fit-content;
+}
+.df-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 8px;
+  background: transparent; border: 0; color: var(--df-muted);
+  font-weight: 600; font-size: 14px; cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.df-tab:hover { color: var(--df-fg); }
+.df-tab.is-active { background: var(--df-accent); color: #fff; }
+
+/* ── Stat row ─────────────────────────────── */
+.df-stack { display: flex; flex-direction: column; gap: 18px; }
+.df-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.df-stat-row--compact { grid-template-columns: repeat(auto-fit, minmax(140px, max-content)); gap: 10px; }
+.df-stat {
+  background: var(--df-card); border: 1px solid var(--df-border);
+  border-radius: 12px; padding: 14px 16px;
+}
+.df-stat-row--compact .df-stat { padding: 10px 14px; min-width: 140px; }
+.df-stat-row--compact .df-stat__label { font-size: 10px; margin-bottom: 4px; }
+.df-stat-row--compact .df-stat__value { font-size: 17px; }
+.df-stat--accent { border-color: var(--df-accent); background: linear-gradient(180deg, rgba(58,168,110,.06), transparent); }
+.df-stat__label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--df-muted); margin-bottom: 6px; }
+.df-stat__value { font-size: 22px; font-weight: 700; }
+.df-stat__sub   { font-size: 12px; color: var(--df-muted); margin-top: 2px; }
+
+/* ── Card / chart wrap ─────────────────────── */
+.df-card {
+  background: var(--df-card); border: 1px solid var(--df-border);
+  border-radius: 14px; padding: 18px 20px;
+}
+.df-card--chart { padding: 18px 16px 12px; }
+.df-card__title { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
+
+/* ── Chart controls ─────────────────────────── */
+.df-chart-controls {
+  display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: end;
+  margin-bottom: 14px;
+}
+.df-field { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: var(--df-muted); text-transform: uppercase; letter-spacing: .04em; min-width: 240px; }
+.df-field select {
+  padding: 9px 12px; background: var(--df-card); border: 1px solid var(--df-border);
+  border-radius: 8px; color: var(--df-fg); font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.df-field select:hover  { border-color: var(--df-accent); }
+.df-field select:focus  { outline: none; border-color: var(--df-accent); box-shadow: 0 0 0 3px rgba(58,168,110,.15); }
+.df-checkbox {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--df-fg); cursor: pointer;
+  height: 38px;
+}
+.df-checkbox input { width: 16px; height: 16px; accent-color: var(--df-accent); }
+
+/* ── Collapse ─────────────────────────────── */
+.df-collapse {
+  background: var(--df-card); border: 1px solid var(--df-border);
+  border-radius: 12px; overflow: hidden;
+}
+.df-collapse__head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; background: transparent; border: 0; color: inherit;
+  text-align: left; cursor: pointer;
+}
+.df-collapse__head:hover { background: var(--df-bg); }
+.df-collapse__title { font-size: 15px; font-weight: 700; }
+.df-collapse__body { padding: 4px 18px 18px; border-top: 1px solid var(--df-border); }
+.df-rot-180 { transform: rotate(180deg); transition: transform .2s ease; }
+
+/* ── Table (price history) ─────────────────── */
+.df-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; margin-top: 12px; }
+.df-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.df-table thead { position: sticky; top: 0; background: var(--df-bg); z-index: 1; }
+.df-table th, .df-table td { padding: 9px 12px; border-bottom: 1px solid var(--df-border); }
+.df-table th { text-align: left; font-weight: 600; color: var(--df-muted); }
+.df-table tr:hover td { background: var(--df-bg); }
+
+/* ── Current prices grid ───────────────────── */
+.df-price-grid {
+  margin-top: 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px;
+}
+.df-price-card {
+  padding: 14px 16px;
+  background: var(--df-card);
+  border: 1px solid var(--df-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.df-price-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--df-accent);
+  box-shadow: 0 4px 10px rgba(15,23,42,.08), 0 2px 4px rgba(15,23,42,.06);
+}
+.df-price-card__sym { font-weight: 700; font-size: 13px; color: var(--df-muted); text-transform: uppercase; letter-spacing: .04em; }
+.df-price-card__sym a { color: inherit; text-decoration: none; }
+.df-price-card__sym a:hover { color: var(--df-accent); text-decoration: underline; }
+.df-price-card__val { font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--df-fg); }
+.df-price-card__meta { font-size: 11px; color: var(--df-muted); margin-top: 8px; }
+.df-price-card__ts { font-size: 11px; color: var(--df-muted); margin-top: 2px; }
+.df-pos { color: #22c55e; font-weight: 700; }
+.df-neg { color: #ef4444; font-weight: 700; }
+
+/* ── Pie + center label ────────────────────── */
+.df-pie-wrap { position: relative; }
+.df-pie-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; pointer-events: none;
+}
+.df-pie-center__big { font-size: 42px; font-weight: 800; color: var(--df-fg); line-height: 1; }
+.df-pie-center__sub { font-size: 12px; color: var(--df-muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+
+/* ── Basket list ───────────────────────────── */
+.df-basket-list { display: flex; flex-direction: column; gap: 4px; }
+.df-basket-row {
+  display: grid;
+  grid-template-columns: 12px minmax(120px, 1.2fr) minmax(120px, 2fr) 90px 90px;
+  gap: 14px; align-items: center; padding: 10px 8px;
+  border-bottom: 1px solid var(--df-border);
+}
+.df-basket-row:last-child { border-bottom: 0; }
+.df-basket-row__swatch { width: 12px; height: 12px; border-radius: 3px; }
+.df-basket-row__symbol { font-weight: 700; }
+.df-basket-row__bar-wrap {
+  height: 8px; background: var(--df-bg); border-radius: 999px; overflow: hidden;
+}
+.df-basket-row__bar { height: 100%; border-radius: 999px; transition: width .3s ease; }
+.df-basket-row__weight { text-align: right; }
+.df-basket-row__price  { text-align: right; }
+
+/* ── Address footer ────────────────────────── */
+.df-address-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 18px; background: var(--df-card);
+  border: 1px solid var(--df-border); border-radius: 12px; flex-wrap: wrap;
+}
+.df-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--df-fg); text-decoration: none; word-break: break-all; }
+.df-mono:hover { color: var(--df-accent); }
+
+/* ── Empty / loading ───────────────────────── */
+.df-empty {
+  background: var(--df-card); border: 1px dashed var(--df-border);
+  border-radius: 14px; padding: 40px 20px; text-align: center;
+}
+
+/* ── Recharts tooltip — force opaque card ── */
+.recharts-default-tooltip,
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--df-surface, #ffffff) !important;
+  border: 1px solid var(--df-line, var(--df-border)) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .18) !important;
+  padding: 10px 12px !important;
+  color: var(--df-fg) !important;
+}
+.recharts-tooltip-wrapper { z-index: 5; }
+.recharts-tooltip-wrapper > div {
+  background: var(--df-surface, #ffffff) !important;
+  backdrop-filter: none !important;
+}
+.recharts-tooltip-item-list,
+.recharts-tooltip-label {
+  color: var(--df-fg) !important;
+}
+[data-theme="dark"] .recharts-tooltip-wrapper > div,
+:root[data-theme="dark"] .recharts-default-tooltip {
+  background: #1a1f1c !important;
+}
+.df-empty__title { font-size: 17px; font-weight: 700; }
+.df-empty__sub { font-size: 13px; color: var(--df-muted); margin-top: 6px; }
+.df-muted { color: var(--df-muted); }
+
+/* ── Mobile ────────────────────────────────── */
+@media (max-width: 720px) {
+  .df-basket-row {
+    grid-template-columns: 12px 1fr 70px;
+    grid-template-areas:
+      "swatch name weight"
+      "swatch bar  price";
+    row-gap: 4px;
+  }
+  .df-basket-row__swatch { grid-area: swatch; }
+  .df-basket-row__name   { grid-area: name; }
+  .df-basket-row__bar-wrap { grid-area: bar; }
+  .df-basket-row__weight { grid-area: weight; }
+  .df-basket-row__price  { grid-area: price; }
+}
+
+/* ── Existing commodity-detail styles preserved below ──────── */
+
+.df-commodities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.df-commodity-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--df-card);
+  border: 1px solid var(--df-border);
+  border-radius: 14px;
+  padding: 16px;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.df-commodity-card:hover { border-color: var(--df-accent); transform: translateY(-1px); }
+.df-commodity-card.is-open { border-color: var(--df-accent); box-shadow: 0 0 0 3px rgba(58, 168, 110, 0.12); }
+
+.df-commodity-card__head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.df-commodity-card__head h3 { margin: 0 0 2px; font-size: 17px; font-weight: 700; }
+
+.df-commodity-card__stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0;
+  padding: 12px; border-radius: 10px; background: var(--df-bg);
+}
+.df-commodity-card__stats > div { display: flex; flex-direction: column; gap: 4px; }
+.df-commodity-card__stats dt { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--df-muted); }
+.df-commodity-card__stats dd { margin: 0; font-weight: 700; font-size: 14px; }
+
+.df-commodity-detail {
+  background: var(--df-card); border: 1px solid var(--df-border);
+  border-radius: 16px; padding: 20px 22px;
+}
+.df-commodity-detail__head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.df-commodity-detail__head h2 { margin: 0; font-size: 22px; }
+.df-commodity-detail__head > button { margin-left: auto; }
+
+.df-commodity-detail__stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;
+}

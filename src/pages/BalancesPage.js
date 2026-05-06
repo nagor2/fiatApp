@@ -4,8 +4,9 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { useBalances } from '../hooks/useBalances';
 import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
-import TokenMark, { TokenPair } from '../components/redesign/TokenMark';
+import TokenMark from '../components/redesign/TokenMark';
 import TokenTransfers from '../components/redesign/TokenTransfers';
+import TradeWidget from '../components/redesign/TradeWidget';
 
 const fmt = (n, dp = 4) => {
   if (n == null || Number.isNaN(n)) return '—';
@@ -23,6 +24,7 @@ export default function BalancesPage() {
   const { account, walletConnected, web3, contracts, getAccount } = useWeb3();
   const { rows, loading, totalUsd, refresh } = useBalances();
   const [openToken, setOpenToken] = useState(null);
+  const [tradeFor,  setTradeFor]  = useState(null);  // 'DFC' | 'RLE' | 'ETH' | null
 
   if (!walletConnected) {
     return (
@@ -77,6 +79,7 @@ export default function BalancesPage() {
               key={row.key}
               row={row}
               onTransfers={() => row.contractName && setOpenToken(row)}
+              onTrade={() => row.tradeable && setTradeFor(row.symbol)}
             />
           ))
         )}
@@ -91,20 +94,23 @@ export default function BalancesPage() {
           onClose={() => setOpenToken(null)}
         />
       )}
+
+      {tradeFor && (
+        <TradeWidget token={tradeFor} onClose={() => setTradeFor(null)} />
+      )}
     </>
   );
 }
 
-function BalanceCard({ row, onTransfers }) {
-  const isPair = row.balance == null && row.swapHref;
-  const [a, b] = isPair ? row.symbol.split('/') : [row.symbol, null];
+function BalanceCard({ row, onTransfers, onTrade }) {
+  const priceLine = row.priceUsd != null
+    ? <span className="df-card__price">@ {fmtUsd(row.priceUsd)} / {row.symbol}</span>
+    : null;
 
   return (
-    <article className={`df-card df-card--token ${isPair ? 'df-card--pool' : ''}`}>
+    <article className="df-card df-card--token">
       <header className="df-card__head">
-        {isPair
-          ? <TokenPair a={a} b={b} size={44} />
-          : <TokenMark symbol={row.symbol} size={44} />}
+        <TokenMark symbol={row.symbol} size={44} />
         <div className="df-card__title-block">
           <h3 className="df-card__title">{row.symbol}</h3>
           <div className="df-card__sub">{row.name}</div>
@@ -112,32 +118,29 @@ function BalanceCard({ row, onTransfers }) {
       </header>
 
       <div className="df-card__body">
-        {row.balance != null ? (
-          <>
-            <div className="df-balance">{fmt(row.balance)} <span className="df-balance__sym">{row.symbol}</span></div>
-            <div className="df-balance__usd">{fmtUsd(row.usd) || <span className="df-muted">unpriced</span>}</div>
-          </>
-        ) : (
-          <div className="df-muted">Trade pair · no balance to display</div>
-        )}
+        <div className="df-balance">{fmt(row.balance)} <span className="df-balance__sym">{row.symbol}</span></div>
+        <div className="df-balance__usd">
+          {fmtUsd(row.usd) || <span className="df-muted">unpriced</span>}
+          {priceLine}
+        </div>
       </div>
 
       <footer className="df-card__foot">
+        {row.tradeable && (
+          <button className="df-btn df-btn--primary df-btn--sm" onClick={onTrade}>
+            <Icon name="swap" size={16} /> Trade
+          </button>
+        )}
         {row.contractName && (
           <button className="df-btn df-btn--ghost df-btn--sm" onClick={onTransfers}>
             <Icon name="arrows" size={16} /> Transfers
           </button>
         )}
-        {row.swapHref && (
-          <a className="df-btn df-btn--ghost df-btn--sm" href={row.swapHref} target="_blank" rel="noreferrer">
-            <Icon name="external" size={16} /> Open on Uniswap
-          </a>
-        )}
         {row.contractName === 'flatCoin' && (
-          <Link to="/credits" className="df-btn df-btn--primary df-btn--sm">Borrow DFC</Link>
+          <Link to="/credits" className="df-btn df-btn--ghost df-btn--sm">Borrow DFC</Link>
         )}
         {row.symbol === 'ETH' && (
-          <Link to="/credits" className="df-btn df-btn--primary df-btn--sm">Use as collateral</Link>
+          <Link to="/credits" className="df-btn df-btn--ghost df-btn--sm">Use as collateral</Link>
         )}
       </footer>
     </article>

@@ -51,10 +51,42 @@ function fromUnits(units, decimals) {
   return Number(f ? `${w}.${f}` : w);
 }
 
+/* ── live price hook ─────────────────────────────────────────── */
+
+function useLivePrice(sellAddr, sellDec, buyAddr, buyDec) {
+  const [price, setPrice] = useState(null);
+  useEffect(() => {
+    if (!sellAddr || !buyAddr) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const params = new URLSearchParams({
+          chainId: '1',
+          sellToken: sellAddr,
+          buyToken:  buyAddr,
+          sellAmount: toUnits('1', sellDec),
+          slippageBps: '50',
+        });
+        const res = await window.fetch(`/api/0x/swap/allowance-holder/price?${params}`);
+        if (!res.ok || cancelled) return;
+        const q = await res.json();
+        if (cancelled) return;
+        const sold   = fromUnits(q.sellAmount, sellDec);
+        const bought = fromUnits(q.buyAmount,  buyDec);
+        if (sold > 0) setPrice(bought / sold);
+      } catch { /* ignore — 0x may be temporarily unavailable */ }
+    };
+    load();
+    const t = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [sellAddr, buyAddr, sellDec, buyDec]);
+  return price;
+}
+
 /* ── page ────────────────────────────────────────────────────── */
 
 export default function PoolsPage() {
-  const { contracts } = useWeb3();
+  const { contracts, ethPriceEtherscan } = useWeb3();
   const [pane, setPane] = useState(null); // { pair }
 
   // Pull RLE address from contracts at runtime (rule token)
@@ -63,6 +95,13 @@ export default function PoolsPage() {
     if (contracts?.rule?._address) t.RLE = { ...t.RLE, address: contracts.rule._address };
     return t;
   }, [contracts]);
+
+  // Live quotes matching each pair's natural sell direction
+  const ethPerDfc     = useLivePrice(TOKENS.DFC.address, TOKENS.DFC.decimals, TOKENS.ETH.address, TOKENS.ETH.decimals);
+  const rlePriceInDfc = useLivePrice(tokens.RLE.address,  tokens.RLE.decimals,  TOKENS.DFC.address, TOKENS.DFC.decimals);
+
+  // DFC price in USD: how much ETH you get per DFC × ETH/USD
+  const dfcUsd = ethPerDfc && ethPriceEtherscan ? ethPerDfc * ethPriceEtherscan : null;
 
   return (
     <div className="df-page">
@@ -79,6 +118,16 @@ export default function PoolsPage() {
             pair={p}
             tokens={tokens}
             onTrade={() => setPane({ pair: p })}
+            quote={
+              p.id === 'dfc-eth' ? (dfcUsd != null ? `$${fmt(dfcUsd, 4)}` : null) :
+              p.id === 'rle-dfc' ? (rlePriceInDfc != null ? `${fmt(rlePriceInDfc, 6)} DFC` : null) :
+              null
+            }
+            quoteLabel={
+              p.id === 'dfc-eth' ? '1 DFC' :
+              p.id === 'rle-dfc' ? '1 RLE' :
+              null
+            }
           />
         ))}
       </section>
@@ -106,7 +155,7 @@ export default function PoolsPage() {
 
 /* ── pool / pair card ─────────────────────────────────────────── */
 
-function PoolCard({ pair, tokens, onTrade }) {
+function PoolCard({ pair, tokens, onTrade, quote, quoteLabel }) {
   const a = tokens[pair.from];
   const b = tokens[pair.to];
   const soon = a?.comingSoon || b?.comingSoon;
@@ -132,6 +181,12 @@ function PoolCard({ pair, tokens, onTrade }) {
           <strong>{b.symbol}</strong>
           <span className="df-faint">{b.name}</span>
         </div>
+        {quote && (
+          <div className="df-pool-card-v2__quote">
+            <span className="df-muted">{quoteLabel} ≈</span>
+            <strong className="df-accent">{quote}</strong>
+          </div>
+        )}
       </div>
 
       <footer className="df-pool-card-v2__foot">
@@ -191,8 +246,13 @@ function SwapDrawer({ pair, tokens, onClose }) {
   const tTo   = tokens[to];
 
   const flip = () => {
+    // Carry "you receive" over as the new "you sell" amount after flipping.
+    const newSell = inputSide === 'buy'
+      ? buyInput
+      : (computedBuy != null ? String(computedBuy) : '');
     setFrom(to); setTo(from);
-    setSellAmount(''); setBuyInput(''); setQuote(null); setQuoteErr(null); setInputSide('sell');
+    setSellAmount(newSell);
+    setBuyInput(''); setQuote(null); setQuoteErr(null); setInputSide('sell');
   };
 
   const requestQuote = useCallback(async () => {
@@ -204,15 +264,19 @@ function SwapDrawer({ pair, tokens, onClose }) {
     }
     setQuoting(true);
     try {
+      // 0x /price only supports sellAmount. For buy-side input, invert the pair:
+      // query "sell buyInput of tTo → get tFrom" and use buyAmount as the required sell.
+      const inverted = inputSide === 'buy';
       const q = await swap0x.quote({
-        sellToken: tFrom.address,
-        buyToken:  tTo.address,
-        ...(inputSide === 'sell'
-          ? { sellAmount: toUnits(sellAmount, tFrom.decimals) }
-          : { buyAmount:  toUnits(buyInput,   tTo.decimals)   }),
+        sellToken: inverted ? tTo.address   : tFrom.address,
+        buyToken:  inverted ? tFrom.address : tTo.address,
+        sellAmount: inverted
+          ? toUnits(buyInput,   tTo.decimals)
+          : toUnits(sellAmount, tFrom.decimals),
         taker: account,
         slippageBps: Math.round(slippage * 100),
       });
+      q._inverted = inverted;
       setQuote(q);
     } catch (e) {
       setQuoteErr(e.message || String(e));
@@ -229,9 +293,14 @@ function SwapDrawer({ pair, tokens, onClose }) {
     return () => clearTimeout(t);
   }, [sellAmount, buyInput, inputSide, from, to, slippage, requestQuote]);
 
-  // Derived display values from quote
-  const computedBuy  = quote && tTo   ? fromUnits(quote.buyAmount,  tTo.decimals)   : null;
-  const computedSell = quote && tFrom ? fromUnits(quote.sellAmount, tFrom.decimals) : null;
+  // Derived display values from quote.
+  // When inverted (buy-side): sellToken=tTo, buyToken=tFrom, so fields are swapped.
+  const computedBuy = quote && tTo
+    ? fromUnits(quote._inverted ? quote.sellAmount : quote.buyAmount,  tTo.decimals)
+    : null;
+  const computedSell = quote && tFrom
+    ? fromUnits(quote._inverted ? quote.buyAmount  : quote.sellAmount, tFrom.decimals)
+    : null;
 
   const displaySell = inputSide === 'sell' ? sellAmount : (computedSell != null ? fmt(computedSell, 6) : '');
   const displayBuy  = inputSide === 'buy'  ? buyInput   : (computedBuy  != null ? fmt(computedBuy,  6) : '');
@@ -325,11 +394,17 @@ function SwapDrawer({ pair, tokens, onClose }) {
                 {!quoting && price != null && (
                   <span>
                     1 {tFrom.symbol} ≈ <strong>{fmt(price, 6)}</strong> {tTo.symbol}
-                    {ethPriceEtherscan && (
-                      <span className="df-muted" style={{ marginLeft: 8 }}>
-                        (≈ ${fmt(price * ethPriceEtherscan, 4)})
-                      </span>
-                    )}
+                    {ethPriceEtherscan && (() => {
+                      // price = tTo per 1 tFrom
+                      const usd = tFrom.native ? ethPriceEtherscan          // 1 ETH → $X
+                                : tTo.native   ? price * ethPriceEtherscan  // 1 DFC → price ETH × $X/ETH
+                                : null;
+                      return usd != null ? (
+                        <span className="df-muted" style={{ marginLeft: 8 }}>
+                          (≈ ${fmt(usd, 2)})
+                        </span>
+                      ) : null;
+                    })()}
                   </span>
                 )}
                 {quoteErr && <span className="df-error">{quoteErr}</span>}

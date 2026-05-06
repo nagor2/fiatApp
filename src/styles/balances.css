@@ -80,7 +80,8 @@
   font-variant-numeric: tabular-nums; word-break: break-all;
 }
 .df-balance__sym { font-size: 14px; font-weight: 600; color: var(--df-muted); margin-left: 6px; letter-spacing: 0; }
-.df-balance__usd { font-size: 13px; color: var(--df-muted); font-variant-numeric: tabular-nums; }
+.df-balance__usd { font-size: 13px; color: var(--df-muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.df-card__price { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--df-accent-soft); color: var(--df-accent); font-weight: 600; }
 
 .df-card__foot {
   display: flex; flex-wrap: wrap; gap: 8px;

@@ -69,6 +69,42 @@ export function useBalances() {
         }
       }));
 
+      // ── Live DFC + RLE pricing from on-chain pools ────────────────
+      // We import lazily so unconnected/no-balance pages don't pay the cost.
+      let dfcUsd = null;
+      let rleUsd = null;
+      if (ethUnitUsd && ethUnitUsd > 0) {
+        try {
+          const { getDfcPriceInEth, getRleDfcPoolInfo } = await import('../utils/uniswap-quoter');
+          // DFC/USD via DFC→ETH→USD
+          try {
+            const dfc = await getDfcPriceInEth();
+            if (dfc?.priceInETH) dfcUsd = dfc.priceInETH * ethUnitUsd;
+          } catch (e) { /* swallow — leave dfcUsd null */ }
+
+          // RLE/USD via RLE→DFC→USD
+          const rleAddr = contracts?.rule?._address;
+          if (rleAddr && dfcUsd) {
+            try {
+              const pool = await getRleDfcPoolInfo(rleAddr);
+              if (pool?.priceRleInDfc) rleUsd = pool.priceRleInDfc * dfcUsd;
+            } catch (e) { /* swallow */ }
+          }
+        } catch (_) {}
+      }
+
+      // Patch token rows with real prices.
+      const pricedTokenRows = tokenRows.map((r) => {
+        if (r.symbol === 'DFC' && dfcUsd != null) {
+          return { ...r, priceUsd: dfcUsd, usd: r.balance * dfcUsd };
+        }
+        if (r.symbol === 'RLE' && rleUsd != null) {
+          return { ...r, priceUsd: rleUsd, usd: r.balance * rleUsd };
+        }
+        return r;
+      });
+
+      // ── No more "pair cards"; users open Uniswap from inside TradeWidget.
       const result = [
         {
           key: 'eth',
@@ -82,39 +118,13 @@ export function useBalances() {
           contractName: null,
           swapHref: null,
           available: true,
+          tradeable: true,    // ETH → DFC via 0x
         },
-        ...tokenRows.map(r => ({
+        ...pricedTokenRows.map(r => ({
           ...r,
           swapHref: null,
+          tradeable: r.symbol === 'DFC' || r.symbol === 'RLE',
         })),
-        // Swap pairs — surfaced as portfolio entries because the original UI
-        // exposes them under Balances.
-        {
-          key: 'dotflat-eth',
-          symbol: 'DFC/ETH',
-          name: 'Dotflat / ETH pool',
-          balance: null,
-          usd: null,
-          priceUsd: null,
-          iconType: 'pool',
-          contract: null,
-          contractName: null,
-          swapHref: 'https://app.uniswap.org/explore/tokens/ethereum/0x1f709cfa0c409e158c68edcd32453809c9eb69ee',
-          available: true,
-        },
-        {
-          key: 'rule-dotflat',
-          symbol: 'RLE/DFC',
-          name: 'Rule / Dotflat pool',
-          balance: null,
-          usd: null,
-          priceUsd: null,
-          iconType: 'pool',
-          contract: null,
-          contractName: null,
-          swapHref: 'https://app.uniswap.org/explore/pools/ethereum/0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044',
-          available: true,
-        },
       ];
 
       if (myReq !== reqId.current) return; // stale

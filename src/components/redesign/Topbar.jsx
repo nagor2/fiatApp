@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Icon from './Icons';
 import { useWeb3 } from '../../contexts/Web3Context';
+import useExchangeRate from '../../hooks/useExchangeRate';
 
 /**
  * Topbar — brand, search, ETH price pill (with multi-source popover),
@@ -23,6 +24,9 @@ export default function Topbar({ onMenu, theme, setTheme }) {
     disconnectWallet,
   } = useWeb3();
 
+  const { instruments } = useExchangeRate();
+  const dfcIndex = instruments.find((i) => i.symbol === 'DFC')?.currentPrice;
+
   const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '';
 
   return (
@@ -31,15 +35,17 @@ export default function Topbar({ onMenu, theme, setTheme }) {
         <Icon name="menu" />
       </button>
 
-      <div className="df-topbar__brand">
+      <a className="df-topbar__brand" href="/" aria-label="Home">
         <img src={`${process.env.PUBLIC_URL}/assets/logo.png`} alt="DotFlat" />
         <span>DotFlat</span>
-      </div>
+      </a>
 
-      <div className="df-topbar__searchwrap">
-        <Icon name="search" size={16} />
-        <input className="df-topbar__search" placeholder="Search address, tx, position…" />
-      </div>
+      {dfcIndex != null && (
+        <div className="df-topbar__dfc-index">
+          <span className="df-topbar__dfc-label">DFC</span>
+          <span className="df-topbar__dfc-value">{dfcIndex.toFixed(4)}</span>
+        </div>
+      )}
 
       <div className="df-topbar__right">
         <EthPricePill
@@ -51,7 +57,6 @@ export default function Topbar({ onMenu, theme, setTheme }) {
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
         </button>
-        <button className="df-icon-btn" aria-label="Notifications"><Icon name="bell" /></button>
 
         {walletConnected ? (
           <button

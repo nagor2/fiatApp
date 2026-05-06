@@ -62,6 +62,10 @@ class BlockWatcher {
     this.wss = null;
     this.healthServer = null;
     this.blockTimestampCache = new Map();
+    this.pollingInterval = null;   // HTTP polling timer — stored so watchdog can clear it
+    this.watchdogInterval = null;
+    this._lastBlockReceivedAt = null; // wall-clock ms, updated on every new block
+    this._restarting = false;         // guard against concurrent restarts
   }
   
   async init() {
@@ -85,7 +89,8 @@ class BlockWatcher {
       
       // Подписка на новые блоки
       await this.subscribeToBlocks();
-      
+      this.startWatchdog();
+
       this.health.status = 'healthy';
       logger.info('Block Watcher initialized successfully');
     } catch (error) {
@@ -815,7 +820,7 @@ class BlockWatcher {
       // лишние зависимые инвалидации кэша.
       logger.warn('Using polling mode (HTTP provider)');
       let lastPolledBlock = this.health.lastProcessedBlock || 0;
-      setInterval(async () => {
+      this.pollingInterval = setInterval(async () => {
         try {
           const latest = Number(await this.web3.eth.getBlockNumber());
           if (latest <= lastPolledBlock) return;
@@ -839,7 +844,8 @@ class BlockWatcher {
   async processBlockHeader(blockHeader) {
     const blockNumber = Number(blockHeader.number);
     const blockTimestamp = Number(blockHeader.timestamp);
-    
+
+    this._lastBlockReceivedAt = Date.now();
     this.health.lastNetworkBlock = blockNumber;
     this.health.lastNetworkBlockTime = new Date(blockTimestamp * 1000).toISOString();
     
@@ -1079,8 +1085,50 @@ class BlockWatcher {
     }
   }
   
+  // ===== Watchdog — detects and recovers from stalled block processing =====
+
+  startWatchdog(staleThresholdMs = 60_000, checkIntervalMs = 30_000) {
+    this.watchdogInterval = setInterval(async () => {
+      if (this._restarting) return;
+      if (!this._lastBlockReceivedAt) return; // still in initial sync, skip
+      const staleMs = Date.now() - this._lastBlockReceivedAt;
+      if (staleMs < staleThresholdMs) return;
+
+      logger.warn(`Watchdog: no new blocks for ${Math.floor(staleMs / 1000)}s — restarting subscription`);
+      await this.restartSubscription();
+    }, checkIntervalMs);
+  }
+
+  async restartSubscription() {
+    if (this._restarting) return;
+    this._restarting = true;
+    try {
+      // Tear down existing subscription / polling
+      if (this.subscription) {
+        try { await this.subscription.unsubscribe(); } catch (_) { /* ignore */ }
+        this.subscription = null;
+      }
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
+
+      // Brief pause before reconnecting
+      await new Promise((r) => setTimeout(r, 2000));
+
+      await this.subscribeToBlocks();
+      this.health.status = 'healthy';
+      logger.info('Watchdog: subscription restarted successfully');
+    } catch (err) {
+      logger.error('Watchdog: failed to restart subscription:', err.message);
+      this.health.status = 'degraded';
+    } finally {
+      this._restarting = false;
+    }
+  }
+
   // ===== Health & Status =====
-  
+
   startHealthBroadcast() {
     this.healthServer = new HealthServer(
       this.healthPort,
@@ -1113,11 +1161,21 @@ class BlockWatcher {
   }
   
   getHealthStatus() {
-    return {
+    const h = {
       ...this.health,
       uptime: Date.now() - this.health.startTime,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
+    // Downgrade to degraded if we haven't seen a new block in over 60 seconds,
+    // even if the internal status flag is still 'healthy'.
+    if (h.status === 'healthy' && this._lastBlockReceivedAt) {
+      const staleMs = Date.now() - this._lastBlockReceivedAt;
+      if (staleMs > 60_000) {
+        h.status = 'degraded';
+        h.staleFor = `${Math.floor(staleMs / 1000)}s`;
+      }
+    }
+    return h;
   }
   
   broadcastHealth() {
@@ -1486,23 +1544,26 @@ class BlockWatcher {
 
   async shutdown() {
     logger.info('Shutting down Block Watcher...');
-    
+
+    if (this.watchdogInterval) clearInterval(this.watchdogInterval);
+    if (this.pollingInterval)  clearInterval(this.pollingInterval);
+
     if (this.subscription) {
       await this.subscription.unsubscribe();
     }
-    
+
     if (this.redisClient) {
       await this.redisClient.quit();
     }
-    
+
     if (this.wss) {
       this.wss.close();
     }
-    
+
     if (this.healthServer) {
       this.healthServer.stop();
     }
-    
+
     logger.info('Block Watcher stopped');
     process.exit(0);
   }

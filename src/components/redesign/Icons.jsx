@@ -43,6 +43,9 @@ export default function Icon({ name, size = 20, ...rest }) {
     case 'clock':    return <svg {...props}><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>;
     case 'info':     return <svg {...props}><circle cx="12" cy="12" r="8"/><path d="M12 11v5"/><circle cx="12" cy="8" r="0.6" fill="currentColor"/></svg>;
     case 'check':    return <svg {...props}><path d="m4 12 5 5 11-11"/></svg>;
+    case 'chart':    return <svg {...props}><path d="M4 4v16h16"/><path d="m7 14 3-4 3 3 5-7"/></svg>;
+    case 'basket':   return <svg {...props}><path d="M3 9h18l-2 11H5z"/><path d="m7 9 4-5"/><path d="m17 9-4-5"/><path d="M10 13v4M14 13v4"/></svg>;
+    case 'chevron-down': return <svg {...props}><path d="m6 9 6 6 6-6"/></svg>;
     default: return <svg {...props}><circle cx="12" cy="12" r="8"/></svg>;
   }
 }

@@ -8,3 +8,12 @@
 @import './pages.css';
 @import './balances.css';
 @import './deposits.css';
+@import './credits.css';
+@import './auctions.css';
+@import './governance.css';
+@import './pools.css';
+@import './commodities.css';
+@import './contracts.css';
+@import './watcher.css';
+@import './home.css';
+@import './eth-price-pill.css';

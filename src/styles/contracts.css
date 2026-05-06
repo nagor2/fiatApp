@@ -1,0 +1,88 @@
+/* DotFlat — Contracts */
+
+.df-contracts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.df-contract-card {
+  text-align: left;
+  cursor: pointer;
+  background: var(--df-card);
+  border: 1px solid var(--df-border);
+  border-radius: 14px;
+  padding: 16px;
+  transition: border-color .15s ease, transform .15s ease;
+  font: inherit; color: inherit;
+}
+.df-contract-card:hover { border-color: var(--df-accent); transform: translateY(-1px); }
+.df-contract-card.is-open { border-color: var(--df-accent); box-shadow: 0 0 0 3px rgba(58,168,110,0.12); }
+
+.df-contract-card__head {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+}
+.df-contract-card__head h3 { margin: 0; font-size: 17px; }
+.df-contract-card__addr {
+  font-size: 12px; color: var(--df-muted);
+  padding: 6px 8px; background: var(--df-bg); border-radius: 8px;
+}
+
+.df-contract-detail {
+  background: var(--df-card); border: 1px solid var(--df-border); border-radius: 16px; padding: 20px 22px;
+}
+.df-contract-detail__head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.df-contract-detail__head h2 { margin: 0; font-size: 22px; }
+.df-contract-detail__head > button { margin-left: auto; }
+
+.df-contract-detail__row {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  background: var(--df-bg); border: 1px solid var(--df-border); border-radius: 10px;
+  margin-bottom: 14px; flex-wrap: wrap;
+}
+.df-contract-detail__row code { flex: 1; min-width: 200px; word-break: break-all; }
+
+.df-contract-detail__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Contract stat grid (per-contract live data) ──────────────── */
+
+.df-contract-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.df-stat-cell {
+  background: var(--df-bg);
+  border: 1px solid var(--df-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.df-stat-cell--accent {
+  background: color-mix(in srgb, var(--df-accent) 10%, var(--df-card));
+  border-color: color-mix(in srgb, var(--df-accent) 35%, var(--df-border));
+}
+
+.df-stat-cell__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--df-muted);
+  font-weight: 600;
+}
+.df-stat-cell__value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--df-text);
+  word-break: break-word;
+}
+.df-stat-cell__sub {
+  font-size: 12px;
+  color: var(--df-muted);
+}
