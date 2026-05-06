@@ -197,15 +197,10 @@ export const Web3Provider = ({ children }) => {
   };
 
   const fetchEthPriceEtherscan = async () => {
-    if (!config.etherscanApiKey) {
-      return;
-    }
-
     try {
-      const url = `${config.etherscanApiUrl}?chainid=1&module=stats&action=ethprice&apikey=${config.etherscanApiKey}`;
-      const response = await fetch(url);
+      const response = await fetch('/api/ethprice');
+      if (!response.ok) return;
       const data = await response.json();
-      
       if (data.status === '1' && data.result) {
         const price = parseFloat(data.result.ethusd);
         setEthPriceEtherscan(price);
