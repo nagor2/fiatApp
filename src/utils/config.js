@@ -3026,19 +3026,71 @@ config.about = {
             to="/contracts/ExchangeRateContract"
             style={{
               display: 'inline-block',
-              padding: '12px 32px',
+              padding: '14px 36px',
               background: 'linear-gradient(135deg, #e0a800 0%, #f5c518 100%)',
               color: '#1a1a1a',
-              fontWeight: 700,
-              fontSize: '1rem',
-              borderRadius: '6px',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              borderRadius: '8px',
               textDecoration: 'none',
-              letterSpacing: '0.03em',
-              boxShadow: '0 2px 8px rgba(224,168,0,0.4)',
+              letterSpacing: '0.04em',
+              boxShadow: '0 4px 16px rgba(224,168,0,0.55)',
+              textShadow: 'none',
             }}
           >
-            📈 See live commodity quotes
+            📊 What will $1,000 buy in 2030?
           </Link>
+        </div>
+
+        <div style={{background: '#f8f8f8', border: '1px solid #e8e8e8', borderRadius: '10px', padding: '24px 28px', margin: '8px 0 28px'}}>
+          <h3 style={{marginTop: 0, fontSize: '1.1rem', letterSpacing: '0.02em'}}>
+            DFC is a <em>flatcoin</em> &mdash; not a stablecoin
+          </h3>
+          <p style={{marginBottom: '20px', color: '#444'}}>
+            Stablecoins track fiat money. Flatcoins track what money can actually buy.
+            DFC is pegged to a basket of real-world commodities, so its value moves with the real economy &mdash; not with government printing presses.
+          </p>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+            <div style={{background: '#fff3f3', borderRadius: '8px', padding: '16px 20px'}}>
+              <div style={{fontWeight: 700, marginBottom: '10px', color: '#c0392b'}}>😟 USDT / USDC</div>
+              <ul style={{margin: 0, paddingLeft: '18px', color: '#555', lineHeight: 1.7}}>
+                <li>Pegged to the US dollar</li>
+                <li>Loses purchasing power every year</li>
+                <li>Controlled by a central company</li>
+                <li>Can be frozen or blacklisted</li>
+                <li>Dependent on the banking system</li>
+              </ul>
+            </div>
+            <div style={{background: '#f0faf0', borderRadius: '8px', padding: '16px 20px'}}>
+              <div style={{fontWeight: 700, marginBottom: '10px', color: '#27ae60'}}>😊 DotFlat (DFC)</div>
+              <ul style={{margin: 0, paddingLeft: '18px', color: '#555', lineHeight: 1.7}}>
+                <li>Pegged to a commodities basket</li>
+                <li>Preserves purchasing power over time</li>
+                <li>Governed by open smart contracts</li>
+                <li>Nobody can freeze your balance</li>
+                <li>Over-collateralized for stability</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <h2>DotFlat Explained</h2>
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', margin: '8px 0 28px'}}>
+          <div style={{background: '#fffbea', borderRadius: '8px', padding: '20px', borderTop: '3px solid #e0a800'}}>
+            <div style={{fontSize: '1.6rem', marginBottom: '8px'}}>🏦</div>
+            <strong>Fully Collateralized</strong>
+            <p style={{marginTop: '8px', marginBottom: 0, color: '#555', fontSize: '0.92rem', lineHeight: 1.6}}>Every DFC in circulation is backed by ETH locked in a smart contract. No fractional reserves, no hidden risk.</p>
+          </div>
+          <div style={{background: '#fffbea', borderRadius: '8px', padding: '20px', borderTop: '3px solid #e0a800'}}>
+            <div style={{fontSize: '1.6rem', marginBottom: '8px'}}>🛒</div>
+            <strong>Tracks Real Goods</strong>
+            <p style={{marginTop: '8px', marginBottom: 0, color: '#555', fontSize: '0.92rem', lineHeight: 1.6}}>Value is tied to a basket of commodities &mdash; gold, oil, grain, coffee &mdash; so DFC buys roughly the same amount of real-world goods year after year.</p>
+          </div>
+          <div style={{background: '#fffbea', borderRadius: '8px', padding: '20px', borderTop: '3px solid #e0a800'}}>
+            <div style={{fontSize: '1.6rem', marginBottom: '8px'}}>🔒</div>
+            <strong>Non-Custodial</strong>
+            <p style={{marginTop: '8px', marginBottom: 0, color: '#555', fontSize: '0.92rem', lineHeight: 1.6}}>All logic lives in verified Ethereum smart contracts. No company holds your assets. No one can freeze, censor, or confiscate your balance.</p>
+          </div>
         </div>
 
         <h2>Introduction</h2>

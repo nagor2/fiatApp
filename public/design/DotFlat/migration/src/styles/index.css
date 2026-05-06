@@ -1,0 +1,8 @@
+/* DotFlat — global root styles. Tokens + base reset live here.
+   Page-specific styles are imported by Layout.js. */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@import './tokens.css';
+@import './shell.css';
+@import './pages.css';

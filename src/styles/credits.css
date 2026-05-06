@@ -1,0 +1,266 @@
+/* ──────────────────────────────────────────────────────
+   Credits page — debt positions & CDP actions.
+   Built on top of the shared df-* primitives in balances.css
+   and deposits.css. This file adds:
+     · 4-up stat row variant
+     · pill (status) component
+     · health bar (mini + preview banner)
+     · credit-card layout
+     · detail hero + grid + action row
+     · danger button variant
+   ────────────────────────────────────────────────────── */
+
+/* 4-up stat row — squeezes one more KPI than --3 */
+.df-stat-row.df-stat-row--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .df-stat-row.df-stat-row--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .df-stat-row.df-stat-row--4 { grid-template-columns: 1fr; }
+}
+
+.df-stat--danger {
+  border-color: rgba(220, 80, 80, .35);
+  background: rgba(220, 80, 80, .04);
+}
+.df-warn-text {
+  color: #c44545;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Pills (status chips) ─────────────────────────────── */
+.df-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.df-pill--ok       { background: rgba(80, 175, 120, .12); color: #2e8c5b;  border-color: rgba(80, 175, 120, .25); }
+.df-pill--safe     { background: rgba(64, 142, 200, .12); color: #2a6b96; border-color: rgba(64, 142, 200, .25); }
+.df-pill--warn     { background: rgba(212, 136, 6, .14);  color: #a3650a; border-color: rgba(212, 136, 6, .3); }
+.df-pill--danger   { background: rgba(220, 80, 80, .14);  color: #b53737; border-color: rgba(220, 80, 80, .3); }
+
+/* ── Health bar ───────────────────────────────────────── */
+.df-health {
+  margin-top: 14px;
+}
+.df-health__bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--df-bg-soft);
+  overflow: hidden;
+}
+.df-health__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width .25s ease, background-color .2s ease;
+}
+.df-health__fill--danger { background: #d05050; }
+.df-health__fill--warn   { background: #d48806; }
+.df-health__fill--ok     { background: #50af78; }
+.df-health__fill--safe   { background: #408ec8; }
+
+.df-health__tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--df-line);
+  opacity: .9;
+}
+.df-health__label {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--df-muted);
+  font-family: var(--df-mono);
+  letter-spacing: 0.02em;
+}
+
+/* Health preview block inside forms (shows projected ratio after change) */
+.df-health-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--df-r-md);
+  border: 1px solid var(--df-line);
+  background: var(--df-bg-soft);
+  font-size: 13px;
+}
+.df-health-preview b {
+  font-family: var(--df-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+.df-health-preview--danger { border-color: rgba(220, 80, 80, .4); color: #b53737; background: rgba(220, 80, 80, .06); }
+.df-health-preview--warn   { border-color: rgba(212, 136, 6, .4);  color: #a3650a; background: rgba(212, 136, 6, .06); }
+.df-health-preview--ok     { border-color: rgba(80, 175, 120, .4); color: #2e8c5b; background: rgba(80, 175, 120, .06); }
+.df-health-preview--safe   { border-color: rgba(64, 142, 200, .4); color: #2a6b96; background: rgba(64, 142, 200, .06); }
+
+/* ── Credit card ──────────────────────────────────────── */
+.df-card {
+  background: var(--df-bg);
+  border: 1px solid var(--df-line);
+  border-radius: var(--df-r-lg);
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .1s ease;
+  font: inherit;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.df-card:hover {
+  border-color: var(--df-accent);
+}
+.df-card:active { transform: translateY(1px); }
+
+.df-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.df-card__id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.df-card__title { font-weight: 700; font-size: 15px; }
+.df-card__sub   { color: var(--df-muted); font-size: 12px; margin-top: 1px; }
+
+.df-card__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.df-card__metric { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.df-card__metric--right { text-align: right; align-items: flex-end; }
+.df-card__metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--df-muted);
+}
+.df-card__metric-value {
+  font-family: var(--df-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+.df-card__metric-value span {
+  font-size: 12px;
+  color: var(--df-muted);
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.df-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--df-line);
+  font-size: 12.5px;
+  color: var(--df-muted);
+}
+.df-card__foot b { color: var(--df-ink); font-family: var(--df-mono); margin-left: 4px; }
+
+/* ── Detail (drawer body) ─────────────────────────────── */
+.df-detail { display: flex; flex-direction: column; gap: 18px; }
+
+.df-detail__hero {
+  position: relative;
+  background: var(--df-bg-soft);
+  border: 1px solid var(--df-line);
+  border-radius: var(--df-r-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.df-detail__hero-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.df-detail__hero-label { color: var(--df-muted); font-size: 13px; }
+.df-detail__hero-value {
+  font-family: var(--df-mono);
+  font-size: 22px;
+  font-weight: 700;
+}
+.df-detail__hero-value small { font-size: 13px; color: var(--df-muted); margin-left: 4px; font-weight: 500; }
+.df-detail__hero-pill {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.df-detail__grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  font-size: 13px;
+  margin: 0;
+}
+.df-detail__grid dt { color: var(--df-muted); }
+.df-detail__grid dd {
+  margin: 0;
+  text-align: right;
+  font-family: var(--df-mono);
+  font-weight: 500;
+}
+
+.df-detail__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.df-detail__actions .df-btn {
+  justify-content: center;
+}
+.df-detail__actions .df-btn--danger {
+  grid-column: 1 / -1;
+}
+
+/* ── Danger button ────────────────────────────────────── */
+.df-btn--danger {
+  background: #d05050;
+  color: #fff;
+  border-color: #d05050;
+}
+.df-btn--danger:hover:not(:disabled) {
+  background: #b53737;
+  border-color: #b53737;
+}
+.df-btn--danger:disabled {
+  background: rgba(220, 80, 80, .25);
+  border-color: transparent;
+  color: rgba(255, 255, 255, .8);
+}
+
+/* ── Drawer head — accommodate multi-line with sub ────── */
+.df-drawer__head-text { flex: 1; min-width: 0; }
+.df-drawer__lede { margin: 4px 0 0; font-size: 13px; }
+
+/* ── Cards grid (Credits doesn't import deposits.css for this) */
+.df-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}

@@ -1,27 +1,27 @@
-import './App.css';
+import './styles/index.css';
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Web3Provider } from './contexts/Web3Context';
 import Layout from './components/Layout';
+import Stub from './pages/_Stub';
+import DepositsPage from './pages/DepositsPage';
+import BalancesPage from './pages/BalancesPage';
+const CreditsPage = lazy(() => import('./pages/CreditsPage'));
+const AuctionsPage = lazy(() => import('./pages/AuctionsPage'));
 
-const HomePage = lazy(() => import('./pages/HomePage'));
-const BalancesPage = lazy(() => import(/* webpackPrefetch: true */ './pages/BalancesPage'));
-const CreditsPage = lazy(() => import(/* webpackPrefetch: true */ './pages/CreditsPage'));
-const DepositsPage = lazy(() => import(/* webpackPrefetch: true */ './pages/DepositsPage'));
-const AuctionsPage = lazy(() => import(/* webpackPrefetch: true */ './pages/AuctionsPage'));
-const PoolsPage = lazy(() => import(/* webpackPrefetch: true */ './pages/PoolsPage'));
-const ContractsPage = lazy(() => import(/* webpackPrefetch: true */ './pages/ContractsPage'));
-const CommoditiesPage = lazy(() => import(/* webpackPrefetch: true */ './pages/CommoditiesPage'));
-const ChartsDemoPage = lazy(() => import('./pages/ChartsDemoPage'));
-const BlockWatcherPage = lazy(() => import('./pages/BlockWatcherPage'));
-const WalletTest = lazy(() => import('./components/WalletTest'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+
+
+
+// As we migrate each page, replace the corresponding Stub with a real lazy import.
+// Step 1: every route renders a Stub inside the new shell.
 
 const events = require('events');
 const eventEmitter = new events.EventEmitter();
 eventEmitter.setMaxListeners(13);
 
-const PageFallback = () => <div align="center">Loading...</div>;
+const PageFallback = () => (
+  <div style={{ padding: 40, textAlign: 'center', color: 'var(--df-muted)' }}>Loading…</div>
+);
 
 function App() {
   return (
@@ -30,25 +30,23 @@ function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<Layout />}>
-              <Route index element={<HomePage emitter={eventEmitter} />} />
-              <Route path="balances" element={<BalancesPage emitter={eventEmitter} />} />
-              <Route path="credits" element={<CreditsPage emitter={eventEmitter} />} />
-              <Route path="cdp" element={<CreditsPage emitter={eventEmitter} />} />
-              <Route path="debtPositions/:id" element={<CreditsPage emitter={eventEmitter} />} />
-              <Route path="deposits" element={<DepositsPage emitter={eventEmitter} />} />
-              <Route path="deposit/:depositId" element={<DepositsPage emitter={eventEmitter} />} />
-              <Route path="auctions" element={<AuctionsPage emitter={eventEmitter} />} />
-              <Route path="auction/:auctionId" element={<AuctionsPage emitter={eventEmitter} />} />
-              <Route path="pools" element={<PoolsPage emitter={eventEmitter} />} />
-              <Route path="pool/:token1/:token2" element={<PoolsPage emitter={eventEmitter} />} />
-              <Route path="contracts" element={<ContractsPage emitter={eventEmitter} />} />
-              <Route path="contracts/:contractName" element={<ContractsPage emitter={eventEmitter} />} />
-              <Route path="commodities" element={<CommoditiesPage emitter={eventEmitter} />} />
-              <Route path="commodity/:commodityName" element={<CommoditiesPage emitter={eventEmitter} />} />
-              <Route path="charts-demo" element={<ChartsDemoPage />} />
-              <Route path="block-watcher" element={<BlockWatcherPage emitter={eventEmitter} />} />
-              <Route path="test/wallet" element={<WalletTest />} />
-              <Route path="*" element={<NotFoundPage />} />
+              <Route index                   element={<Stub title="Welcome to" accent="DotFlat" sub="Your dashboard for Dotflat-coin, credits, deposits and the commodity basket." />} />
+              <Route path="balances"         element={<BalancesPage />} />
+              <Route path="/credits" element={<CreditsPage />} />
+              <Route path="cdp"              element={<Stub title="Credit" accent="positions" />} />
+              <Route path="debtPositions/:id" element={<Stub title="Credit" accent="position" />} />
+              <Route path="deposits"           element={<DepositsPage />} />
+              <Route path="deposit/:depositId" element={<DepositsPage />} />
+              <Route path="/auctions" element={<AuctionsPage />} />
+              <Route path="auction/:auctionId" element={<Stub title="Auction" accent="detail" />} />
+              <Route path="pools"            element={<Stub title="Liquidity" accent="pools" sub="Provide liquidity and earn fees." />} />
+              <Route path="pool/:token1/:token2" element={<Stub title="Pool" accent="detail" />} />
+              <Route path="contracts"        element={<Stub title="Protocol" accent="contracts" />} />
+              <Route path="contracts/:contractName" element={<Stub title="Contract" accent="detail" />} />
+              <Route path="commodities"      element={<Stub title="Commodity" accent="basket" sub="Real-world commodities backing DFC." />} />
+              <Route path="commodity/:commodityName" element={<Stub title="Commodity" accent="detail" />} />
+              <Route path="block-watcher"    element={<Stub title="Block" accent="watcher"   sub="Live view of DotFlat-relevant transactions." />} />
+              <Route path="*"                element={<Stub title="Not" accent="found" sub="That page doesn't exist." />} />
             </Route>
           </Routes>
         </Suspense>

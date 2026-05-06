@@ -1,0 +1,152 @@
+/* ──────────────────────────────────────────────────────
+   ETH price pill — multi-source popover
+   Append to shell.css (or import after it).
+   ────────────────────────────────────────────────────── */
+
+.df-eth-pricewrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* Upgrade .df-eth-pill from a static span to a hoverable button.
+   Existing layout (.df-eth-pill flex/gap/padding) carries over. */
+button.df-eth-pill {
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  appearance: none;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+button.df-eth-pill:hover,
+button.df-eth-pill:focus-visible {
+  background: var(--df-bg);
+  border-color: var(--df-accent);
+  outline: none;
+}
+button.df-eth-pill svg {
+  opacity: .55;
+  margin-left: -2px;
+}
+button.df-eth-pill:hover svg { opacity: .9; }
+
+/* Drift indicator on the pill itself */
+.df-eth-pill--drift .df-eth-pill__dot {
+  background: var(--df-warn, #d97706);
+  box-shadow: 0 0 0 4px rgba(217, 119, 6, .15);
+}
+
+/* ── popover ─────────────────────────────────────────── */
+
+.df-eth-pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 60;
+  width: 320px;
+  padding: 16px;
+  background: var(--df-bg);
+  border: 1px solid var(--df-line);
+  border-radius: var(--df-r-md);
+  box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06);
+  animation: df-eth-pop-in .14s ease-out;
+}
+
+@keyframes df-eth-pop-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Little upward arrow pointing at the pill */
+.df-eth-pop::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 22px;
+  width: 12px; height: 12px;
+  background: var(--df-bg);
+  border-left: 1px solid var(--df-line);
+  border-top: 1px solid var(--df-line);
+  transform: rotate(45deg);
+}
+
+.df-eth-pop__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--df-muted);
+  margin-bottom: 6px;
+}
+.df-eth-pop__lead {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--df-muted);
+}
+
+.df-eth-pop__row {
+  padding: 10px 0;
+  border-top: 1px dashed var(--df-line);
+}
+.df-eth-pop__row:first-of-type { border-top: 0; padding-top: 4px; }
+
+.df-eth-pop__row.is-primary .df-eth-pop__row-label {
+  color: var(--df-accent-ink);
+  font-weight: 700;
+}
+
+.df-eth-pop__row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.df-eth-pop__row-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--df-fg);
+}
+.df-eth-pop__row-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.df-eth-pop__drift {
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--df-r-pill);
+}
+.df-eth-pop__drift.is-up   { color: #b45309; background: rgba(217, 119, 6, .12); }
+.df-eth-pop__drift.is-down { color: #b91c1c; background: rgba(239,  68, 68, .12); }
+
+.df-eth-pop__row-help {
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--df-muted);
+}
+
+.df-eth-pop__warn {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(217, 119, 6, .08);
+  border: 1px solid rgba(217, 119, 6, .25);
+  border-radius: var(--df-r-md);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #92400e;
+}
+
+/* On narrow screens, anchor the popover to the right edge of the viewport
+   so it doesn't overflow off-screen. */
+@media (max-width: 480px) {
+  .df-eth-pop {
+    right: -8px;
+    width: min(320px, calc(100vw - 32px));
+  }
+}

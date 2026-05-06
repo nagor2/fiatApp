@@ -1,43 +1,56 @@
-import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useWeb3 } from '../contexts/Web3Context';
-import ConnectButton from './ConnectButton';
-import { Address, ETHPrice } from '../utils/utils.js';
+import React, { useEffect, useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import Topbar from './redesign/Topbar';
+import Sidebar from './redesign/Sidebar';
+import BottomNav from './redesign/BottomNav';
 
-const Layout = () => {
-  const { account, walletConnected, ethPrice, ethPriceLastUpdate, ethPriceEtherscan, ethPriceUniswap, getAccount, disconnectWallet } = useWeb3();
-  const navigate = useNavigate();
+import '../styles/tokens.css';
+import '../styles/shell.css';
+import '../styles/pages.css';
+import '../styles/eth-price-pill.css';
 
-  const handleLogoClick = () => {
-    navigate('/');
-  };
+
+/**
+ * New DotFlat shell. Wraps every route via <Outlet />.
+ *
+ * Replaces the old Layout.js + MainLayout.js.
+ */
+export default function Layout() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('df-theme') || 'light';
+  });
+  const [cardStyle] = useState(() => {
+    return localStorage.getItem('df-cardstyle') || 'soft';
+  });
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('df-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-cardstyle', cardStyle);
+  }, [cardStyle]);
 
   return (
-    <div className="App">
-      <div className="App-header">
-        <ETHPrice 
-          ethPrice={ethPrice} 
-          lastUpdate={ethPriceLastUpdate}
-          ethPriceEtherscan={ethPriceEtherscan}
-          ethPriceUniswap={ethPriceUniswap}
-        />
-        <img src='/img/logo.png' alt="DotFlat Logo" />
-        &nbsp;
-        <h2 align="center" className="pointer" onClick={handleLogoClick}>
-          DotFlat
-        </h2>
-        {walletConnected ? (
-          <Address account={account} onDisconnect={disconnectWallet} />
-        ) : (
-          <ConnectButton getAccount={getAccount} name='connect wallet' />
-        )}
+    <>
+      <div
+        className="df-app"
+        data-sidebar="full"
+        data-mobile-open={mobileOpen ? 'true' : 'false'}
+      >
+        <Topbar onMenu={() => setMobileOpen(o => !o)} theme={theme} setTheme={setTheme} />
+        <Sidebar onNavigate={() => setMobileOpen(false)} />
+        <main className="df-main">
+          <Outlet />
+        </main>
+        <BottomNav />
       </div>
-
-      <div className="content">
-        <Outlet />
-      </div>
-    </div>
+      <div
+        className={`df-drawer-bg ${mobileOpen ? 'is-open' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
+    </>
   );
-};
-
-export default Layout;
+}

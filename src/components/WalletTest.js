@@ -30,11 +30,9 @@ function WalletTest() {
     let cancelled = false;
     (async () => {
       const {
-        initWalletConnect,
         subscribeToWalletConnectEvents,
       } = await import('../utils/walletconnect');
       if (cancelled) return;
-      initWalletConnect();
       subscribeToWalletConnectEvents(
         (accounts) => {
           console.log('Account changed:', accounts);

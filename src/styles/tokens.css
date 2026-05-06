@@ -1,0 +1,235 @@
+/* DotFlat — design tokens */
+:root {
+  /* Brand palette */
+  --df-mint-50:  #f1faf4;
+  --df-mint-100: #d9f1e1;
+  --df-mint-200: #b3e3c4;
+  --df-mint-300: #7dd2a0;
+  --df-mint-400: #4ebd80;
+  --df-mint-500: #2fa463;   /* primary mint */
+  --df-mint-600: #1f8a50;
+  --df-mint-700: #196d40;
+
+  --df-gold:     #d6a52a;
+  --df-rose:     #e36161;
+  --df-sky:      #6da9d8;
+
+  /* Neutrals — light theme */
+  --df-bg:        #f4f8f4;       /* page bg */
+  --df-bg-soft:   #eef3ee;
+  --df-surface:   #ffffff;       /* card */
+  --df-surface-2: #f8fbf8;
+  --df-ink:       #0e1a17;       /* primary text */
+  --df-ink-2:     #2a3a36;
+  --df-muted:     #6b7a76;
+  --df-faint:     #93a09c;
+  --df-line:      rgba(14, 26, 23, 0.08);
+  --df-line-2:    rgba(14, 26, 23, 0.14);
+  --df-dot:       rgba(14, 26, 23, 0.18);
+
+  --df-accent:        var(--df-mint-500);
+  --df-accent-soft:   var(--df-mint-100);
+  --df-accent-ink:    var(--df-mint-700);
+
+  --df-pos: #1f8a50;
+  --df-neg: #c44545;
+
+  /* Type */
+  --df-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --df-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Radii */
+  --df-r-xs: 6px;
+  --df-r-sm: 10px;
+  --df-r-md: 14px;
+  --df-r-lg: 20px;
+  --df-r-xl: 28px;
+  --df-r-pill: 999px;
+
+  /* Shadow */
+  --df-shadow-1: 0 1px 2px rgba(14,26,23,.04), 0 2px 8px rgba(14,26,23,.04);
+  --df-shadow-2: 0 1px 2px rgba(14,26,23,.05), 0 12px 28px rgba(14,26,23,.08);
+  --df-shadow-pop: 0 1px 2px rgba(14,26,23,.06), 0 24px 48px rgba(14,26,23,.14);
+
+  /* Spacing rhythm */
+  --df-gap: 16px;
+  --df-pad: 20px;
+
+  /* Sidebar widths */
+  --df-rail-w: 76px;
+  --df-side-w: 256px;
+  --df-topbar-h: 64px;
+  --df-bottombar-h: 64px;
+}
+
+/* Dark theme */
+:root[data-theme="dark"] {
+  --df-bg:        #0c1411;
+  --df-bg-soft:   #101a16;
+  --df-surface:   #142220;     /* card */
+  --df-surface-2: #18302a;
+  --df-ink:       #ecf5ef;
+  --df-ink-2:     #cad6d0;
+  --df-muted:     #8a9a93;
+  --df-faint:     #5f7068;
+  --df-line:      rgba(236,245,239,.08);
+  --df-line-2:    rgba(236,245,239,.14);
+  --df-dot:       rgba(236,245,239,.20);
+
+  --df-accent:        #4ebd80;
+  --df-accent-soft:   rgba(78,189,128,.16);
+  --df-accent-ink:    #a8e7c0;
+
+  --df-pos: #5dd494;
+  --df-neg: #ee8585;
+
+  --df-shadow-1: 0 1px 2px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.3);
+  --df-shadow-2: 0 2px 4px rgba(0,0,0,.35), 0 16px 32px rgba(0,0,0,.45);
+  --df-shadow-pop: 0 2px 4px rgba(0,0,0,.4), 0 28px 56px rgba(0,0,0,.55);
+}
+
+/* Reset-ish */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--df-font);
+  background: var(--df-bg);
+  color: var(--df-ink);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11';
+}
+button { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* Utilities */
+.df-mono { font-family: var(--df-mono); font-feature-settings: 'tnum' 1; }
+.df-tnum { font-variant-numeric: tabular-nums; }
+.df-pos  { color: var(--df-pos); }
+.df-neg  { color: var(--df-neg); }
+.df-muted { color: var(--df-muted); }
+.df-faint { color: var(--df-faint); }
+
+/* Dotted grid ornament — used as decorative bg in panels and headers */
+.df-dotgrid {
+  background-image: radial-gradient(var(--df-dot) 1px, transparent 1.4px);
+  background-size: 14px 14px;
+}
+
+/* Card — base */
+.df-card {
+  background: var(--df-surface);
+  border: 1px solid var(--df-line);
+  border-radius: var(--df-r-lg);
+  box-shadow: var(--df-shadow-1);
+}
+
+/* Card variants — driven by data attribute on root */
+:root[data-cardstyle="outlined"] .df-card {
+  box-shadow: none;
+  border-color: var(--df-line-2);
+}
+:root[data-cardstyle="elevated"] .df-card {
+  border-color: transparent;
+  box-shadow: var(--df-shadow-2);
+}
+
+/* Pills & chips */
+.df-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--df-r-pill);
+  background: var(--df-accent-soft);
+  color: var(--df-accent-ink);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .01em;
+}
+.df-chip--neutral { background: var(--df-bg-soft); color: var(--df-ink-2); }
+.df-chip--warn    { background: rgba(214,165,42,.16); color: #8a6a14; }
+:root[data-theme="dark"] .df-chip--warn { color: #f0c75a; }
+.df-chip--rose    { background: rgba(227,97,97,.14); color: #b04141; }
+:root[data-theme="dark"] .df-chip--rose { color: #f0a3a3; }
+
+/* Buttons */
+.df-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--df-r-pill);
+  border: 1px solid transparent;
+  background: var(--df-ink);
+  color: var(--df-bg);
+  font-weight: 600; font-size: 13px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .15s ease, background .15s ease;
+  white-space: nowrap;
+}
+.df-btn:hover { transform: translateY(-1px); }
+.df-btn--primary { background: var(--df-accent); color: #fff; }
+:root[data-theme="dark"] .df-btn--primary { color: #0c1411; }
+.df-btn--ghost { background: transparent; color: var(--df-ink); border-color: var(--df-line-2); }
+.df-btn--ghost:hover { background: var(--df-bg-soft); }
+.df-btn--sm { padding: 6px 12px; font-size: 12px; }
+.df-btn--icon { padding: 8px; width: 36px; height: 36px; }
+
+/* Inputs */
+.df-input {
+  width: 100%;
+  background: var(--df-surface);
+  border: 1px solid var(--df-line-2);
+  border-radius: var(--df-r-md);
+  padding: 10px 14px;
+  color: var(--df-ink);
+  font: inherit;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.df-input:focus { border-color: var(--df-accent); box-shadow: 0 0 0 3px var(--df-accent-soft); }
+
+/* Section header */
+.df-section-title {
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--df-faint);
+  font-weight: 700;
+}
+
+/* Display headlines (the "Word Word!" look) */
+.df-display {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.df-display .df-accent-word { color: var(--df-accent); }
+
+/* Iso cube ornament reused */
+.df-iso {
+  width: 28px; height: 28px;
+  display: inline-block;
+  background: linear-gradient(135deg, var(--df-mint-300), var(--df-mint-500));
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+
+/* Scrollbar polish (webkit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--df-line-2); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--df-faint); }
+
+/* Skeleton */
+.df-skel {
+  background: linear-gradient(90deg, var(--df-bg-soft), var(--df-line) 50%, var(--df-bg-soft));
+  background-size: 200% 100%;
+  animation: dfskel 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes dfskel { to { background-position: -200% 0; } }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

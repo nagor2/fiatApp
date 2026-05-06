@@ -1,0 +1,89 @@
+/* DotFlat — Deposits page */
+
+.df-stat-row--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 880px) {
+  .df-stat-row--3 { grid-template-columns: 1fr; }
+}
+
+.df-stat__unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--df-muted);
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+
+.df-accent-text { color: var(--df-accent-ink); }
+
+.df-deposit-card .df-card__head .df-icon-btn {
+  margin-left: auto;
+}
+
+.df-deposit-card__body .df-pos-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 8px;
+  column-gap: 16px;
+  font-size: 13px;
+}
+.df-deposit-card__body .df-pos-grid dt {
+  color: var(--df-muted);
+  font-weight: 600;
+  margin: 0;
+}
+.df-deposit-card__body .df-pos-grid dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.df-pos-grid--big {
+  font-size: 14.5px;
+  margin: 0 0 18px;
+}
+.df-pos-grid--big dt { padding-bottom: 4px; }
+.df-pos-grid--big dd { font-size: 16px; padding-bottom: 4px; }
+
+.df-fineprint {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--df-muted);
+  line-height: 1.5;
+}
+
+.df-drawer__lede {
+  margin: -8px 0 18px;
+  font-size: 13.5px;
+}
+
+.df-form__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.df-field__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.df-hint {
+  background: var(--df-bg-soft);
+  border: 1px solid var(--df-line);
+  border-left: 3px solid var(--df-accent);
+  border-radius: var(--df-r-md);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--df-ink);
+  line-height: 1.5;
+}
+.df-hint b { font-weight: 700; }
+.df-hint--warn {
+  border-left-color: #d48806;
+  background: rgba(212, 136, 6, .07);
+}

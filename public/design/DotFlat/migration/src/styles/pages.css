@@ -1,0 +1,143 @@
+/* DotFlat — page-specific styles */
+
+/* Asset / token pages */
+.df-token-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  color: #fff;
+}
+.df-token-icon--mint { background: linear-gradient(135deg, #4ebd80, #1f8a50); }
+.df-token-icon--rule { background: linear-gradient(135deg, #d6a52a, #a07a14); }
+.df-token-icon--eth  { background: linear-gradient(135deg, #4a5b73, #1f2a3a); }
+.df-token-icon--gold { background: linear-gradient(135deg, #f5cb55, #b8861a); }
+.df-token-icon--sky  { background: linear-gradient(135deg, #6da9d8, #3e72a0); }
+
+/* Mini sparkline holder */
+.df-spark { width: 100%; height: 36px; }
+
+/* Position cards (CDP / Deposit) */
+.df-pos-card {
+  padding: 18px 20px;
+  display: grid;
+  gap: 14px;
+}
+.df-pos-card__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.df-pos-card__id {
+  font-family: var(--df-mono); font-size: 12px; color: var(--df-muted);
+}
+.df-pos-card__num { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.df-pos-card__bar {
+  height: 8px; border-radius: 999px;
+  background: var(--df-bg-soft);
+  overflow: hidden; position: relative;
+}
+.df-pos-card__bar > i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--df-mint-400), var(--df-mint-600));
+  border-radius: 999px;
+}
+.df-pos-card__bar.is-warn > i { background: linear-gradient(90deg, var(--df-gold), #b88516); }
+.df-pos-card__bar.is-danger > i { background: linear-gradient(90deg, #ee8585, #c44545); }
+.df-pos-grid { display: grid; gap: 10px 18px; grid-template-columns: 1fr 1fr; font-size: 13px; }
+.df-pos-grid dt { color: var(--df-muted); font-weight: 600; }
+.df-pos-grid dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Auction card */
+.df-auction-card { padding: 20px; display: grid; gap: 14px; }
+.df-auction-card__top {
+  display: flex; align-items: center; gap: 12px;
+}
+.df-auction-card__timer {
+  font-family: var(--df-mono);
+  font-size: 18px; font-weight: 800; letter-spacing: 0.02em;
+  background: var(--df-ink); color: var(--df-bg);
+  padding: 8px 12px; border-radius: var(--df-r-md);
+  display: inline-flex; gap: 6px;
+}
+
+/* Pool list */
+.df-pool {
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center; gap: 16px;
+}
+.df-pool__pair { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.df-pool__pair-icons { display: flex; }
+.df-pool__pair-icons .df-token-icon { width: 28px; height: 28px; font-size: 11px; }
+.df-pool__pair-icons .df-token-icon + .df-token-icon { margin-left: -10px; box-shadow: 0 0 0 2px var(--df-surface); }
+
+/* Commodity tile */
+.df-comm {
+  padding: 18px;
+  display: grid; gap: 12px;
+  position: relative; overflow: hidden;
+}
+.df-comm__sym {
+  font-family: var(--df-mono);
+  font-weight: 800; font-size: 14px;
+  color: var(--df-accent-ink);
+  background: var(--df-accent-soft);
+  padding: 4px 10px; border-radius: 6px;
+  display: inline-block;
+}
+.df-comm__price { font-size: 24px; font-weight: 800; }
+.df-comm__name  { color: var(--df-muted); font-size: 12.5px; }
+
+/* Block watcher mono table */
+.df-mono-table {
+  font-family: var(--df-mono);
+  font-size: 12.5px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.df-mono-table th { text-align: left; font-weight: 600; color: var(--df-muted); padding: 8px 12px; border-bottom: 1px solid var(--df-line); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-family: var(--df-font); }
+.df-mono-table td { padding: 10px 12px; border-bottom: 1px solid var(--df-line); }
+.df-mono-table tr:hover td { background: var(--df-bg-soft); }
+.df-mono-table .df-hash { color: var(--df-muted); }
+
+/* Quick action card */
+.df-qa {
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 6px;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.df-qa:hover { transform: translateY(-2px); box-shadow: var(--df-shadow-2); }
+.df-qa__icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--df-accent-soft);
+  color: var(--df-accent-ink);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6px;
+}
+.df-qa__title { font-weight: 700; font-size: 15px; }
+.df-qa__sub   { font-size: 12.5px; color: var(--df-muted); }
+
+/* Header decoration accent line */
+.df-accent-rule {
+  width: 64px; height: 4px; border-radius: 4px;
+  background: linear-gradient(90deg, var(--df-accent), var(--df-mint-300));
+  margin: 6px 0 14px;
+}
+
+/* Scroll snap horizontal scroller (mobile) */
+.df-hscroll {
+  display: flex; gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.df-hscroll > * {
+  scroll-snap-align: start;
+  flex: 0 0 78%;
+  min-width: 0;
+}
+@media (min-width: 881px) { .df-hscroll { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; } .df-hscroll > * { flex: initial; } }
