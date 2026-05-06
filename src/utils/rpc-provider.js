@@ -6,11 +6,12 @@
 import { JsonRpcProvider } from 'ethers';
 
 const RPC_PROVIDERS = {
+  PROXY:      typeof window !== 'undefined' ? `${window.location.origin}/api/rpc` : '/api/rpc',
   PUBLICNODE: 'https://ethereum-rpc.publicnode.com',
-  LLAMARPC: 'https://eth.llamarpc.com',
+  LLAMARPC:   'https://eth.llamarpc.com',
 };
 
-const DEFAULT_RPC_URL = RPC_PROVIDERS.PUBLICNODE;
+const DEFAULT_RPC_URL = RPC_PROVIDERS.PROXY;
 const FALLBACK_RPC_URLS = [
   RPC_PROVIDERS.PUBLICNODE,
   RPC_PROVIDERS.LLAMARPC,
