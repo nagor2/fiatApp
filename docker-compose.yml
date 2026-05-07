@@ -82,7 +82,7 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=production
-      - RPC_URL=${RPC_URL:-https://ethereum-rpc.publicnode.com}
+      - RPC_URL=${RPC_URL:-https://eth.llamarpc.com,https://rpc.ankr.com/eth,https://cloudflare-eth.com}
       - REDIS_URL=redis://redis:6379
       - CACHE_TTL=${CACHE_TTL:-60}
       - CACHE_ENABLED=true

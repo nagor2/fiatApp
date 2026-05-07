@@ -1,8 +1,8 @@
 const express = require('express');
-const { Web3 } = require('web3');
 const cacheService = require('../services/cacheService');
 const contractService = require('../services/contractService');
 const logger = require('../utils/logger');
+const { withFallback } = require('../utils/rpcProvider');
 
 const router = express.Router();
 const CACHE_TTL_MARKET    = 30;  // seconds — market prices (ETH/USD, Uniswap pools)
@@ -73,71 +73,61 @@ const V4_QUOTER_ABI = [{
   ],
 }];
 
-// ── RPC web3 instance (separate from contractService — no SDK dependency) ─
-let _web3 = null;
-function getWeb3() {
-  if (!_web3) {
-    const rpcUrl = process.env.RPC_URL || 'https://ethereum-rpc.publicnode.com';
-    _web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl, { timeout: 10000 }));
-  }
-  return _web3;
-}
-
 // ── Fetchers ──────────────────────────────────────────────────────────────
 async function fetchEthUsd() {
-  const web3 = getWeb3();
-  const pool = new web3.eth.Contract(SLOT0_ABI, USDC_WETH_POOL);
-  const s = await pool.methods.slot0().call();
-  // USDC/WETH V3: token0=USDC(6dec), token1=WETH(18dec)
-  // sqrtPriceX96 = sqrt(WETH_wei / USDC_unit) * 2^96  →  price = token1/token0 (raw)
-  // ETH/USD = 10^12 / price = 10^12 * 2^192 / sqrtPriceX96^2
-  const sqrtPriceX96 = BigInt(s.sqrtPriceX96);
-  const ethUsdScaled = (10n ** 18n * 2n ** 192n) / (sqrtPriceX96 ** 2n);
-  return Math.round(Number(ethUsdScaled) / 1e6 * 100) / 100;
+  return withFallback(async (web3) => {
+    const pool = new web3.eth.Contract(SLOT0_ABI, USDC_WETH_POOL);
+    const s = await pool.methods.slot0().call();
+    // USDC/WETH V3: token0=USDC(6dec), token1=WETH(18dec)
+    // ETH/USD = 10^12 * 2^192 / sqrtPriceX96^2
+    const sqrtPriceX96 = BigInt(s.sqrtPriceX96);
+    const ethUsdScaled = (10n ** 18n * 2n ** 192n) / (sqrtPriceX96 ** 2n);
+    return Math.round(Number(ethUsdScaled) / 1e6 * 100) / 100;
+  });
 }
 
 async function fetchDfcEth() {
-  const web3 = getWeb3();
-  const quoter = new web3.eth.Contract(V4_QUOTER_ABI, V4_QUOTER);
-  const oneToken = '1000000000000000000'; // 1 DFC in wei
-  const result = await quoter.methods.quoteExactInputSingle({
-    poolKey: {
-      currency0:   ZERO_ADDRESS,
-      currency1:   DFC_ADDRESS,
-      fee:         3000,
-      tickSpacing: 60,
-      hooks:       ZERO_ADDRESS,
-    },
-    zeroForOne:  false, // DFC (currency1) → ETH (currency0)
-    exactAmount: oneToken,
-    hookData:    '0x',
-  }).call();
-  return Number(BigInt(result.amountOut)) / 1e18;
+  return withFallback(async (web3) => {
+    const quoter = new web3.eth.Contract(V4_QUOTER_ABI, V4_QUOTER);
+    const oneToken = '1000000000000000000'; // 1 DFC in wei
+    const result = await quoter.methods.quoteExactInputSingle({
+      poolKey: {
+        currency0:   ZERO_ADDRESS,
+        currency1:   DFC_ADDRESS,
+        fee:         3000,
+        tickSpacing: 60,
+        hooks:       ZERO_ADDRESS,
+      },
+      zeroForOne:  false, // DFC (currency1) → ETH (currency0)
+      exactAmount: oneToken,
+      hookData:    '0x',
+    }).call();
+    return Number(BigInt(result.amountOut)) / 1e18;
+  });
 }
 
 async function fetchRleDfcPool(rleAddress) {
-  const web3 = getWeb3();
-  const sv = new web3.eth.Contract(V4_STATE_SLOT0_ABI, V4_STATE_VIEW);
-  const [slot0, liquidity] = await Promise.all([
-    sv.methods.getSlot0(DFC_RLE_POOL_ID).call(),
-    sv.methods.getLiquidity(DFC_RLE_POOL_ID).call(),
-  ]);
-  // RLE and DFC are both 18-decimal tokens — no decimal adjustment needed
-  // priceC1PerC0 = sqrtPriceX96^2 / 2^192  (token1 per token0, human-readable)
-  const sqrtPriceX96 = BigInt(slot0.sqrtPriceX96);
-  const SCALE = 10n ** 18n;
-  const priceC1PerC0Scaled = sqrtPriceX96 ** 2n * SCALE / (2n ** 192n);
-  const rleIsCurrency0 = rleAddress.toLowerCase() < DFC_ADDRESS.toLowerCase();
-  const priceRleInDfcScaled = rleIsCurrency0
-    ? priceC1PerC0Scaled
-    : (priceC1PerC0Scaled > 0n ? SCALE * SCALE / priceC1PerC0Scaled : 0n);
-  return {
-    priceRleInDfc: Number(priceRleInDfcScaled) / Number(SCALE),
-    sqrtPriceX96: slot0.sqrtPriceX96.toString(),
-    tick: Number(slot0.tick),
-    lpFee: Number(slot0.lpFee),
-    liquidity: liquidity.toString(),
-  };
+  return withFallback(async (web3) => {
+    const sv = new web3.eth.Contract(V4_STATE_SLOT0_ABI, V4_STATE_VIEW);
+    const [slot0, liquidity] = await Promise.all([
+      sv.methods.getSlot0(DFC_RLE_POOL_ID).call(),
+      sv.methods.getLiquidity(DFC_RLE_POOL_ID).call(),
+    ]);
+    const sqrtPriceX96 = BigInt(slot0.sqrtPriceX96);
+    const SCALE = 10n ** 18n;
+    const priceC1PerC0Scaled = sqrtPriceX96 ** 2n * SCALE / (2n ** 192n);
+    const rleIsCurrency0 = rleAddress.toLowerCase() < DFC_ADDRESS.toLowerCase();
+    const priceRleInDfcScaled = rleIsCurrency0
+      ? priceC1PerC0Scaled
+      : (priceC1PerC0Scaled > 0n ? SCALE * SCALE / priceC1PerC0Scaled : 0n);
+    return {
+      priceRleInDfc: Number(priceRleInDfcScaled) / Number(SCALE),
+      sqrtPriceX96: slot0.sqrtPriceX96.toString(),
+      tick: Number(slot0.tick),
+      lpFee: Number(slot0.lpFee),
+      liquidity: liquidity.toString(),
+    };
+  });
 }
 
 // DFC index = basket.getCurrentSharePriceChange() / 1e6

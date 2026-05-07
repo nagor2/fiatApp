@@ -1,8 +1,8 @@
 const path = require('path');
-const { Web3 } = require('web3');
 const cacheService = require('./cacheService');
 const appConfig = require('../config/config');
 const logger = require('../utils/logger');
+const { connectWithFallback } = require('../utils/rpcProvider');
 
 const ABI_DIR = path.join(__dirname, '../config/abi');
 
@@ -13,27 +13,19 @@ class ContractService {
   }
 
   async init() {
-    const rpcUrl = process.env.RPC_URL;
-    if (!rpcUrl) {
-      throw new Error('RPC_URL not configured');
-    }
+    const daoAbi = require(path.join(ABI_DIR, 'dao.json'));
 
-    this.web3 = new Web3(rpcUrl);
-    logger.info(`Connected to Ethereum RPC: ${rpcUrl}`);
+    // Try each RPC URL until one can successfully call the DAO contract.
+    this.web3 = await connectWithFallback(async (web3) => {
+      const dao = new web3.eth.Contract(daoAbi, appConfig.daoAddress);
+      await dao.methods.addresses('rule').call(); // connectivity probe
+    });
 
-    try {
-      // Инициализируем DAO контракт
-      const daoAbi = require(path.join(ABI_DIR, 'dao.json'));
-      this.contracts.dao = new this.web3.eth.Contract(daoAbi, appConfig.daoAddress);
-      logger.info(`DAO contract initialized at ${appConfig.daoAddress}`);
+    const daoContract = new this.web3.eth.Contract(daoAbi, appConfig.daoAddress);
+    this.contracts.dao = daoContract;
+    logger.info(`DAO contract initialized at ${appConfig.daoAddress}`);
 
-      // Загружаем остальные контракты динамически из DAO
-      await this.loadDynamicContracts();
-      
-    } catch (error) {
-      logger.error('Failed to initialize contracts:', error);
-      throw error;
-    }
+    await this.loadDynamicContracts();
   }
 
   async loadDynamicContracts() {

@@ -82,7 +82,7 @@ variables:
   before_script:
     - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
   script:
-    - kubectl set env -n ${NAMESPACE} deployment/backend ZEROEX_API_KEY=${REACT_APP_ZEROEX_API_KEY} ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+    - kubectl set env -n ${NAMESPACE} deployment/backend RPC_URL=${RPC_URL} ZEROEX_API_KEY=${REACT_APP_ZEROEX_API_KEY} ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
     - kubectl set image -n ${NAMESPACE} deployment/backend backend=${BACKEND_IMAGE}
   tags:
     - docker
