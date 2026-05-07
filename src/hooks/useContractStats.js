@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { usePrices } from '../contexts/PricesContext';
 import { cachedContractCall, cachedEthBalance } from '../utils/cachedContractCall';
 import { getPastEventsCached } from '../utils/cacheApi';
 import { fromBlock } from '../utils/config';
@@ -30,6 +31,7 @@ import { contractKeyForTitle } from '../utils/contractKeys';
  */
 export function useContractStats(title) {
   const { contracts, web3, account, ethPrice, ethPriceUniswap } = useWeb3();
+  const prices = usePrices();
   const [state, setState] = useState({ loading: true, error: null, stats: [], address: null });
   const reqId = useRef(0);
 
@@ -52,6 +54,7 @@ export function useContractStats(title) {
           account,
           ethPrice,
           ethPriceUniswap,
+          prices,
         });
         if (myReq !== reqId.current) return;
         setState({
@@ -96,7 +99,7 @@ const fmt = (n, dp = 2) => {
 const fmtUsd = (n, dp = 2) => `$${fmt(n, dp)}`;
 
 /* ── DFC ────────────────────────────────────────────────────────────── */
-async function loadDfc({ contracts, web3, ethPrice, ethPriceUniswap }) {
+async function loadDfc({ contracts, web3, ethPrice, ethPriceUniswap, prices }) {
   const fc = contracts.flatCoin;
   const cdp = contracts.cdp;
   const dao = contracts.dao;
@@ -131,20 +134,16 @@ async function loadDfc({ contracts, web3, ethPrice, ethPriceUniswap }) {
   const collateralPct = supply > 0 && indicative > 0 ? (collateralUsd / (supply * indicative)) * 100 : 0;
   const stubDemand = supply * stabPct / 100 - stub;
 
-  // Lazy: pricing
-  let pricePool = null;
+  // Pricing from context (no network call); pool liquidity still needs direct RPC
+  let pricePool = prices?.dfcUsd ?? null;
   let etherPool = null;
   let dfcPool = null;
   let tvl = null;
-  if (ethPriceUniswap && ethPriceUniswap > 0) {
-    try {
-      const { getDfcPriceInEth } = await import('../utils/uniswap-quoter');
-      const r = await getDfcPriceInEth();
-      pricePool = r.priceInETH * ethPriceUniswap;
-    } catch (e) { /* swallow */ }
+  const ethUsdForPool = prices?.ethUsd || ethPriceUniswap || 0;
+  if (ethUsdForPool > 0) {
     try {
       const { getPoolLiquidityDirect } = await import('../utils/pool-liquidity-direct');
-      const p = await getPoolLiquidityDirect(ethPriceUniswap);
+      const p = await getPoolLiquidityDirect(ethUsdForPool);
       if (p && p.amountETH != null) {
         etherPool = p.amountETH;
         dfcPool = p.amountDFC;
@@ -177,7 +176,7 @@ async function loadDfc({ contracts, web3, ethPrice, ethPriceUniswap }) {
 }
 
 /* ── RLE ────────────────────────────────────────────────────────────── */
-async function loadRle({ contracts, web3, ethPriceUniswap }) {
+async function loadRle({ contracts, web3, prices }) {
   const r = contracts.rule;
   if (!r) return { stats: [], address: null };
 
@@ -200,26 +199,11 @@ async function loadRle({ contracts, web3, ethPriceUniswap }) {
   }
   const burned = Number(burnedWei) / 1e18;
 
-  // Pool pricing
-  let priceInDfc = null, priceInUsd = null, marketCap = null, poolVolume = null;
-  try {
-    const { getRleDfcPoolInfo, getDfcPriceInEth } = await import('../utils/uniswap-quoter');
-    const [poolR, dfcR] = await Promise.allSettled([
-      getRleDfcPoolInfo(r._address),
-      getDfcPriceInEth(),
-    ]);
-    let dfcPriceInEth = null;
-    if (dfcR.status === 'fulfilled') dfcPriceInEth = dfcR.value.priceInETH;
-    const dfcUsd = (dfcPriceInEth && ethPriceUniswap) ? dfcPriceInEth * ethPriceUniswap : null;
-    if (poolR.status === 'fulfilled') {
-      priceInDfc = poolR.value.priceRleInDfc;
-      if (priceInDfc && dfcUsd) {
-        priceInUsd = priceInDfc * dfcUsd;
-        marketCap = supply * priceInUsd;
-        poolVolume = (poolR.value.amountRle * priceInUsd) + (poolR.value.amountDfc * dfcUsd);
-      }
-    }
-  } catch (_) {}
+  // Pool pricing from context
+  const priceInDfc = prices?.rleDfc?.priceRleInDfc ?? null;
+  const priceInUsd = prices?.rleUsd ?? null;
+  const marketCap = priceInUsd != null ? supply * priceInUsd : null;
+  const poolVolume = null; // amountRle/amountDfc not available from backend price API
 
   const stats = [
     { label: 'Total supply', value: `${fmt(supply, 2)} RLE`, accent: true },

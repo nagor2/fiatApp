@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { usePrices } from '../contexts/PricesContext';
 import { cachedContractCall } from '../utils/cachedContractCall';
 import { toFloat } from '../utils/utils';
 
@@ -28,6 +29,7 @@ import { toFloat } from '../utils/utils';
  */
 export function useBalances() {
   const { account, contracts, web3, ethPrice, ethPriceUniswap } = useWeb3();
+  const prices = usePrices();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,29 +71,9 @@ export function useBalances() {
         }
       }));
 
-      // ── Live DFC + RLE pricing from on-chain pools ────────────────
-      // We import lazily so unconnected/no-balance pages don't pay the cost.
-      let dfcUsd = null;
-      let rleUsd = null;
-      if (ethUnitUsd && ethUnitUsd > 0) {
-        try {
-          const { getDfcPriceInEth, getRleDfcPoolInfo } = await import('../utils/uniswap-quoter');
-          // DFC/USD via DFC→ETH→USD
-          try {
-            const dfc = await getDfcPriceInEth();
-            if (dfc?.priceInETH) dfcUsd = dfc.priceInETH * ethUnitUsd;
-          } catch (e) { /* swallow — leave dfcUsd null */ }
-
-          // RLE/USD via RLE→DFC→USD
-          const rleAddr = contracts?.rule?._address;
-          if (rleAddr && dfcUsd) {
-            try {
-              const pool = await getRleDfcPoolInfo(rleAddr);
-              if (pool?.priceRleInDfc) rleUsd = pool.priceRleInDfc * dfcUsd;
-            } catch (e) { /* swallow */ }
-          }
-        } catch (_) {}
-      }
+      // ── Pricing from PricesContext (one shared fetch on app start) ──
+      const dfcUsd = prices?.dfcUsd ?? null;
+      const rleUsd = prices?.rleUsd ?? null;
 
       // Patch token rows with real prices.
       const pricedTokenRows = tokenRows.map((r) => {
@@ -141,6 +123,18 @@ export function useBalances() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, contracts, web3, ethPrice, ethPriceUniswap]);
+
+  // Patch prices into existing rows when PricesContext updates (no balance re-fetch needed)
+  useEffect(() => {
+    if (!prices || rows.length === 0) return;
+    setRows(prev => prev.map(r => {
+      if (r.symbol === 'ETH' && prices.ethUsd != null) return { ...r, priceUsd: prices.ethUsd, usd: r.balance * prices.ethUsd };
+      if (r.symbol === 'DFC' && prices.dfcUsd != null) return { ...r, priceUsd: prices.dfcUsd, usd: r.balance * prices.dfcUsd };
+      if (r.symbol === 'RLE' && prices.rleUsd != null) return { ...r, priceUsd: prices.rleUsd, usd: r.balance * prices.rleUsd };
+      return r;
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prices]);
 
   const totalUsd = useMemo(
     () => rows.reduce((s, r) => s + (r.usd || 0), 0),

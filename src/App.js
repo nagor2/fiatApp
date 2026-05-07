@@ -2,6 +2,7 @@ import './styles/index.css';
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Web3Provider } from './contexts/Web3Context';
+import { PricesProvider } from './contexts/PricesContext';
 import Layout from './components/Layout';
 import Stub from './pages/_Stub';
 import DepositsPage from './pages/DepositsPage';
@@ -33,6 +34,7 @@ function App() {
   return (
     <BrowserRouter>
       <Web3Provider>
+        <PricesProvider>
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<Layout />}>
@@ -62,6 +64,7 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
+        </PricesProvider>
       </Web3Provider>
     </BrowserRouter>
   );

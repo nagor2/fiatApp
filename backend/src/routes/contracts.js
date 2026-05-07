@@ -1,8 +1,50 @@
 const express = require('express');
+const fs      = require('fs');
+const path    = require('path');
 const contractService = require('../services/contractService');
-const logger = require('../utils/logger');
+const appConfig       = require('../config/config');
+const logger          = require('../utils/logger');
 
-const router = express.Router();
+const router  = express.Router();
+const ABI_DIR = path.join(__dirname, '../config/abi');
+
+// Lazy-loaded, cached in memory — ABIs never change at runtime
+let _contractsPayload = null;
+
+function loadContractsPayload() {
+  if (_contractsPayload) return _contractsPayload;
+
+  const result = {};
+
+  // DAO — address from config, address known statically
+  const daoAbi = JSON.parse(fs.readFileSync(path.join(ABI_DIR, 'dao.json'), 'utf8'));
+  result.dao = { address: appConfig.daoAddress, abi: daoAbi };
+
+  // Dynamic contracts — address from contractService (loaded at startup from DAO)
+  for (const name of appConfig.contracts) {
+    const abiFile = path.join(ABI_DIR, `${name}.json`);
+    if (!fs.existsSync(abiFile)) continue;
+    const abi     = JSON.parse(fs.readFileSync(abiFile, 'utf8'));
+    const address = contractService.contracts?.[name]?._address || null;
+    result[name]  = { address, abi };
+  }
+
+  _contractsPayload = result;
+  return result;
+}
+
+// GET /api/contracts/abis — addresses + ABIs for all contracts.
+// Used by the frontend once on app load to initialize web3 contract instances.
+// Cache-Control: immutable — ABIs only change when contracts are redeployed.
+router.get('/abis', (req, res) => {
+  try {
+    res.set('Cache-Control', 'public, max-age=86400, immutable');
+    res.json(loadContractsPayload());
+  } catch (err) {
+    logger.error('Failed to load contracts payload:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Получить состояние CDP контракта
 router.get('/cdp/state', async (req, res) => {

@@ -86,12 +86,12 @@ async function fetchEthUsd() {
   const web3 = getWeb3();
   const pool = new web3.eth.Contract(SLOT0_ABI, USDC_WETH_POOL);
   const s = await pool.methods.slot0().call();
-  const sqrtPrice = Number(BigInt(s.sqrtPriceX96)) / Number(BigInt(2) ** BigInt(96));
-  const price = sqrtPrice * sqrtPrice; // USDC per WETH in raw (USDC=6dec, WETH=18dec)
-  // USDC is token0 (6 dec), WETH is token1 (18 dec):
-  // priceWETH/USDC = price * 10^12  (price is in USDC units per WETH unit, raw)
-  const ethUsd = price * 1e12;
-  return Math.round(ethUsd * 100) / 100;
+  // USDC/WETH V3: token0=USDC(6dec), token1=WETH(18dec)
+  // sqrtPriceX96 = sqrt(WETH_wei / USDC_unit) * 2^96  →  price = token1/token0 (raw)
+  // ETH/USD = 10^12 / price = 10^12 * 2^192 / sqrtPriceX96^2
+  const sqrtPriceX96 = BigInt(s.sqrtPriceX96);
+  const ethUsdScaled = (10n ** 18n * 2n ** 192n) / (sqrtPriceX96 ** 2n);
+  return Math.round(Number(ethUsdScaled) / 1e6 * 100) / 100;
 }
 
 async function fetchDfcEth() {
@@ -120,14 +120,17 @@ async function fetchRleDfcPool(rleAddress) {
     sv.methods.getSlot0(DFC_RLE_POOL_ID).call(),
     sv.methods.getLiquidity(DFC_RLE_POOL_ID).call(),
   ]);
-  const sqrtBig = BigInt(slot0.sqrtPriceX96);
-  const Q96 = BigInt(2) ** BigInt(96);
-  const sqrtPrice = Number(sqrtBig) / Number(Q96);
-  const priceC1PerC0 = sqrtPrice * sqrtPrice;
+  // RLE and DFC are both 18-decimal tokens — no decimal adjustment needed
+  // priceC1PerC0 = sqrtPriceX96^2 / 2^192  (token1 per token0, human-readable)
+  const sqrtPriceX96 = BigInt(slot0.sqrtPriceX96);
+  const SCALE = 10n ** 18n;
+  const priceC1PerC0Scaled = sqrtPriceX96 ** 2n * SCALE / (2n ** 192n);
   const rleIsCurrency0 = rleAddress.toLowerCase() < DFC_ADDRESS.toLowerCase();
-  const priceRleInDfc = rleIsCurrency0 ? priceC1PerC0 : (priceC1PerC0 > 0 ? 1 / priceC1PerC0 : 0);
+  const priceRleInDfcScaled = rleIsCurrency0
+    ? priceC1PerC0Scaled
+    : (priceC1PerC0Scaled > 0n ? SCALE * SCALE / priceC1PerC0Scaled : 0n);
   return {
-    priceRleInDfc,
+    priceRleInDfc: Number(priceRleInDfcScaled) / Number(SCALE),
     sqrtPriceX96: slot0.sqrtPriceX96.toString(),
     tick: Number(slot0.tick),
     lpFee: Number(slot0.lpFee),
@@ -163,18 +166,14 @@ async function cachedFetch(key, ttl, fn) {
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────
-// GET /api/prices — returns ETH/USD, DFC/ETH, and optionally RLE/DFC
-// Query params: rle=<address>  (optional, enables RLE/DFC pricing)
-// GET /api/prices
-// Query params: rle=<address>  (optional — enables RLE/DFC pricing)
+// GET /api/prices — returns all prices: ETH/USD, DFC/ETH, DFC/USD, RLE/DFC, RLE/USD
+// RLE address is resolved automatically from contractService (no query params needed)
 //
-// Cache-Control strategy:
-//   dfcIndex — oracle value, only changes on blockchain tx → 5 min browser cache
-//   market prices — AMM / Etherscan, change frequently → 60 s browser cache
-//   stale-while-revalidate lets the browser serve stale data while refetching in bg
+// Cache-Control: dfcIndex → 5 min (oracle, changes only on-chain tx)
+//                market prices → 30 s + stale-while-revalidate
 router.get('/', async (req, res) => {
   try {
-    const rleAddress = req.query.rle || null;
+    const rleAddress = contractService.contracts?.rule?._address || null;
 
     const [ethUsd, dfcEth, dfcIndex] = await Promise.allSettled([
       cachedFetch('price:eth_usd',   CACHE_TTL_MARKET, fetchEthUsd),
@@ -212,8 +211,6 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // dfcIndex is oracle-sourced — valid for 5 min in browser.
-    // Market prices rotate every 60 s; stale-while-revalidate covers the gap.
     const maxAge = response.dfcIndex != null ? CACHE_TTL_ORACLE : CACHE_TTL_MARKET;
     res.set('Cache-Control', `public, max-age=${maxAge}, stale-while-revalidate=${maxAge * 4}`);
     res.json(response);

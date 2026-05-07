@@ -1,7 +1,10 @@
+const path = require('path');
 const { Web3 } = require('web3');
 const cacheService = require('./cacheService');
-const contractsConfig = require('../config/contracts');
+const appConfig = require('../config/config');
 const logger = require('../utils/logger');
+
+const ABI_DIR = path.join(__dirname, '../config/abi');
 
 class ContractService {
   constructor() {
@@ -20,9 +23,9 @@ class ContractService {
 
     try {
       // Инициализируем DAO контракт
-      const daoAbi = require('../config/abi/dao.json');
-      this.contracts.dao = new this.web3.eth.Contract(daoAbi, contractsConfig.dao.address);
-      logger.info(`DAO contract initialized at ${contractsConfig.dao.address}`);
+      const daoAbi = require(path.join(ABI_DIR, 'dao.json'));
+      this.contracts.dao = new this.web3.eth.Contract(daoAbi, appConfig.daoAddress);
+      logger.info(`DAO contract initialized at ${appConfig.daoAddress}`);
 
       // Загружаем остальные контракты динамически из DAO
       await this.loadDynamicContracts();
@@ -34,20 +37,14 @@ class ContractService {
   }
 
   async loadDynamicContracts() {
-    for (const contractConfig of contractsConfig.dynamicContracts) {
+    for (const name of appConfig.contracts) {
       try {
-        // Получаем адрес из DAO
-        const address = await this.contracts.dao.methods.addresses(contractConfig.name).call();
-        
-        // Загружаем ABI
-        const abi = require(`../${contractConfig.abiPath}`);
-        
-        // Создаем contract instance
-        this.contracts[contractConfig.name] = new this.web3.eth.Contract(abi, address);
-        
-        logger.info(`Contract ${contractConfig.name} initialized at ${address}`);
+        const address = await this.contracts.dao.methods.addresses(name).call();
+        const abi     = require(path.join(ABI_DIR, `${name}.json`));
+        this.contracts[name] = new this.web3.eth.Contract(abi, address);
+        logger.info(`Contract ${name} initialized at ${address}`);
       } catch (error) {
-        logger.error(`Failed to initialize contract ${contractConfig.name}:`, error);
+        logger.error(`Failed to initialize contract ${name}:`, error);
       }
     }
   }

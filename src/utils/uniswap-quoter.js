@@ -513,13 +513,19 @@ let _backendPricesCache = null;
 let _backendPricesTs = 0;
 const BACKEND_TTL = 25_000; // slightly under backend's 30s so we always get a fresh answer
 
-async function _fetchBackendPrices(rleAddress) {
+// Called by PricesContext after its own fetch — pre-populates the cache so
+// class components and lazy callers never need to make a separate request.
+export function setPricesCache(data) {
+  _backendPricesCache = data;
+  _backendPricesTs = Date.now();
+}
+
+async function _fetchBackendPrices() {
   const now = Date.now();
   if (_backendPricesCache && (now - _backendPricesTs) < BACKEND_TTL) {
     return _backendPricesCache;
   }
-  const qs = rleAddress ? `?rle=${rleAddress}` : '';
-  const resp = await fetch(`/api/prices${qs}`);
+  const resp = await fetch('/api/prices');
   if (!resp.ok) throw new Error(`/api/prices ${resp.status}`);
   const data = await resp.json();
   _backendPricesCache = data;
@@ -549,7 +555,7 @@ export const getDfcPriceInEth = () => _dedupedCall('dfcPriceInEth', TTL, async (
 
 export const getRleDfcPoolInfo = (rleAddress) => _dedupedCall(`rleDfc:${rleAddress}`, TTL, async () => {
   try {
-    const d = await _fetchBackendPrices(rleAddress);
+    const d = await _fetchBackendPrices();
     if (d.rleDfc) return d.rleDfc;
   } catch (_) {}
   return _getRleDfcPoolInfo(rleAddress);
