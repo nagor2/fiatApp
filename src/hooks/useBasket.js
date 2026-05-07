@@ -53,7 +53,7 @@ export default function useBasket() {
       console.error('useBasket failed:', e);
       setState((s) => ({ ...s, loading: false, error: e.message || String(e) }));
     }
-  }, [contracts]);
+  }, [contracts?.basket]);
 
   useEffect(() => { load(); }, [load]);
 

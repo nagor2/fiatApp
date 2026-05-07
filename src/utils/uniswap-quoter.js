@@ -12,6 +12,26 @@ import { withFallback } from './rpc-provider';
 
 const { Contract, formatUnits, parseUnits, ZeroAddress } = ethers;
 
+// In-flight dedup + short TTL cache (30s) so multiple components share one RPC call.
+const _cache = new Map(); // key → { promise, ts, result }
+function _dedupedCall(key, ttlMs, fn) {
+  const now = Date.now();
+  const entry = _cache.get(key);
+  if (entry) {
+    if (entry.promise) return entry.promise;           // already in-flight
+    if (now - entry.ts < ttlMs) return Promise.resolve(entry.result); // cached
+  }
+  const promise = fn().then(result => {
+    _cache.set(key, { promise: null, ts: Date.now(), result });
+    return result;
+  }).catch(err => {
+    _cache.delete(key);
+    throw err;
+  });
+  _cache.set(key, { promise, ts: 0, result: null });
+  return promise;
+}
+
 const DFC_TOKEN = new Token(
   UNISWAP_CONFIG.CHAIN_ID,
   UNISWAP_CONFIG.TOKENS.DFC,
@@ -158,7 +178,7 @@ function createPoolConfig() {
  * Получить котировку DFC в ETH из Uniswap V4
  * @returns {Promise<{priceInETH: number, source: string, gasEstimate?: string}>}
  */
-export async function getDfcPriceInEth() {
+async function _getDfcPriceInEth() {
   try {
     console.log('🔄 Getting DFC quote from Uniswap V4 Quoter...');
     console.log(`   Quoter: ${UNISWAP_CONFIG.V4.QUOTER}`);
@@ -230,7 +250,7 @@ export async function getDfcPriceInEth() {
  * @param {number} ethPriceUSD - цена ETH в USD для расчета TVL
  * @returns {Promise<{liquidity: string, sqrtPriceX96: string, tick: number, fee: number, amountETH: number, amountDFC: number, tvlUSD: number, source: string}>}
  */
-export async function getPoolLiquidityInfo(ethPriceUSD = null) {
+async function _getPoolLiquidityInfo(ethPriceUSD = null) {
   try {
     console.log('🔄 Getting liquidity info for DFC/ETH pool via StateView...');
     
@@ -341,7 +361,7 @@ export function getDfcTokenInfo() {
  * Получить цену ETH в USD из Uniswap V3 (через пул USDC/WETH)
  * @returns {Promise<{priceInUSD: number, source: string}>}
  */
-export async function getEthPriceInUsd() {
+async function _getEthPriceInUsd() {
   try {
     console.log('🔄 Getting ETH/USD price from Uniswap V3...');
     console.log(`   Pool: USDC/WETH (0.05% fee)`);
@@ -438,7 +458,7 @@ async function getV4PoolStateById(poolId) {
  * @param {string} rleAddress - адрес RLE токена (узнаётся из DAO в рантайме)
  * @returns {Promise<{priceRleInDfc:number, amountRle:number, amountDfc:number, liquidity:string, lpFee:number}>}
  */
-export async function getRleDfcPoolInfo(rleAddress) {
+async function _getRleDfcPoolInfo(rleAddress) {
   if (!rleAddress) {
     throw new Error('RLE address is required');
   }
@@ -487,6 +507,55 @@ export async function getRleDfcPoolInfo(rleAddress) {
     lpFee: state.lpFee,
   };
 }
+
+// ── Backend price API (Redis-cached, shared across all browser clients) ──
+let _backendPricesCache = null;
+let _backendPricesTs = 0;
+const BACKEND_TTL = 25_000; // slightly under backend's 30s so we always get a fresh answer
+
+async function _fetchBackendPrices(rleAddress) {
+  const now = Date.now();
+  if (_backendPricesCache && (now - _backendPricesTs) < BACKEND_TTL) {
+    return _backendPricesCache;
+  }
+  const qs = rleAddress ? `?rle=${rleAddress}` : '';
+  const resp = await fetch(`/api/prices${qs}`);
+  if (!resp.ok) throw new Error(`/api/prices ${resp.status}`);
+  const data = await resp.json();
+  _backendPricesCache = data;
+  _backendPricesTs = now;
+  return data;
+}
+
+// Public exports — cached + deduped (30s TTL).
+// Try backend API first (one shared RPC call server-side + Redis); fall back to direct RPC.
+const TTL = 30_000;
+
+export const getEthPriceInUsd = () => _dedupedCall('ethPriceInUsd', TTL, async () => {
+  try {
+    const d = await _fetchBackendPrices();
+    if (d.ethUsd) return { priceInUSD: d.ethUsd, source: 'backend-cache' };
+  } catch (_) {}
+  return _getEthPriceInUsd();
+});
+
+export const getDfcPriceInEth = () => _dedupedCall('dfcPriceInEth', TTL, async () => {
+  try {
+    const d = await _fetchBackendPrices();
+    if (d.dfcEth) return { priceInETH: d.dfcEth, source: 'backend-cache' };
+  } catch (_) {}
+  return _getDfcPriceInEth();
+});
+
+export const getRleDfcPoolInfo = (rleAddress) => _dedupedCall(`rleDfc:${rleAddress}`, TTL, async () => {
+  try {
+    const d = await _fetchBackendPrices(rleAddress);
+    if (d.rleDfc) return d.rleDfc;
+  } catch (_) {}
+  return _getRleDfcPoolInfo(rleAddress);
+});
+
+export const getPoolLiquidityInfo = (ethPriceUSD) => _dedupedCall(`poolLiq:${ethPriceUSD}`, TTL, () => _getPoolLiquidityInfo(ethPriceUSD));
 
 const uniswapQuoterModule = {
   getDfcPriceInEth,

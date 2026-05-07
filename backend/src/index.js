@@ -6,6 +6,7 @@ const cacheService = require('./services/cacheService');
 const contractsRouter = require('./routes/contracts');
 const zeroexRouter = require('./routes/zeroex');
 const ethpriceRouter = require('./routes/ethprice');
+const pricesRouter = require('./routes/prices');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -36,6 +37,7 @@ app.get('/health', (req, res) => {
 app.use('/api/contracts', contractsRouter);
 app.use('/api/0x', zeroexRouter);
 app.use('/api/ethprice', ethpriceRouter);
+app.use('/api/prices', pricesRouter);
 
 // Error handling
 app.use((err, req, res, next) => {

@@ -214,7 +214,11 @@ export default function useExchangeRate() {
       console.error('useExchangeRate failed:', e);
       setState((s) => ({ ...s, loading: false, error: e.message || String(e) }));
     }
-  }, [contracts, web3]);
+  // Depend only on the two contracts this hook actually uses.
+  // contracts is rebuilt on every resolved address (oracle, cdp, basket…),
+  // so using the full object would re-fire the expensive transaction fetch
+  // for each contract that resolves — typically 4–5 times per page load.
+  }, [contracts?.oracle, contracts?.basket, web3]);
 
   useEffect(() => { load(); }, [load]);
 

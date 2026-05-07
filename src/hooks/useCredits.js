@@ -118,7 +118,7 @@ export function useCredits({ pollFeeMs = 15000 } = {}) {
     } finally {
       if (myReq === reqId.current) setLoading(false);
     }
-  }, [account, contracts, web3, decorate]);
+  }, [account, contracts?.cdp, contracts?.dao, web3, decorate]);
 
   /** Light refresh — batched re-pull of totalCurrentFee for active rows. */
   const refreshFees = useCallback(async () => {

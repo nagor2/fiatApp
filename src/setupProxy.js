@@ -21,7 +21,7 @@ module.exports = function(app) {
   app.use(
     '/api/rpc',
     createProxyMiddleware({
-      target: 'https://ethereum.publicnode.com',
+      target: 'https://ethereum-rpc.publicnode.com',
       changeOrigin: true,
       secure: true,
       pathRewrite: {
@@ -62,6 +62,18 @@ module.exports = function(app) {
           error: 'Etherscan proxy error', 
           message: err.message 
         });
+      },
+    })
+  );
+
+  // Backend price endpoint (Redis-cached ETH/DFC/RLE prices from on-chain)
+  app.use(
+    '/api/prices',
+    createProxyMiddleware({
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+      onError: (err, req, res) => {
+        res.status(503).json({ error: 'prices unavailable', message: err.message });
       },
     })
   );

@@ -3,7 +3,11 @@
  * Если один провайдер недоступен (429, timeout, CORS), автоматически пробует следующий
  */
 
-import { JsonRpcProvider } from 'ethers';
+import { JsonRpcProvider, Network } from 'ethers';
+
+// Pre-built mainnet network object — passing this as staticNetwork tells ethers
+// to NEVER call eth_chainId (saves one round-trip per provider creation).
+const MAINNET = Network.from(1);
 
 const RPC_PROVIDERS = {
   PROXY:      typeof window !== 'undefined' ? `${window.location.origin}/api/rpc` : '/api/rpc',
@@ -21,9 +25,9 @@ const providerCache = new Map();
 
 function getProvider(rpcUrl) {
   if (!providerCache.has(rpcUrl)) {
-    const provider = new JsonRpcProvider(rpcUrl, undefined, {
-      staticNetwork: true,
-      batchMaxCount: 1,
+    const provider = new JsonRpcProvider(rpcUrl, MAINNET, {
+      staticNetwork: MAINNET,
+      batchMaxCount: 5,
     });
     providerCache.set(rpcUrl, provider);
   }
@@ -54,22 +58,28 @@ export async function withFallback(requestFn, options = {}) {
     } catch (error) {
       lastError = error;
       const errorMsg = error.message || error.toString();
-      
+
+      // Contract execution errors (revert, bad call) won't succeed on another provider — fail fast.
+      if (error.code === 'CALL_EXCEPTION' || errorMsg.includes('execution reverted') || errorMsg.includes('missing revert data')) {
+        console.error(`❌ Contract error on ${rpcUrl} (not retrying):`, errorMsg);
+        throw error;
+      }
+
       if (errorMsg.includes('429') || errorMsg.includes('Too Many Requests')) {
         console.warn(`⚠️ Rate limit on ${rpcUrl}, trying next...`);
         continue;
       }
-      
+
       if (errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT')) {
         console.warn(`⚠️ Timeout on ${rpcUrl}, trying next...`);
         continue;
       }
-      
+
       if (errorMsg.includes('CORS') || errorMsg.includes('NetworkError')) {
         console.warn(`⚠️ CORS error on ${rpcUrl}, trying next...`);
         continue;
       }
-      
+
       console.error(`❌ Error on ${rpcUrl}:`, errorMsg);
       continue;
     }

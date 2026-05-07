@@ -41,15 +41,15 @@ export function useAuctions({ pollMs = 30000 } = {}) {
     if (addr?.toLowerCase() === contracts.rule?._address?.toLowerCase())     return 'RLE';
     if (addr?.toLowerCase() === contracts.weth?._address?.toLowerCase())     return 'WETH';
     return '?';
-  }, [contracts]);
+  }, [contracts?.flatCoin, contracts?.rule, contracts?.weth]);
 
   const typeOf = useCallback((auction) => {
     if (!contracts) return 'liquidation';
     const lot = auction.lotToken?.toLowerCase();
-    if (lot === contracts.rule?._address?.toLowerCase())     return 'dfc-buyout';   // pay DFC, receive RLE
-    if (lot === contracts.flatCoin?._address?.toLowerCase()) return 'rle-buyout';   // pay RLE, receive DFC
-    return 'liquidation';                                                            // pay DFC, receive WETH
-  }, [contracts]);
+    if (lot === contracts.rule?._address?.toLowerCase())     return 'dfc-buyout';
+    if (lot === contracts.flatCoin?._address?.toLowerCase()) return 'rle-buyout';
+    return 'liquidation';
+  }, [contracts?.rule, contracts?.flatCoin]);
 
   const load = useCallback(async () => {
     if (!web3 || !contracts?.auction) {
@@ -163,7 +163,7 @@ export function useAuctions({ pollMs = 30000 } = {}) {
     } finally {
       if (myReq === reqId.current) setLoading(false);
     }
-  }, [web3, contracts, account, symbolOf, typeOf]);
+  }, [web3, contracts?.auction, contracts?.dao, account, symbolOf, typeOf]);
 
   useEffect(() => { load(); }, [load]);
 

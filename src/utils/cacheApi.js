@@ -33,12 +33,23 @@ const absoluteWorkerUrl = rawWorkerUrl.startsWith('http')
   : (typeof window !== 'undefined' ? `${window.location.origin}${rawWorkerUrl}` : rawWorkerUrl);
 const WORKER_API_URL = absoluteWorkerUrl.replace(/\/health$/, '');
 
-// In-flight deduplication: if the same URL is already being fetched, return the
-// same promise instead of firing a second request to the worker.
-const _inFlight = new Map();
+// In-flight dedup + 10 s result cache.
+// Prevents StrictMode double-mounts and rapid re-renders from firing duplicate worker requests.
+const _inFlight = new Map(); // key → Promise (in-flight)
+const _resultCache = new Map(); // key → { value, ts }
+const RESULT_CACHE_TTL = 10_000; // ms
+
 function dedupFetch(key, fn) {
+  // Serve cached result if still fresh.
+  const cached = _resultCache.get(key);
+  if (cached && Date.now() - cached.ts < RESULT_CACHE_TTL) {
+    return Promise.resolve(cached.value);
+  }
+  // Dedup concurrent in-flight requests.
   if (_inFlight.has(key)) return _inFlight.get(key);
-  const promise = fn().finally(() => _inFlight.delete(key));
+  const promise = fn()
+    .then((value) => { _resultCache.set(key, { value, ts: Date.now() }); return value; })
+    .finally(() => _inFlight.delete(key));
   _inFlight.set(key, promise);
   return promise;
 }
@@ -72,12 +83,12 @@ async function fetchWorkerEvents(contractAddress, eventName, limit) {
 
 async function fetchWorkerTransactions(contractAddress, limit) {
   const url = `${WORKER_API_URL}/api/transactions/${contractAddress}?limit=${limit}`;
-  const response = await fetchWorkerWithTimeout(url, {}, WORKER_TX_TIMEOUT_MS);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  const data = await response.json();
-  return data.transactions || [];
+  return dedupFetch(url, async () => {
+    const response = await fetchWorkerWithTimeout(url, {}, WORKER_TX_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return data.transactions || [];
+  });
 }
 
 export async function getContractTransactions(contractAddress, limit = 100) {

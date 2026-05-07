@@ -85,7 +85,7 @@ export function useDeposits({ pollInterestMs = 20000 } = {}) {
     } finally {
       if (myReq === reqId.current) setLoading(false);
     }
-  }, [account, contracts, web3]);
+  }, [account, contracts?.deposit, contracts?.dao, web3]);
 
   /** Lighter refresh: only re-pull overallInterest for known deposits. */
   const refreshInterest = useCallback(async () => {

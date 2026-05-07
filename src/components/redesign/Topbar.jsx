@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Icon from './Icons';
 import { useWeb3 } from '../../contexts/Web3Context';
-import useExchangeRate from '../../hooks/useExchangeRate';
 
 /**
  * Topbar — brand, search, ETH price pill (with multi-source popover),
@@ -24,8 +23,16 @@ export default function Topbar({ onMenu, theme, setTheme }) {
     disconnectWallet,
   } = useWeb3();
 
-  const { instruments } = useExchangeRate();
-  const dfcIndex = instruments.find((i) => i.symbol === 'DFC')?.currentPrice;
+  const [dfcIndex, setDfcIndex] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/prices')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (!cancelled && d?.dfcIndex != null) setDfcIndex(d.dfcIndex); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '';
 

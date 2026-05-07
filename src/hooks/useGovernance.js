@@ -188,7 +188,7 @@ export function usePool({ pollMs = 30000 } = {}) {
     } finally {
       if (myReq === reqId.current) setLoading(false);
     }
-  }, [contracts, account, web3]);
+  }, [contracts?.dao, account, web3]);
 
   useEffect(() => { load(); }, [load]);
 
