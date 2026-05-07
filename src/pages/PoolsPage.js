@@ -52,6 +52,7 @@ export default function PoolsPage() {
 
   const dfcUsd        = prices?.dfcUsd                   ?? null;
   const rlePriceInDfc = prices?.rleDfc?.priceRleInDfc    ?? null;
+  const rleUsd        = (rlePriceInDfc != null && dfcUsd != null) ? rlePriceInDfc * dfcUsd : null;
 
   return (
     <div className="df-page">
@@ -70,7 +71,7 @@ export default function PoolsPage() {
             onTrade={() => setPane({ pair: p })}
             quote={
               p.id === 'dfc-eth' ? (dfcUsd != null ? `$${fmt(dfcUsd, 4)}` : null) :
-              p.id === 'rle-dfc' ? (rlePriceInDfc != null ? `${fmt(rlePriceInDfc, 6)} DFC` : null) :
+              p.id === 'rle-dfc' ? (rlePriceInDfc != null ? `${fmt(rlePriceInDfc, 6)} DFC${rleUsd != null ? ` ($${fmt(rleUsd, 4)})` : ''}` : null) :
               null
             }
             quoteLabel={

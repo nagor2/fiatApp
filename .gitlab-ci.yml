@@ -95,7 +95,8 @@ variables:
   before_script:
     - echo "${K3S_CONFIG}" | base64 -d > /.kube/config
   script:
-    - kubectl set env -n ${NAMESPACE} deployment/watcher RPC_HTTP_URL=${RPC_URL} ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+    - WATCHER_RPC=$(echo "${RPC_URL}" | cut -d',' -f1)
+    - kubectl set env -n ${NAMESPACE} deployment/watcher RPC_HTTP_URL=${WATCHER_RPC} ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
     - kubectl set image -n ${NAMESPACE} deployment/watcher watcher=${WATCHER_IMAGE}
   tags:
     - docker
