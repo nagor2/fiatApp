@@ -7,6 +7,7 @@ const contractsRouter = require('./routes/contracts');
 const zeroexRouter = require('./routes/zeroex');
 const ethpriceRouter = require('./routes/ethprice');
 const pricesRouter = require('./routes/prices');
+const rpcRouter = require('./routes/rpc');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/contracts', contractsRouter);
 app.use('/api/0x', zeroexRouter);
 app.use('/api/ethprice', ethpriceRouter);
 app.use('/api/prices', pricesRouter);
+app.use('/api/rpc', rpcRouter);
 
 // Error handling
 app.use((err, req, res, next) => {

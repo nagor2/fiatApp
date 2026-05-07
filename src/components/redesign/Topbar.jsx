@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Icon from './Icons';
 import { useWeb3 } from '../../contexts/Web3Context';
+import { usePrices } from '../../contexts/PricesContext';
 
 /**
  * Topbar — brand, search, ETH price pill (with multi-source popover),
@@ -13,26 +14,12 @@ import { useWeb3 } from '../../contexts/Web3Context';
  * can sanity-check the oracle against external sources.
  */
 export default function Topbar({ onMenu, theme, setTheme }) {
-  const {
-    ethPrice,
-    ethPriceEtherscan,
-    ethPriceUniswap,
-    account,
-    walletConnected,
-    getAccount,
-    disconnectWallet,
-  } = useWeb3();
-
-  const [dfcIndex, setDfcIndex] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/prices')
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (!cancelled && d?.dfcIndex != null) setDfcIndex(d.dfcIndex); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  const { account, walletConnected, getAccount, disconnectWallet } = useWeb3();
+  const prices = usePrices();
+  const dfcIndex          = prices?.dfcIndex          ?? null;
+  const ethPriceOracle    = prices?.ethUsd             ?? null;
+  const ethPriceUniswap   = prices?.ethUsdUniswap      ?? null;
+  const ethPriceEtherscan = prices?.ethUsdEtherscan   ?? null;
 
   const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '';
 
@@ -57,7 +44,7 @@ export default function Topbar({ onMenu, theme, setTheme }) {
 
       <div className="df-topbar__right">
         <EthPricePill
-          contract={ethPrice}
+          contract={ethPriceOracle}
           etherscan={ethPriceEtherscan}
           uniswap={ethPriceUniswap}
         />

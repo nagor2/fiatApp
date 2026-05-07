@@ -8,15 +8,18 @@ const logger          = require('../utils/logger');
 const router  = express.Router();
 const ABI_DIR = path.join(__dirname, '../config/abi');
 
-// Lazy-loaded, cached in memory — ABIs never change at runtime
+// Cached in memory once all contract addresses are resolved
 let _contractsPayload = null;
 
 function loadContractsPayload() {
-  if (_contractsPayload) return _contractsPayload;
+  // Return cached payload only if all dynamic contracts have addresses
+  if (_contractsPayload && appConfig.contracts.every(n => _contractsPayload[n]?.address)) {
+    return _contractsPayload;
+  }
 
   const result = {};
 
-  // DAO — address from config, address known statically
+  // DAO — address from config, known statically
   const daoAbi = JSON.parse(fs.readFileSync(path.join(ABI_DIR, 'dao.json'), 'utf8'));
   result.dao = { address: appConfig.daoAddress, abi: daoAbi };
 
@@ -29,7 +32,11 @@ function loadContractsPayload() {
     result[name]  = { address, abi };
   }
 
-  _contractsPayload = result;
+  // Only freeze the cache when all addresses are known
+  if (appConfig.contracts.every(n => result[n]?.address)) {
+    _contractsPayload = result;
+  }
+
   return result;
 }
 

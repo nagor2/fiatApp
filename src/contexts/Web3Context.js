@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import Web3 from 'web3';
 import config from '../utils/config';
 import {getPastEventsCached} from "../utils/cacheApi";
+import { usePrices } from './PricesContext';
 
 const Web3Context = createContext();
 
@@ -20,9 +21,11 @@ export const Web3Provider = ({ children }) => {
   const [walletConnected, setWalletConnected] = useState(false);
   const [ethPrice, setEthPrice] = useState('');
   const [ethPriceLastUpdate, setEthPriceLastUpdate] = useState(null);
-  const [ethPriceEtherscan, setEthPriceEtherscan] = useState(null);
-  const [ethPriceUniswap, setEthPriceUniswap] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const prices = usePrices();
+  const ethPriceUniswap   = prices?.ethUsdUniswap   ?? null;
+  const ethPriceEtherscan = prices?.ethUsdEtherscan ?? null;
 
   const initWeb3 = async () => {
     let web3Instance;
@@ -45,104 +48,62 @@ export const Web3Provider = ({ children }) => {
   };
 
   const initContracts = async (web3Instance) => {
+    const resp = await fetch('/api/contracts/abis');
+    if (!resp.ok) throw new Error('Failed to fetch contract ABIs');
+    const abis = await resp.json();
+
     const contractsObj = {};
-    const dao = new web3Instance.eth.Contract(config.daoABI, config.daoAddress);
-    contractsObj['dao'] = dao;
+    for (const [name, { address, abi }] of Object.entries(abis)) {
+      if (address && abi) {
+        contractsObj[name] = new web3Instance.eth.Contract(abi, address);
+      }
+    }
 
-    dao.methods.addresses('rule').call().then((result) => {
-      contractsObj['rule'] = new web3Instance.eth.Contract(config.ruleABI, result);
-      setContracts(prev => ({ ...prev, rule: contractsObj['rule'] }));
-    });
-
-    dao.methods.addresses("flatCoin").call().then((result) => {
-      contractsObj['flatCoin'] = new web3Instance.eth.Contract(config.stableCoinABI, result);
-      setContracts(prev => ({ ...prev, flatCoin: contractsObj['flatCoin'] }));
-    });
-
-    dao.methods.addresses("cdp").call().then((result) => {
-      contractsObj['cdp'] = new web3Instance.eth.Contract(config.cdpABI, result);
-      setContracts(prev => ({ ...prev, cdp: contractsObj['cdp'] }));
-    });
-
-    dao.methods.addresses('oracle').call().then(async (oracleAddress) => {
-      contractsObj['oracle'] = new web3Instance.eth.Contract(config.oracleABI, oracleAddress);
-      
-      // Получаем текущую цену
-      contractsObj['oracle'].methods.getPrice('eth').call().then((price) => {
+    if (contractsObj.oracle) {
+      contractsObj.oracle.methods.getPrice('eth').call().then((price) => {
         console.log("price: " + price);
         setEthPrice((parseFloat(price) / 10 ** 6).toFixed(2));
-      });
-      
-      // Получаем последнее событие priceUpdated для ETH из cache
-      try {
-        const events = await getPastEventsCached(
-          contractsObj['oracle'],
-          'priceUpdated',
-          {fromBlock: 0, toBlock: 'latest'},
-          web3Instance
-        );
-        
+      }).catch(() => {});
+
+      getPastEventsCached(
+        contractsObj.oracle,
+        'priceUpdated',
+        { fromBlock: 0, toBlock: 'latest' },
+        web3Instance,
+      ).then(async (events) => {
         if (events.length > 0) {
-          // Берём последнее событие
           const lastEvent = events[events.length - 1];
-          const blockNum = typeof lastEvent.blockNumber === 'bigint' 
-            ? Number(lastEvent.blockNumber) 
+          const blockNum = typeof lastEvent.blockNumber === 'bigint'
+            ? Number(lastEvent.blockNumber)
             : lastEvent.blockNumber;
           const block = await web3Instance.eth.getBlock(blockNum);
-          const blockTimestamp = typeof block.timestamp === 'bigint' 
-            ? Number(block.timestamp) 
+          const blockTimestamp = typeof block.timestamp === 'bigint'
+            ? Number(block.timestamp)
             : block.timestamp;
-          const timestamp = new Date(blockTimestamp * 1000);
-          
-          console.log("Last ETH price update:", timestamp, "block:", blockNum);
-          setEthPriceLastUpdate(timestamp);
+          console.log("Last ETH price update block:", blockNum);
+          setEthPriceLastUpdate(new Date(blockTimestamp * 1000));
         }
-      } catch (err) {
-        console.error('Failed to get price update events:', err);
-      }
-      
-      setContracts(prev => ({ ...prev, oracle: contractsObj['oracle'] }));
-    });
-
-    dao.methods.addresses("deposit").call().then((result) => {
-      contractsObj['deposit'] = new web3Instance.eth.Contract(config.depositABI, result);
-      setContracts(prev => ({ ...prev, deposit: contractsObj['deposit'] }));
-    });
-
-    dao.methods.addresses("basket").call().then((result) => {
-      contractsObj['basket'] = new web3Instance.eth.Contract(config.cartABI, result);
-      setContracts(prev => ({ ...prev, basket: contractsObj['basket'] }));
-    });
-
-    dao.methods.addresses("auction").call().then((result) => {
-      contractsObj['auction'] = new web3Instance.eth.Contract(config.auctionABI, result);
-      setContracts(prev => ({ ...prev, auction: contractsObj['auction'] }));
-    });
+      }).catch(err => console.error('Failed to get price update events:', err));
+    }
 
     setContracts(contractsObj);
     return contractsObj;
   };
 
   const getAccount = async () => {
-    console.log('🔄 getAccount called');
-    
-    // Проверяем есть ли уже подключение через MetaMask extension
+    console.log('getAccount called');
+
     if (window.ethereum) {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts && accounts.length > 0) {
-          console.log('✅ Already connected via MetaMask:', accounts[0]);
           setAccount(accounts[0]);
           setWalletConnected(true);
           return;
         }
-        
-        // Пробуем подключиться через расширение напрямую
-        console.log('🔄 Trying to connect via MetaMask extension...');
+
         const newAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
         if (newAccounts && newAccounts.length > 0) {
-          console.log('✅ Connected via MetaMask extension:', newAccounts[0]);
           setAccount(newAccounts[0]);
           setWalletConnected(true);
           return;
@@ -151,70 +112,33 @@ export const Web3Provider = ({ children }) => {
         console.log('MetaMask extension connection failed or rejected:', err.message);
       }
     }
-    
-    // Если нет window.ethereum или пользователь отклонил - открываем Web3Modal
+
     try {
-      console.log('🔄 Opening Web3Modal for WalletConnect...');
       const { connectWithWalletConnect } = await import(/* webpackPrefetch: true */ '../utils/walletconnect');
       const result = await connectWithWalletConnect();
-
       if (result && result.address) {
-        console.log('✅ Connected via WalletConnect:', result.address);
         setAccount(result.address);
         setWalletConnected(true);
       }
     } catch (error) {
-      console.error('❌ Connection error:', error.message);
+      console.error('Connection error:', error.message);
     }
   };
 
   const disconnectWallet = async () => {
     try {
-      // Пробуем отключить WalletConnect
       try {
         const { disconnectWalletConnect, isWalletConnectConnected } = await import('../utils/walletconnect');
-        
         if (isWalletConnectConnected()) {
           await disconnectWalletConnect();
-          console.log('✅ Disconnected from WalletConnect');
         }
       } catch (err) {
         console.log('WalletConnect not connected or error:', err.message);
       }
-      
-      // Для MetaMask просто сбрасываем состояние
-      // (MetaMask не поддерживает programmatic disconnect)
       setAccount('');
       setWalletConnected(false);
-      console.log('✅ Wallet disconnected');
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
-    }
-  };
-
-  const fetchEthPriceEtherscan = async () => {
-    try {
-      const response = await fetch('/api/ethprice');
-      if (!response.ok) return;
-      const data = await response.json();
-      if (data.status === '1' && data.result) {
-        const price = parseFloat(data.result.ethusd);
-        setEthPriceEtherscan(price);
-        console.log('✅ ETH price from Etherscan:', price);
-      }
-    } catch (err) {
-      console.error('Failed to fetch Etherscan ETH price:', err);
-    }
-  };
-
-  const fetchEthPriceUniswap = async () => {
-    try {
-      const { getEthPriceInUsd } = await import('../utils/uniswap-quoter');
-      const result = await getEthPriceInUsd();
-      setEthPriceUniswap(result.priceInUSD);
-      console.log('✅ ETH price from Uniswap:', result.priceInUSD);
-    } catch (err) {
-      console.error('Failed to fetch Uniswap ETH price:', err);
     }
   };
 
@@ -222,20 +146,16 @@ export const Web3Provider = ({ children }) => {
     const initialize = async () => {
       const web3Instance = await initWeb3();
       await initContracts(web3Instance);
-      
-      // Восстанавливаем ТОЛЬКО MetaMask расширение (не WalletConnect!)
+
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts && accounts.length > 0) {
-            console.log('✅ Restored MetaMask extension connection:', accounts[0]);
             setAccount(accounts[0]);
             setWalletConnected(true);
           }
-          
-          // Подписываемся на изменения аккаунтов
+
           window.ethereum.on('accountsChanged', (accounts) => {
-            console.log('🔄 MetaMask accounts changed:', accounts);
             if (accounts && accounts.length > 0) {
               setAccount(accounts[0]);
               setWalletConnected(true);
@@ -244,37 +164,20 @@ export const Web3Provider = ({ children }) => {
               setWalletConnected(false);
             }
           });
-          
-          // Подписываемся на изменения сети
-          window.ethereum.on('chainChanged', (chainId) => {
-            console.log('🔄 Chain changed:', chainId);
+
+          window.ethereum.on('chainChanged', () => {
             window.location.reload();
           });
-          
         } catch (err) {
           console.log('No saved MetaMask connection');
         }
       }
-      
+
       setIsInitialized(true);
     };
-    
+
     initialize();
   }, []);
-
-  useEffect(() => {
-    if (!isInitialized) return;
-    
-    fetchEthPriceEtherscan();
-    fetchEthPriceUniswap();
-    
-    const interval = setInterval(() => {
-      fetchEthPriceEtherscan();
-      fetchEthPriceUniswap();
-    }, 60000);
-    
-    return () => clearInterval(interval);
-  }, [isInitialized]);
 
   const value = {
     web3,
@@ -283,13 +186,11 @@ export const Web3Provider = ({ children }) => {
     walletConnected,
     ethPrice,
     ethPriceLastUpdate,
-    ethPriceEtherscan,
     ethPriceUniswap,
+    ethPriceEtherscan,
     isInitialized,
     getAccount,
     disconnectWallet,
-    fetchEthPriceEtherscan,
-    fetchEthPriceUniswap,
   };
 
   return (

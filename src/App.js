@@ -33,8 +33,8 @@ const PageFallback = () => (
 function App() {
   return (
     <BrowserRouter>
-      <Web3Provider>
-        <PricesProvider>
+      <PricesProvider>
+        <Web3Provider>
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<Layout />}>
@@ -64,8 +64,8 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
-        </PricesProvider>
-      </Web3Provider>
+        </Web3Provider>
+      </PricesProvider>
     </BrowserRouter>
   );
 }

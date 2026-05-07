@@ -72,13 +72,10 @@ class BlockWatcher {
     try {
       await this.connectRedis();
       
-      // Проверяем флаг CLEAR_CACHE
-      const clearCache = process.env.CLEAR_CACHE === 'true' || process.argv.includes('--clear-cache');
-      if (clearCache) {
-        logger.warn('⚠️  CLEAR_CACHE flag detected! Flushing Redis and starting from START_BLOCK...');
-        await this.redisClient.flushDb();
-        logger.info('✓ Redis database cleared');
-      }
+      // Clear all watcher-owned Redis data on every startup so the event index
+      // is always built fresh from START_BLOCK. Backend contract-call cache
+      // (contract:v2:* / price:*) is preserved.
+      await this.clearWatcherData();
       
       await this.connectWeb3();
       await this.loadContracts();
@@ -100,6 +97,23 @@ class BlockWatcher {
     }
   }
   
+  async clearWatcherData() {
+    const patterns = ['event:*', 'events:*', 'txs:*', 'tx:*', 'watcher:*'];
+    let deleted = 0;
+    for (const pattern of patterns) {
+      let cursor = 0;
+      do {
+        const res = await this.redisClient.scan(cursor, { MATCH: pattern, COUNT: 200 });
+        cursor = res.cursor;
+        if (res.keys.length > 0) {
+          await this.redisClient.del(res.keys);
+          deleted += res.keys.length;
+        }
+      } while (cursor !== 0);
+    }
+    logger.info(`Cleared ${deleted} watcher Redis keys — resyncing from block ${this.startBlock}`);
+  }
+
   async connectRedis() {
     // reconnectStrategy: бесконечный реконнект с backoff 100мс..5000мс.
     // Без этого node-redis v4 после ~20 неудачных попыток переходит в
@@ -347,18 +361,9 @@ class BlockWatcher {
     let syncFromBlock = this.startBlock;
 
     if (checkpoint) {
-      if (checkpoint.contractsHash === currentHash) {
-        syncFromBlock = checkpoint.lastProcessedBlock + 1;
-        logger.info(`Resuming from checkpoint: block ${checkpoint.lastProcessedBlock}`);
-        logger.info(`Current stats: ${this.health.transactionsIndexed} txs, ${this.health.eventsIndexed} events`);
-      } else {
-        logger.info(`Contracts list changed, full rescan from block ${this.startBlock}`);
-        // При rescan сбрасываем счетчики (данные будут перезаписаны)
-        this.health.transactionsIndexed = 0;
-        this.health.eventsIndexed = 0;
-      }
+      logger.info(`Checkpoint ignored (always-fresh sync) — starting from block ${this.startBlock}`);
     } else {
-      logger.info(`No checkpoint found, starting from block ${this.startBlock}`);
+      logger.info(`Starting from block ${this.startBlock}`);
     }
 
     if (syncFromBlock < currentBlock) {
@@ -1088,9 +1093,23 @@ class BlockWatcher {
   // ===== Watchdog — detects and recovers from stalled block processing =====
 
   startWatchdog(staleThresholdMs = 60_000, checkIntervalMs = 30_000) {
+    // Grace period after startup before we complain about no blocks.
+    const startupGraceMs = 2 * 60_000;
     this.watchdogInterval = setInterval(async () => {
       if (this._restarting) return;
-      if (!this._lastBlockReceivedAt) return; // still in initial sync, skip
+      if (!this._lastBlockReceivedAt) {
+        // Subscription hasn't received any block yet. If historical sync is done
+        // and we're past the startup grace period, the subscription likely failed
+        // to start — restart it.
+        if (this.health.historicalSyncProgress === null) {
+          const elapsedSinceStart = Date.now() - this.health.startTime;
+          if (elapsedSinceStart > startupGraceMs) {
+            logger.warn('Watchdog: no blocks received since startup (subscription likely failed) — restarting');
+            await this.restartSubscription();
+          }
+        }
+        return;
+      }
       const staleMs = Date.now() - this._lastBlockReceivedAt;
       if (staleMs < staleThresholdMs) return;
 
@@ -1168,11 +1187,20 @@ class BlockWatcher {
     };
     // Downgrade to degraded if we haven't seen a new block in over 60 seconds,
     // even if the internal status flag is still 'healthy'.
-    if (h.status === 'healthy' && this._lastBlockReceivedAt) {
-      const staleMs = Date.now() - this._lastBlockReceivedAt;
-      if (staleMs > 60_000) {
-        h.status = 'degraded';
-        h.staleFor = `${Math.floor(staleMs / 1000)}s`;
+    if (h.status === 'healthy') {
+      if (this._lastBlockReceivedAt) {
+        const staleMs = Date.now() - this._lastBlockReceivedAt;
+        if (staleMs > 60_000) {
+          h.status = 'degraded';
+          h.staleFor = `${Math.floor(staleMs / 1000)}s`;
+        }
+      } else if (h.historicalSyncProgress === null) {
+        // Sync is done but no block has been received — subscription never started.
+        const elapsedSinceStart = Date.now() - this.health.startTime;
+        if (elapsedSinceStart > 2 * 60_000) {
+          h.status = 'degraded';
+          h.staleFor = 'subscription_never_started';
+        }
       }
     }
     return h;

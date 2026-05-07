@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
 import { fromBlock } from '../utils/config';
-import { cachedContractCall } from '../utils/cachedContractCall';
+import { cachedContractCall, batchCachedContractCalls } from '../utils/cachedContractCall';
 import { getPastEventsCached } from '../utils/cacheApi';
 import { toFloat } from '../utils/utils';
 
@@ -53,13 +53,26 @@ export function useDeposits({ pollInterestMs = 20000 } = {}) {
         e => e.returnValues.owner.toLowerCase() === account.toLowerCase(),
       );
 
-      const detailed = await Promise.all(mine.map(async (ev) => {
+      // Batch all per-deposit reads: [deposit0, interest0, deposit1, interest1, ...]
+      const batchCalls = mine.flatMap((ev) => {
         const id = ev.returnValues.id;
-        const [d, interest] = await Promise.all([
-          cachedContractCall('deposit', 'deposits', [id], contracts.deposit),
-          cachedContractCall('deposit', 'overallInterest', [id], contracts.deposit, { noCache: true })
-            .catch(() => '0'),
-        ]);
+        return [
+          { contractKey: 'deposit', methodName: 'deposits',        args: [id] },
+          { contractKey: 'deposit', methodName: 'overallInterest', args: [id], noCache: true },
+        ];
+      });
+
+      const batchResults = mine.length
+        ? await batchCachedContractCalls(batchCalls)
+        : [];
+
+      const detailed = mine.map((ev, i) => {
+        const id = ev.returnValues.id;
+        const dRes = batchResults[i * 2];
+        const iRes = batchResults[i * 2 + 1];
+        const d = dRes?.success ? dRes.result : null;
+        const interest = iRes?.success ? iRes.result : '0';
+        if (!d) return null;
         return {
           id,
           coinsDeposited: Number(toFloat(d.coinsDeposited)) / 1e18,
@@ -68,7 +81,7 @@ export function useDeposits({ pollInterestMs = 20000 } = {}) {
           updated: d.lastTimeUpdated ? new Date(Number(d.lastTimeUpdated) * 1000) : null,
           closed: !!d.closed,
         };
-      }));
+      }).filter(Boolean);
 
       // newest first
       detailed.sort((a, b) => Number(b.id) - Number(a.id));
@@ -87,16 +100,20 @@ export function useDeposits({ pollInterestMs = 20000 } = {}) {
     }
   }, [account, contracts?.deposit, contracts?.dao, web3]);
 
-  /** Lighter refresh: only re-pull overallInterest for known deposits. */
+  /** Lighter refresh: batched re-pull of overallInterest for active deposits. */
   const refreshInterest = useCallback(async () => {
-    if (!contracts?.deposit) return;
-    const updates = await Promise.all(rows.map(async (r) => {
-      try {
-        const i = await cachedContractCall('deposit', 'overallInterest', [r.id], contracts.deposit, { noCache: true });
-        return [r.id, Number(toFloat(i)) / 1e18];
-      } catch { return [r.id, r.accumulatedInterest]; }
+    if (!contracts?.deposit || rows.length === 0) return;
+    const calls = rows.map(r => ({
+      contractKey: 'deposit', methodName: 'overallInterest', args: [r.id], noCache: true,
     }));
-    const map = Object.fromEntries(updates);
+    const results = await batchCachedContractCalls(calls);
+    const map = {};
+    rows.forEach((r, i) => {
+      const res = results[i];
+      map[r.id] = res?.success
+        ? Number(toFloat(res.result)) / 1e18
+        : r.accumulatedInterest;
+    });
     setRows(prev => prev.map(r => ({ ...r, accumulatedInterest: map[r.id] ?? r.accumulatedInterest })));
   }, [rows, contracts]);
 

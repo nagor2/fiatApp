@@ -5,8 +5,9 @@ const contractService = require('../services/contractService');
 const logger = require('../utils/logger');
 
 const router = express.Router();
-const CACHE_TTL_MARKET = 30;  // seconds — market prices (ETH/USD, Uniswap pools)
-const CACHE_TTL_ORACLE = 300; // seconds — oracle DFC index (only changes on-chain tx)
+const CACHE_TTL_MARKET    = 30;  // seconds — market prices (ETH/USD, Uniswap pools)
+const CACHE_TTL_ORACLE    = 300; // seconds — oracle DFC index (only changes on-chain tx)
+const CACHE_TTL_ETHERSCAN = 60;  // seconds — Etherscan ETH price (rate-limited)
 
 // ── Addresses ─────────────────────────────────────────────────────────────
 const USDC_WETH_POOL  = '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640';
@@ -76,7 +77,8 @@ const V4_QUOTER_ABI = [{
 let _web3 = null;
 function getWeb3() {
   if (!_web3) {
-    _web3 = new Web3(process.env.RPC_URL || 'https://ethereum-rpc.publicnode.com');
+    const rpcUrl = process.env.RPC_URL || 'https://ethereum-rpc.publicnode.com';
+    _web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl, { timeout: 10000 }));
   }
   return _web3;
 }
@@ -138,30 +140,59 @@ async function fetchRleDfcPool(rleAddress) {
   };
 }
 
-// Fetch DFC index from the on-chain oracle contract (already initialized by contractService).
+// DFC index = basket.getCurrentSharePriceChange() / 1e6
+// (ratio of current weighted basket price to initial, e.g. 1.28 = +28% since inception)
 async function fetchDfcIndex() {
+  const basket = contractService.contracts?.basket;
+  if (!basket) throw new Error('basket contract not ready');
+  const raw = await basket.methods.getCurrentSharePriceChange().call();
+  return Number(BigInt(raw)) / 1e6;
+}
+
+async function fetchEthUsdOracle() {
   const oracle = contractService.contracts?.oracle;
   if (!oracle) throw new Error('oracle contract not ready');
-  const [price, decimals] = await Promise.all([
-    oracle.methods.getPrice('dfc').call(),
-    oracle.methods.getDecimals('dfc').call(),
-  ]);
-  return Number(BigInt(price)) / 10 ** Number(decimals);
+  const raw = await oracle.methods.getPrice('eth').call();
+  return Number(BigInt(raw)) / 1e6;
+}
+
+async function fetchEthUsdEtherscan() {
+  const apiKey = process.env.ETHERSCAN_API_KEY;
+  if (!apiKey) throw new Error('ETHERSCAN_API_KEY not set');
+  const url = `https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice&apikey=${apiKey}`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (data.status !== '1') throw new Error(`Etherscan: ${data.message}`);
+  return parseFloat(data.result.ethusd);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
+
+// In-memory stale cache — survives Redis misses and RPC failures
+const _stale = {};
+
 async function cachedFetch(key, ttl, fn) {
   try {
     const cached = await cacheService.get(key);
-    if (cached) return cached;
+    if (cached != null) {
+      _stale[key] = cached; // keep warm
+      return cached;
+    }
   } catch (_) {}
 
+  // Return stale data immediately and refresh in background
+  if (_stale[key] != null) {
+    fn().then(result => {
+      _stale[key] = result;
+      cacheService.set(key, result, ttl).catch(() => {});
+    }).catch(() => {});
+    return _stale[key];
+  }
+
+  // Cold start — must fetch synchronously
   const result = await fn();
-
-  try {
-    await cacheService.set(key, result, ttl);
-  } catch (_) {}
-
+  _stale[key] = result;
+  try { await cacheService.set(key, result, ttl); } catch (_) {}
   return result;
 }
 
@@ -175,24 +206,32 @@ router.get('/', async (req, res) => {
   try {
     const rleAddress = contractService.contracts?.rule?._address || null;
 
-    const [ethUsd, dfcEth, dfcIndex] = await Promise.allSettled([
-      cachedFetch('price:eth_usd',   CACHE_TTL_MARKET, fetchEthUsd),
-      cachedFetch('price:dfc_eth',   CACHE_TTL_MARKET, fetchDfcEth),
-      cachedFetch('price:dfc_index', CACHE_TTL_ORACLE, fetchDfcIndex),
+    const [ethUsdUniswap, dfcEth, dfcIndex, ethUsdEtherscan, ethUsd] = await Promise.allSettled([
+      cachedFetch('price:eth_usd_uniswap',   CACHE_TTL_MARKET,    fetchEthUsd),
+      cachedFetch('price:dfc_eth',           CACHE_TTL_MARKET,    fetchDfcEth),
+      cachedFetch('price:dfc_index',         CACHE_TTL_ORACLE,    fetchDfcIndex),
+      cachedFetch('price:eth_usd_etherscan', CACHE_TTL_ETHERSCAN, fetchEthUsdEtherscan),
+      cachedFetch('price:eth_usd_oracle',    CACHE_TTL_ORACLE,    fetchEthUsdOracle),
     ]);
 
+    // ethUsd = oracle price (what the protocol actually uses)
+    // ethUsdUniswap / ethUsdEtherscan = market reference prices
     const response = {
-      ethUsd:   ethUsd.status   === 'fulfilled' ? ethUsd.value   : null,
-      dfcEth:   dfcEth.status   === 'fulfilled' ? dfcEth.value   : null,
-      dfcIndex: dfcIndex.status === 'fulfilled' ? dfcIndex.value : null,
+      ethUsd:          ethUsd.status          === 'fulfilled' ? ethUsd.value          : null,
+      ethUsdUniswap:   ethUsdUniswap.status   === 'fulfilled' ? ethUsdUniswap.value   : null,
+      ethUsdEtherscan: ethUsdEtherscan.status === 'fulfilled' ? ethUsdEtherscan.value : null,
+      dfcEth:          dfcEth.status          === 'fulfilled' ? dfcEth.value          : null,
+      dfcIndex:        dfcIndex.status        === 'fulfilled' ? dfcIndex.value        : null,
       dfcUsd:   null,
       rleDfc:   null,
       rleUsd:   null,
       ts:       Date.now(),
     };
 
-    if (response.ethUsd && response.dfcEth) {
-      response.dfcUsd = response.dfcEth * response.ethUsd;
+    // DFC/USD derived from oracle ETH price; fall back to Uniswap if oracle not ready
+    const ethForCalc = response.ethUsd ?? response.ethUsdUniswap;
+    if (ethForCalc && response.dfcEth) {
+      response.dfcUsd = response.dfcEth * ethForCalc;
     }
 
     if (rleAddress && response.dfcUsd) {
@@ -219,5 +258,26 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'price fetch failed', message: err.message });
   }
 });
+
+// Pre-warm cache at startup and refresh every CACHE_TTL_MARKET seconds so
+// the first HTTP request always returns from cache (avoids cold-start 504s).
+async function warmCache() {
+  try {
+    await Promise.allSettled([
+      cachedFetch('price:eth_usd_uniswap',   CACHE_TTL_MARKET,    fetchEthUsd),
+      cachedFetch('price:dfc_eth',           CACHE_TTL_MARKET,    fetchDfcEth),
+      cachedFetch('price:dfc_index',         CACHE_TTL_ORACLE,    fetchDfcIndex),
+      cachedFetch('price:eth_usd_etherscan', CACHE_TTL_ETHERSCAN, fetchEthUsdEtherscan),
+      cachedFetch('price:eth_usd_oracle',    CACHE_TTL_ORACLE,    fetchEthUsdOracle),
+    ]);
+    logger.info('Prices cache warmed');
+  } catch (e) {
+    logger.warn('Prices cache warm failed:', e.message);
+  }
+}
+
+// Delay slightly so contractService is fully initialized before we read it
+setTimeout(warmCache, 2000);
+setInterval(warmCache, CACHE_TTL_MARKET * 1000);
 
 module.exports = router;

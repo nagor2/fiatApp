@@ -203,7 +203,25 @@ async function loadRle({ contracts, web3, prices }) {
   const priceInDfc = prices?.rleDfc?.priceRleInDfc ?? null;
   const priceInUsd = prices?.rleUsd ?? null;
   const marketCap = priceInUsd != null ? supply * priceInUsd : null;
-  const poolVolume = null; // amountRle/amountDfc not available from backend price API
+
+  // Derive pool amounts from sqrtPriceX96 + liquidity (same math as _getRleDfcPoolInfo).
+  // canonical V4 ordering: currency0 < currency1 by address.
+  let poolVolume = null;
+  const rleDfc = prices?.rleDfc;
+  if (rleDfc?.liquidity && rleDfc?.sqrtPriceX96 && priceInUsd != null && prices?.dfcUsd != null) {
+    try {
+      /* global BigInt */
+      const DFC_ADDR = '0x1f709cfa0c409e158c68edcd32453809c9eb69ee';
+      const rleIsCurrency0 = r._address.toLowerCase() < DFC_ADDR;
+      const sqrtPrice = Number(BigInt(rleDfc.sqrtPriceX96)) / Number(BigInt(2) ** BigInt(96));
+      const liqNum = Number(BigInt(rleDfc.liquidity));
+      const amount0 = liqNum / sqrtPrice / 1e18;
+      const amount1 = liqNum * sqrtPrice / 1e18;
+      const amountRle = rleIsCurrency0 ? amount0 : amount1;
+      const amountDfc = rleIsCurrency0 ? amount1 : amount0;
+      poolVolume = amountRle * priceInUsd + amountDfc * prices.dfcUsd;
+    } catch (_) {}
+  }
 
   const stats = [
     { label: 'Total supply', value: `${fmt(supply, 2)} RLE`, accent: true },

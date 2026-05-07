@@ -1,7 +1,6 @@
-/* global BigInt */
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { usePrices } from '../contexts/PricesContext';
 import { ZEROEX_NATIVE_ETH } from '../hooks/use0xSwap';
 import Icon from '../components/redesign/Icons';
 import TokenMark from '../components/redesign/TokenMark';
@@ -37,57 +36,11 @@ const fmt = (n, dp = 4) => {
   });
 };
 
-function toUnits(amount, decimals) {
-  if (!amount) return '0';
-  const [w = '0', f = ''] = String(amount).split('.');
-  const frac = (f + '0'.repeat(decimals)).slice(0, decimals);
-  return BigInt(w + frac).toString();
-}
-
-function fromUnits(units, decimals) {
-  if (units == null) return 0;
-  const s = String(units).padStart(decimals + 1, '0');
-  const w = s.slice(0, -decimals) || '0';
-  const f = s.slice(-decimals).replace(/0+$/, '');
-  return Number(f ? `${w}.${f}` : w);
-}
-
-/* ── live price hook ─────────────────────────────────────────── */
-
-function useLivePrice(sellAddr, sellDec, buyAddr, buyDec) {
-  const [price, setPrice] = useState(null);
-  useEffect(() => {
-    if (!sellAddr || !buyAddr) return;
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const params = new URLSearchParams({
-          chainId: '1',
-          sellToken: sellAddr,
-          buyToken:  buyAddr,
-          sellAmount: toUnits('1', sellDec),
-          slippageBps: '50',
-        });
-        const res = await window.fetch(`/api/0x/swap/allowance-holder/price?${params}`);
-        if (!res.ok || cancelled) return;
-        const q = await res.json();
-        if (cancelled) return;
-        const sold   = fromUnits(q.sellAmount, sellDec);
-        const bought = fromUnits(q.buyAmount,  buyDec);
-        if (sold > 0) setPrice(bought / sold);
-      } catch { /* ignore — 0x may be temporarily unavailable */ }
-    };
-    load();
-    const t = setInterval(load, 60_000);
-    return () => { cancelled = true; clearInterval(t); };
-  }, [sellAddr, buyAddr, sellDec, buyDec]);
-  return price;
-}
-
 /* ── page ────────────────────────────────────────────────────── */
 
 export default function PoolsPage() {
-  const { contracts, ethPriceEtherscan } = useWeb3();
+  const { contracts } = useWeb3();
+  const prices = usePrices();
   const [pane, setPane] = useState(null); // { pair }
 
   // Pull RLE address from contracts at runtime (rule token)
@@ -97,12 +50,8 @@ export default function PoolsPage() {
     return t;
   }, [contracts]);
 
-  // Live quotes matching each pair's natural sell direction
-  const ethPerDfc     = useLivePrice(TOKENS.DFC.address, TOKENS.DFC.decimals, TOKENS.ETH.address, TOKENS.ETH.decimals);
-  const rlePriceInDfc = useLivePrice(tokens.RLE.address,  tokens.RLE.decimals,  TOKENS.DFC.address, TOKENS.DFC.decimals);
-
-  // DFC price in USD: how much ETH you get per DFC × ETH/USD
-  const dfcUsd = ethPerDfc && ethPriceEtherscan ? ethPerDfc * ethPriceEtherscan : null;
+  const dfcUsd        = prices?.dfcUsd                   ?? null;
+  const rlePriceInDfc = prices?.rleDfc?.priceRleInDfc    ?? null;
 
   return (
     <div className="df-page">

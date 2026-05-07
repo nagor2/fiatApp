@@ -122,7 +122,7 @@ export function useBalances() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, contracts, web3, ethPrice, ethPriceUniswap]);
+  }, [account, contracts, web3]);
 
   // Patch prices into existing rows when PricesContext updates (no balance re-fetch needed)
   useEffect(() => {

@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
-import { useWeb3 } from '../contexts/Web3Context';
+import config from '../utils/config';
 import useExchangeRate from '../hooks/useExchangeRate';
 import useBasket from '../hooks/useBasket';
 
@@ -63,7 +63,7 @@ const BRAND_COLORS = [
 export default function CommoditiesPage() {
   const { name } = useParams();
   const navigate = useNavigate();
-  const { explorer } = useWeb3();
+  const explorer = (config.explorer || 'https://etherscan.io/').replace(/\/?$/, '/');
   const initialTab = name === 'basket' ? 'basket' : (name === 'index' || !name) ? 'index' : 'index';
   const [tab, setTab] = useState(initialTab);
 
