@@ -867,13 +867,20 @@ class BlockWatcher {
       // пока в цепочке не появится следующий — это засоряет RPC и кидает
       // лишние зависимые инвалидации кэша.
       logger.warn('Using polling mode (HTTP provider)');
-      let lastPolledBlock = this.health.lastProcessedBlock || 0;
+      // Стартуем с текущего блока — пропускаем блоки produced во время
+      // исторического синка, чтобы не делать burst из сотен RPC-запросов
+      // сразу после старта и не упереться в rate limit free-tier ноды.
+      let lastPolledBlock = Number(await this.web3.eth.getBlockNumber());
+      logger.info(`Polling starting from current block ${lastPolledBlock}`);
       this.pollingInterval = setInterval(async () => {
         try {
           const latest = Number(await this.web3.eth.getBlockNumber());
           if (latest <= lastPolledBlock) return;
 
-          for (let n = lastPolledBlock + 1; n <= latest; n++) {
+          // Обрабатываем не более 5 блоков за тик — защита от rate limit при
+          // большом отставании (например после рестарта подписки).
+          const catchUpTo = Math.min(latest, lastPolledBlock + 5);
+          for (let n = lastPolledBlock + 1; n <= catchUpTo; n++) {
             const blockHeader = await this.web3.eth.getBlock(n);
             if (!blockHeader) {
               logger.warn(`getBlock(${n}) returned null during polling, will retry`);

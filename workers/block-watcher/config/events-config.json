@@ -1,13 +1,13 @@
 {
   "contractEvents": {
-    "dao": ["NewVoting", "VotingFailed"],
+    "dao": ["NewVoting", "VotingFailed", "VotingSucceed"],
     "rule": ["Transfer", "Approval"],
     "flatCoin": ["Transfer", "Approval"],
-    "cdp": ["PositionOpened", "PositionClosed", "PositionLiquidated", "Transfer"],
+    "cdp": ["PositionOpened", "PositionUpdated", "liquidateCollateral", "liquidationStatusChanged"],
     "oracle": ["priceUpdated", "priceUpdateRequest"],
-    "deposit": ["DepositOpened", "DepositClosed", "Transfer"],
-    "basket": ["Transfer"],
-    "auction": ["newAuction", "newBid", "auctionFinished"],
+    "deposit": ["DepositOpened"],
+    "basket": ["instrumentAdded", "shareChanged"],
+    "auction": ["newAuction", "newBid", "auctionFinished", "bidCanceled"],
     "pool": ["Swap", "Mint", "Burn", "Sync", "Transfer"]
   },
   "fullScanContracts": {
