@@ -26,7 +26,7 @@ const logger = winston.createLogger({
 class BlockWatcher {
   constructor() {
     this.rpcWsUrl = process.env.RPC_WS_URL;
-    this.rpcHttpUrl = process.env.RPC_HTTP_URL;
+    this.rpcHttpUrl = (process.env.RPC_HTTP_URL || '').split(',')[0].trim();
     // Дефолт — FQDN Redis'а проекта DotFlat в k8s-неймспейсе `dotflat`.
     // Переопределяется через env REDIS_URL (в k8s задаётся секретом watcher-env).
     this.redisUrl = process.env.REDIS_URL || 'redis://redis.app-dotflat.svc.cluster.local:6379';
@@ -455,10 +455,10 @@ class BlockWatcher {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
     
-    // 2. Загружаем события для каждого контракта через RPC getPastEvents
-    logger.info('=== PHASE 2: Loading events via RPC getPastEvents ===');
+    // 2. Загружаем события для каждого контракта через Etherscan getLogs API
+    logger.info('=== PHASE 2: Loading events via Etherscan getLogs API ===');
     await this.ensureRedisReady();
-    await this.loadEventsViaRPC(fromBlock, toBlock);
+    await this.loadEventsViaEtherscan(fromBlock, toBlock);
     
     await this.saveCheckpoint(toBlock);
     this.health.historicalSyncProgress = null;
@@ -587,70 +587,113 @@ class BlockWatcher {
     }
   }
   
-  // ===== Events Loading via RPC getPastEvents =====
-  
-  async loadEventsViaRPC(fromBlock, toBlock) {
-    const MAX_BLOCK_RANGE = 49999;
-    
+  // ===== Events Loading via Etherscan getLogs API =====
+
+  async loadEventsViaEtherscan(fromBlock, toBlock) {
+    if (!this.etherscanApiKey) {
+      logger.warn('Etherscan API key not configured, skipping events historical sync');
+      return;
+    }
+
     for (const [address, contractInfo] of this.watchedAddresses.entries()) {
       const contractKey = contractInfo.contractKey;
       const eventNames = this.contractEvents[contractKey];
-      
+
       if (!eventNames || eventNames.length === 0) {
         logger.debug(`No events configured for ${contractInfo.name}, skipping`);
         continue;
       }
-      
-      // Создаем contract instance если нет
+
       if (!this.contracts.has(contractKey)) {
         logger.warn(`No contract instance for ${contractKey}, skipping events`);
         continue;
       }
-      
+
       const contractInstance = this.contracts.get(contractKey);
-      
-      logger.info(`Loading events for ${contractInfo.name} (${eventNames.length} event types)...`);
-      
-      // Загружаем события по чанкам (как getPastEventsChunked)
-      const totalRange = toBlock - fromBlock;
-      
-      if (totalRange <= MAX_BLOCK_RANGE) {
-        // Одним запросом
-        await this.loadEventsForContract(contractInstance, contractKey, address, eventNames, fromBlock, toBlock);
-      } else {
-        // Chunked loading
-        let currentFrom = fromBlock;
-        while (currentFrom <= toBlock) {
-          const currentTo = Math.min(currentFrom + MAX_BLOCK_RANGE, toBlock);
-          
-          logger.debug(`Loading events chunk: blocks ${currentFrom} → ${currentTo}`);
-          await this.loadEventsForContract(contractInstance, contractKey, address, eventNames, currentFrom, currentTo);
-          
-          currentFrom = currentTo + 1;
-        }
+      logger.info(`Loading events for ${contractInfo.name} via Etherscan (${eventNames.length} event types)...`);
+
+      for (const eventName of eventNames) {
+        await this.ensureRedisReady();
+        await this.loadEventLogsViaEtherscan(contractInstance, contractKey, address, eventName, fromBlock, toBlock);
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
   }
-  
-  async loadEventsForContract(contractInstance, contractKey, contractAddress, eventNames, fromBlock, toBlock) {
-    for (const eventName of eventNames) {
+
+  async loadEventLogsViaEtherscan(contractInstance, contractKey, contractAddress, eventName, fromBlock, toBlock) {
+    const eventAbi = contractInstance.options.jsonInterface.find(
+      item => item.type === 'event' && item.name === eventName
+    );
+    if (!eventAbi) {
+      logger.warn(`No ABI definition for event ${eventName} in ${contractKey}`);
+      return;
+    }
+
+    const signature = `${eventAbi.name}(${eventAbi.inputs.map(i => i.type).join(',')})`;
+    const topic0 = this.web3.utils.keccak256(signature);
+
+    let page = 1;
+    const pageSize = 1000;
+    let totalIndexed = 0;
+
+    while (true) {
+      const url = `${this.etherscanApiUrl}?chainid=1&module=logs&action=getLogs` +
+        `&address=${contractAddress}&fromBlock=${fromBlock}&toBlock=${toBlock}` +
+        `&topic0=${topic0}&page=${page}&offset=${pageSize}&apikey=${this.etherscanApiKey}`;
+
       try {
-        const events = await contractInstance.getPastEvents(eventName, {
-          fromBlock: fromBlock,
-          toBlock: toBlock
-        });
-        
-        if (events.length > 0) {
-          logger.info(`Found ${events.length} ${eventName} events for ${contractKey}`);
-          
-          for (const event of events) {
+        const response = await axios.get(url);
+        const data = response.data;
+
+        if (data.status !== '1') {
+          if (data.message !== 'No records found') {
+            logger.warn(`Etherscan getLogs error for ${contractKey}.${eventName}: ${data.message}`);
+          }
+          break;
+        }
+
+        const logs = data.result || [];
+
+        for (const log of logs) {
+          try {
+            const decoded = this.web3.eth.abi.decodeLog(
+              eventAbi.inputs,
+              log.data,
+              log.topics.slice(1)
+            );
+
+            const event = {
+              event: eventName,
+              returnValues: decoded,
+              blockNumber: parseInt(log.blockNumber, 16),
+              transactionHash: log.transactionHash,
+              logIndex: parseInt(log.logIndex, 16)
+            };
+
             await this.indexEvent(event, contractKey, contractAddress);
+            totalIndexed++;
+          } catch (decodeError) {
+            logger.warn(`Failed to decode ${eventName} log in tx ${log.transactionHash}: ${decodeError.message}`);
           }
         }
-        
+
+        if (logs.length < pageSize) break;
+        page++;
+        await new Promise(resolve => setTimeout(resolve, 200));
+
       } catch (error) {
-        logger.debug(`Could not fetch ${eventName} for ${contractKey}: ${error.message}`);
+        if (error.response?.status === 429) {
+          logger.warn(`Etherscan rate limit on getLogs for ${contractKey}.${eventName}, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          logger.error(`Failed to load ${eventName} for ${contractKey}: ${error.message}`);
+          break;
+        }
       }
+    }
+
+    if (totalIndexed > 0) {
+      logger.info(`Indexed ${totalIndexed} ${eventName} events for ${contractKey} via Etherscan`);
     }
   }
   
@@ -1389,28 +1432,22 @@ class BlockWatcher {
     const eventNames = this.contractEvents[contractKey];
     if (!eventNames || eventNames.length === 0) return 0;
 
+    if (!this.etherscanApiKey) {
+      logger.warn('Etherscan API key not configured, skipping reindexContractEvents');
+      return 0;
+    }
+
     const contractAddress = contract.options.address?.toLowerCase();
     if (!contractAddress) return 0;
 
-    const MAX_BLOCK_RANGE = 49999;
-    let indexed = 0;
-
+    const countBefore = this.health.eventsIndexed;
     logger.info(`Reindexing ${contractKey} events [${eventNames.join(',')}] from ${fromBlock} to ${toBlock}`);
-    for (let from = fromBlock; from <= toBlock; from += MAX_BLOCK_RANGE + 1) {
-      const to = Math.min(from + MAX_BLOCK_RANGE, toBlock);
-      for (const eventName of eventNames) {
-        try {
-          const events = await contract.getPastEvents(eventName, { fromBlock: from, toBlock: to });
-          for (const event of events) {
-            await this.indexEvent(event, contractKey, contractAddress);
-            indexed++;
-          }
-        } catch (error) {
-          logger.error(`reindexContractEvents ${contractKey}.${eventName} ${from}-${to} failed: ${error.message}`);
-        }
-      }
+
+    for (const eventName of eventNames) {
+      await this.loadEventLogsViaEtherscan(contract, contractKey, contractAddress, eventName, fromBlock, toBlock);
     }
-    return indexed;
+
+    return this.health.eventsIndexed - countBefore;
   }
 
   async renewContractCache(contractNameOrAddress) {
@@ -1498,35 +1535,12 @@ class BlockWatcher {
       await this.loadTransactionsViaEtherscan(contractAddress, this.startBlock, toBlock);
 
       const eventNames = this.contractEvents[contractKey];
-      
-      if (eventNames && eventNames.length > 0) {
-        const contract = this.contracts.get(contractKey);
-        if (contract) {
-          logger.info(`Loading events for ${contractInfo.name} (${eventNames.length} event types)...`);
-          
-          const MAX_BLOCK_RANGE = 49999;
-          for (let from = this.startBlock; from <= toBlock; from += MAX_BLOCK_RANGE + 1) {
-            const to = Math.min(from + MAX_BLOCK_RANGE, toBlock);
-            
-            for (const eventName of eventNames) {
-              try {
-                const events = await contract.getPastEvents(eventName, {
-                  fromBlock: from,
-                  toBlock: to
-                });
-                
-                for (const event of events) {
-                  await this.indexEvent(event, contractKey, contractAddress);
-                }
-                
-                if (events.length > 0) {
-                  logger.info(`Found ${events.length} ${eventName} events for ${contractInfo.name}`);
-                }
-              } catch (error) {
-                logger.error(`Failed to load ${eventName} for ${contractInfo.name}:`, error.message);
-              }
-            }
-          }
+      const contractInstance = this.contracts.get(contractKey);
+
+      if (eventNames && eventNames.length > 0 && contractInstance) {
+        logger.info(`Loading events for ${contractInfo.name} via Etherscan (${eventNames.length} event types)...`);
+        for (const eventName of eventNames) {
+          await this.loadEventLogsViaEtherscan(contractInstance, contractKey, contractAddress, eventName, this.startBlock, toBlock);
         }
       }
 
