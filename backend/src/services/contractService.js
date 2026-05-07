@@ -28,24 +28,29 @@ class ContractService {
     await this.loadDynamicContracts();
   }
 
-  async loadDynamicContracts() {
+  async loadDynamicContracts(names = appConfig.contracts) {
     const daoAbi = require(path.join(ABI_DIR, 'dao.json'));
-    for (const name of appConfig.contracts) {
+    const failed = [];
+    for (const name of names) {
       try {
         const address = await withFallback((web3) => {
           const dao = new web3.eth.Contract(daoAbi, appConfig.daoAddress);
           return dao.methods.addresses(name).call();
         });
         const abi = require(path.join(ABI_DIR, `${name}.json`));
-        // Re-bind contract to current web3 (may have rotated during fallback)
         this.contracts[name] = new (require('../utils/rpcProvider').getWeb3()).eth.Contract(abi, address);
         logger.info(`Contract ${name} initialized at ${address}`);
       } catch (error) {
         logger.error(`Failed to initialize contract ${name}:`, error);
+        failed.push(name);
       }
     }
-    // Keep this.web3 in sync with whatever provider is currently active
     this.web3 = require('../utils/rpcProvider').getWeb3();
+
+    if (failed.length > 0) {
+      logger.warn(`[contracts] Will retry ${failed.join(', ')} in 30s`);
+      setTimeout(() => this.loadDynamicContracts(failed), 30_000);
+    }
   }
 
   async callMethod(contractName, methodName, args = [], options = {}) {

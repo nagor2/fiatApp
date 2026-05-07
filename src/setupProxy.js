@@ -35,28 +35,17 @@ module.exports = function(app) {
     })
   );
 
-  // Ethereum JSON-RPC — strip prefix, send to root of RPC endpoint
-  app.use(
-    '/api/rpc',
-    createProxyMiddleware({
-      target: 'https://ethereum-rpc.publicnode.com',
-      changeOrigin: true,
-      secure: true,
-      onError: (err, req, res) => {
-        res.status(500).json({ error: 'RPC proxy error', message: err.message });
-      },
-    })
-  );
-
   // ── Backend API ────────────────────────────────────────────────────────────
   // Use pathFilter (not app.use prefix) so http-proxy-middleware v3 preserves
   // the full path — Express strips the matched prefix when using app.use(path, ...).
+  // /api/rpc is included here so local dev uses the backend's multi-URL fallback
+  // (same as nginx.conf does in production).
 
   app.use(
     createProxyMiddleware({
       target: BACKEND,
       changeOrigin: true,
-      pathFilter: ['/api/prices', '/api/contracts', '/api/ethprice'],
+      pathFilter: ['/api/prices', '/api/contracts', '/api/ethprice', '/api/rpc'],
       onError: (err, req, res) => {
         res.status(503).json({ error: 'backend unavailable', message: err.message });
       },

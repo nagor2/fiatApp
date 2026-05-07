@@ -42,11 +42,17 @@ function loadContractsPayload() {
 
 // GET /api/contracts/abis — addresses + ABIs for all contracts.
 // Used by the frontend once on app load to initialize web3 contract instances.
-// Cache-Control: immutable — ABIs only change when contracts are redeployed.
+// Cache-Control: immutable only when all addresses are resolved; short TTL while still loading.
 router.get('/abis', (req, res) => {
   try {
-    res.set('Cache-Control', 'public, max-age=86400, immutable');
-    res.json(loadContractsPayload());
+    const payload = loadContractsPayload();
+    const allResolved = appConfig.contracts.every(n => payload[n]?.address);
+    if (allResolved) {
+      res.set('Cache-Control', 'public, max-age=86400, immutable');
+    } else {
+      res.set('Cache-Control', 'no-store');
+    }
+    res.json(payload);
   } catch (err) {
     logger.error('Failed to load contracts payload:', err.message);
     res.status(500).json({ error: err.message });

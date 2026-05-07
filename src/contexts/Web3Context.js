@@ -53,9 +53,12 @@ export const Web3Provider = ({ children }) => {
     const abis = await resp.json();
 
     const contractsObj = {};
+    const missingNames = [];
     for (const [name, { address, abi }] of Object.entries(abis)) {
       if (address && abi) {
         contractsObj[name] = new web3Instance.eth.Contract(abi, address);
+      } else if (abi && !address) {
+        missingNames.push(name);
       }
     }
 
@@ -87,7 +90,39 @@ export const Web3Provider = ({ children }) => {
     }
 
     setContracts(contractsObj);
+
+    if (missingNames.length > 0) {
+      console.log(`[contracts] Addresses pending for: ${missingNames.join(', ')} — will retry in 30s`);
+      scheduleContractRetry(web3Instance, contractsObj);
+    }
+
     return contractsObj;
+  };
+
+  const scheduleContractRetry = (web3Instance, existing) => {
+    setTimeout(async () => {
+      try {
+        const resp = await fetch('/api/contracts/abis');
+        if (!resp.ok) return;
+        const abis = await resp.json();
+        let changed = false;
+        const next = { ...existing };
+        for (const [name, { address, abi }] of Object.entries(abis)) {
+          if (address && abi && !next[name]) {
+            next[name] = new web3Instance.eth.Contract(abi, address);
+            changed = true;
+          }
+        }
+        if (changed) {
+          setContracts(next);
+          console.log('[contracts] Addresses resolved after retry');
+        }
+        const stillMissing = Object.values(abis).some(({ address, abi }) => abi && !address);
+        if (stillMissing) scheduleContractRetry(web3Instance, next);
+      } catch (err) {
+        console.warn('[contracts] Retry failed:', err.message);
+      }
+    }, 30_000);
   };
 
   const getAccount = async () => {

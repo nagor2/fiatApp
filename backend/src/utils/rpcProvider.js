@@ -57,7 +57,7 @@ async function withFallback(fn) {
   while (attempts < urls.length) {
     const currentUrl = urls[_index];
     try {
-      return await fn(getWeb3());
+      return await fn(getWeb3(), currentUrl);
     } catch (err) {
       _rotate(currentUrl);
       attempts++;
