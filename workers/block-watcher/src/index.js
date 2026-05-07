@@ -263,7 +263,8 @@ class BlockWatcher {
         name: contract.name,
         contractKey: 'pool',
         type: contract.type,
-        address: contract.address
+        address: contract.address,
+        poolIds: contract.poolIds ? contract.poolIds.map(id => id.toLowerCase()) : null,
       });
       
       // Загружаем ABI для pool из contractAbis
@@ -614,13 +615,13 @@ class BlockWatcher {
 
       for (const eventName of eventNames) {
         await this.ensureRedisReady();
-        await this.loadEventLogsViaEtherscan(contractInstance, contractKey, address, eventName, fromBlock, toBlock);
+        await this.loadEventLogsViaEtherscan(contractInstance, contractKey, address, eventName, fromBlock, toBlock, contractInfo.poolIds);
         await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
   }
 
-  async loadEventLogsViaEtherscan(contractInstance, contractKey, contractAddress, eventName, fromBlock, toBlock) {
+  async loadEventLogsViaEtherscan(contractInstance, contractKey, contractAddress, eventName, fromBlock, toBlock, poolIds = null) {
     const eventAbi = contractInstance.options.jsonInterface.find(
       item => item.type === 'event' && item.name === eventName
     );
@@ -632,62 +633,70 @@ class BlockWatcher {
     const signature = `${eventAbi.name}(${eventAbi.inputs.map(i => i.type).join(',')})`;
     const topic0 = this.web3.utils.keccak256(signature);
 
-    let page = 1;
-    const pageSize = 1000;
+    // Если заданы poolIds — делаем отдельный запрос на каждый пул через topic1.
+    // Это исключает события чужих пулов на стороне Etherscan, не гоняя лишний трафик.
+    const topic1List = poolIds && poolIds.length > 0 ? poolIds : [null];
+
     let totalIndexed = 0;
 
-    while (true) {
-      const url = `${this.etherscanApiUrl}?chainid=1&module=logs&action=getLogs` +
-        `&address=${contractAddress}&fromBlock=${fromBlock}&toBlock=${toBlock}` +
-        `&topic0=${topic0}&page=${page}&offset=${pageSize}&apikey=${this.etherscanApiKey}`;
+    for (const topic1 of topic1List) {
+      let page = 1;
+      const pageSize = 1000;
 
-      try {
-        const response = await axios.get(url);
-        const data = response.data;
+      while (true) {
+        let url = `${this.etherscanApiUrl}?chainid=1&module=logs&action=getLogs` +
+          `&address=${contractAddress}&fromBlock=${fromBlock}&toBlock=${toBlock}` +
+          `&topic0=${topic0}&page=${page}&offset=${pageSize}&apikey=${this.etherscanApiKey}`;
+        if (topic1) url += `&topic0_1_opr=and&topic1=${topic1}`;
 
-        if (data.status !== '1') {
-          if (data.message !== 'No records found') {
-            logger.warn(`Etherscan getLogs error for ${contractKey}.${eventName}: ${data.message}`);
+        try {
+          const response = await axios.get(url);
+          const data = response.data;
+
+          if (data.status !== '1') {
+            if (data.message !== 'No records found') {
+              logger.warn(`Etherscan getLogs error for ${contractKey}.${eventName}: ${data.message}`);
+            }
+            break;
           }
-          break;
-        }
 
-        const logs = data.result || [];
+          const logs = data.result || [];
 
-        for (const log of logs) {
-          try {
-            const decoded = this.web3.eth.abi.decodeLog(
-              eventAbi.inputs,
-              log.data,
-              log.topics.slice(1)
-            );
+          for (const log of logs) {
+            try {
+              const decoded = this.web3.eth.abi.decodeLog(
+                eventAbi.inputs,
+                log.data,
+                log.topics.slice(1)
+              );
 
-            const event = {
-              event: eventName,
-              returnValues: decoded,
-              blockNumber: parseInt(log.blockNumber, 16),
-              transactionHash: log.transactionHash,
-              logIndex: parseInt(log.logIndex, 16)
-            };
+              const event = {
+                event: eventName,
+                returnValues: decoded,
+                blockNumber: parseInt(log.blockNumber, 16),
+                transactionHash: log.transactionHash,
+                logIndex: parseInt(log.logIndex, 16)
+              };
 
-            await this.indexEvent(event, contractKey, contractAddress);
-            totalIndexed++;
-          } catch (decodeError) {
-            logger.warn(`Failed to decode ${eventName} log in tx ${log.transactionHash}: ${decodeError.message}`);
+              await this.indexEvent(event, contractKey, contractAddress);
+              totalIndexed++;
+            } catch (decodeError) {
+              logger.warn(`Failed to decode ${eventName} log in tx ${log.transactionHash}: ${decodeError.message}`);
+            }
           }
-        }
 
-        if (logs.length < pageSize) break;
-        page++;
-        await new Promise(resolve => setTimeout(resolve, 200));
+          if (logs.length < pageSize) break;
+          page++;
+          await new Promise(resolve => setTimeout(resolve, 200));
 
-      } catch (error) {
-        if (error.response?.status === 429) {
-          logger.warn(`Etherscan rate limit on getLogs for ${contractKey}.${eventName}, retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else {
-          logger.error(`Failed to load ${eventName} for ${contractKey}: ${error.message}`);
-          break;
+        } catch (error) {
+          if (error.response?.status === 429) {
+            logger.warn(`Etherscan rate limit on getLogs for ${contractKey}.${eventName}, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            logger.error(`Failed to load ${eventName} for ${contractKey}: ${error.message}`);
+            break;
+          }
         }
       }
     }

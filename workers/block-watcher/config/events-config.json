@@ -8,7 +8,7 @@
     "deposit": ["DepositOpened"],
     "basket": ["instrumentAdded", "shareChanged"],
     "auction": ["newAuction", "newBid", "auctionFinished", "bidCanceled"],
-    "pool": ["Swap", "Mint", "Burn", "Sync", "Transfer"]
+    "pool": ["Initialize", "Swap", "ModifyLiquidity"]
   },
   "fullScanContracts": {
     "flatCoin": ["Transfer"],

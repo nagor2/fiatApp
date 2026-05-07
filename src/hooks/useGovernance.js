@@ -16,20 +16,51 @@ import { toFloat } from '../utils/utils';
  *   raw      — number, no unit
  */
 export const KNOWN_PARAMS = [
-  { name: 'stabilizationFundPercent', label: 'Stabilization fund',     unit: 'percent',
-    hint:  'Share of liquidation proceeds reserved for the stabilization fund.' },
-  { name: 'collateralDiscount',       label: 'Collateral discount',    unit: 'percent',
-    hint:  'Markdown applied to collateral when calculating max borrow.' },
-  { name: 'interestRate',             label: 'CDP interest rate',      unit: 'percent',
-    hint:  'Annual rate accruing on outstanding DFC debt.' },
-  { name: 'depositRate',              label: 'Deposit rate',           unit: 'percent',
-    hint:  'Annual rate paid to DFC depositors.' },
-  { name: 'minAuctionPriceMove',      label: 'Min auction price step', unit: 'percent',
-    hint:  'Minimum % gap between consecutive bids on any auction.' },
-  { name: 'maxRuleEmissionPercent',   label: 'Max RLE emission',       unit: 'percent',
-    hint:  'Cap on RLE that can be minted in a single buyout cycle.' },
-  { name: 'auctionTurnDuration',      label: 'Auction turn duration',  unit: 'seconds',
-    hint:  'How long an auction stays open after the last action before becoming claimable.' },
+  // CDP / Lending
+  { name: 'interestRate',                     label: 'CDP interest rate',           unit: 'percent',
+    hint: 'Annual rate accruing on outstanding DFC debt.' },
+  { name: 'depositRate',                      label: 'Deposit rate',                unit: 'percent',
+    hint: 'Annual rate paid to DFC depositors.' },
+  { name: 'collateralDiscount',               label: 'Collateral discount',         unit: 'percent',
+    hint: 'Markdown applied to collateral when calculating max borrow.' },
+  { name: 'liquidationFee',                   label: 'Liquidation fee',             unit: 'percent',
+    hint: 'Fee charged on collateral during liquidation.' },
+  { name: 'marginCallTimeLimit',              label: 'Margin call time limit',      unit: 'seconds',
+    hint: 'Time a CDP has to top up collateral before liquidation.' },
+  { name: 'minCDPBalanceToInitBuyOut',        label: 'Min CDP balance for buyout',  unit: 'tokens',
+    hint: 'Minimum DFC debt on a CDP to trigger a buyout auction.' },
+  // Deposits
+  { name: 'defaultDepositPeriod',             label: 'Default deposit period',      unit: 'seconds',
+    hint: 'Lock-up duration for a standard DFC deposit.' },
+  // Auctions
+  { name: 'auctionTurnDuration',              label: 'Auction turn duration',       unit: 'seconds',
+    hint: 'How long an auction stays open after the last action before becoming claimable.' },
+  { name: 'minAuctionPriceMove',              label: 'Min auction price step',      unit: 'percent',
+    hint: 'Minimum % gap between consecutive bids on any auction.' },
+  // Stabilization
+  { name: 'stabilizationFundPercent',         label: 'Stabilization fund',          unit: 'percent',
+    hint: 'Share of liquidation proceeds reserved for the stabilization fund.' },
+  { name: 'maxCoinsForStabilization',         label: 'Max coins for stabilization', unit: 'tokens',
+    hint: 'Cap on DFC that can be used for stabilization in one cycle.' },
+  // Governance voting
+  { name: 'quorum',                           label: 'Quorum',                      unit: 'percent',
+    hint: 'Minimum participation (% of pooled RLE) required for a vote to be valid.' },
+  { name: 'majority',                         label: 'Majority',                    unit: 'percent',
+    hint: 'Share of votes in favour required to pass a standard proposal.' },
+  { name: 'absoluteMajority',                 label: 'Absolute majority',           unit: 'percent',
+    hint: 'Share of all pooled RLE required to pass critical proposals.' },
+  { name: 'votingDuration',                   label: 'Voting duration',             unit: 'seconds',
+    hint: 'How long a voting round stays open.' },
+  { name: 'minRuleTokensToInitVotingPercent', label: 'Min RLE to start vote',       unit: 'percent',
+    hint: 'Minimum % of pooled RLE a member must hold to open a new vote.' },
+  // Emissions & oracle
+  { name: 'maxRuleEmissionPercent',           label: 'Max RLE emission',            unit: 'percent',
+    hint: 'Cap on RLE that can be minted in a single buyout cycle.' },
+  { name: 'highVolatilityEventBarrierPercent',label: 'High volatility barrier',     unit: 'percent',
+    hint: 'Price move % that triggers a high-volatility oracle event.' },
+  // Minting
+  { name: 'minCoinsToMint',                   label: 'Min DFC to mint',             unit: 'raw',
+    hint: 'Minimum amount of DFC (in wei) that can be minted in a single CDP operation.' },
 ];
 
 /**
@@ -220,6 +251,10 @@ export function formatParamValue(value, unit) {
   if (value == null || !Number.isFinite(value)) return '—';
   if (unit === 'percent') return `${value}%`;
   if (unit === 'seconds') return formatSeconds(value);
+  if (unit === 'tokens') {
+    const dfc = value / 1e18;
+    return `${dfc.toLocaleString(undefined, { maximumFractionDigits: 4 })} DFC`;
+  }
   return value.toLocaleString();
 }
 

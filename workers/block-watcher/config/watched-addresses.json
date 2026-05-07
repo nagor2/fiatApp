@@ -6,9 +6,13 @@
   },
   "staticContracts": [
     {
-      "address": "0x718626E8c94DFdB24e7BD6d5F6da22035BCF47F7",
-      "name": "DFC/ETH Pool",
-      "type": "pool"
+      "address": "0x000000000004444c5dc75cB358380D2e3dE08A90",
+      "name": "Uniswap V4 PoolManager",
+      "type": "pool",
+      "poolIds": [
+        "0xca0a1a9ab72c583a8ccd487e6d8c75bcc62f9792b4c8c5aedd1707fe2b8bd3cf",
+        "0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044"
+      ]
     }
   ],
   "dynamicContracts": [
