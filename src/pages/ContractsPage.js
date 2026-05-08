@@ -191,6 +191,21 @@ function ContractDetail({ selected, onClose, onTrade }) {
               ))
             )}
           </div>
+
+          {selected.title === 'ExchangeRateContract' && (
+            <div className="df-pools-note" style={{ marginTop: 20 }}>
+              <div className="df-pools-note__icon"><Icon name="info" /></div>
+              <div>
+                <strong>Centralized oracle — upgrade planned.</strong>{' '}
+                The current ExchangeRateContract is maintained by the DotFlat team:
+                price feeds are submitted by a trusted off-chain service and stored on-chain.
+                This design prioritises simplicity during the protocol's early stage.
+                The next protocol release will replace it with a <strong>decentralized oracle</strong>{' '}
+                that aggregates prices from multiple independent providers with on-chain dispute resolution,
+                removing the team as a single point of trust.
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <p className="df-faint">No deployment address available in the current network.</p>

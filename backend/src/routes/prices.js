@@ -236,8 +236,12 @@ router.get('/', async (req, res) => {
       ts:       Date.now(),
     };
 
-    // DFC/USD derived from oracle ETH price; fall back to Uniswap if oracle not ready
-    const ethForCalc = response.ethUsd ?? response.ethUsdUniswap;
+    // DFC/USD = dfcEth * market ETH price.
+    // Use market price (Etherscan → Uniswap) not the oracle price: the oracle
+    // reflects the protocol's trusted collateral value (updated on-chain by the
+    // team) and can lag the real market, inflating the displayed DFC price.
+    // Oracle price (ethUsd) is kept in the response for protocol-internal use.
+    const ethForCalc = response.ethUsdEtherscan ?? response.ethUsdUniswap ?? response.ethUsd;
     if (ethForCalc && response.dfcEth) {
       response.dfcUsd = response.dfcEth * ethForCalc;
     }
