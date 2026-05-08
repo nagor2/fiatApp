@@ -135,6 +135,7 @@ export function usePool({ pollMs = 30000 } = {}) {
       const calls = [
         { contractKey: 'dao',  methodName: 'activeVoting', args: [] },
         { contractKey: 'rule', methodName: 'balanceOf',    args: [daoAddress] },
+        { contractKey: 'rule', methodName: 'totalSupply',  args: [] },
       ];
       if (account) {
         calls.push(
@@ -157,6 +158,7 @@ export function usePool({ pollMs = 30000 } = {}) {
       let cur = 0;
       const isActiveVoting = !!get(cur++);
       const ruleBalance    = Number(toFloat(get(cur++) || '0')) / 1e18;
+      const ruleSupply     = Number(toFloat(get(cur++) || '0')) / 1e18;
       const userPooled     = account ? Number(toFloat(get(cur++) || '0')) / 1e18 : 0;
       const allowed        = account ? Number(toFloat(get(cur++) || '0')) / 1e18 : 0;
 
@@ -203,6 +205,7 @@ export function usePool({ pollMs = 30000 } = {}) {
         daoAddress,
         totalPooled: ruleBalance,           // mirrors Pool.js: ruleBalanceOfDAO is the "totalPooled"
         ruleBalance,
+        ruleSupply,
         userPooled,
         allowed,
         params,

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { usePrices } from '../contexts/PricesContext';
 import { usePool as useGovernance } from '../hooks/useGovernance';
 import {
   PoolTokensForm,
@@ -50,6 +51,10 @@ const fmtRel = (d) => {
 export default function GovernancePage() {
   const { explorer, walletConnected } = useWeb3();
   const { pool, stats, loading, refresh } = useGovernance();
+  const prices = usePrices();
+  const marketCap = (pool?.ruleSupply != null && prices?.rleUsd != null)
+    ? pool.ruleSupply * prices.rleUsd
+    : null;
   const [tab, setTab]   = useState('params');   // 'params' | 'contracts'
   const [pane, setPane] = useState(null);       // { kind: ... } | null
 
@@ -85,13 +90,16 @@ export default function GovernancePage() {
       />
 
       {/* ── Stats ── */}
-      <section className="df-stat-row df-stat-row--4">
+      <section className="df-stat-row df-stat-row--5">
         <Stat label="Your pooled" value={`${fmt(pool.userPooled, 4)} RLE`} />
         <Stat label="Your share"   value={`${fmt(stats.sharePct, 2)}%`} muted={pool.userPooled <= 0} />
         <Stat label="Total pooled" value={`${fmt(pool.totalPooled, 0)} RLE`} />
         <Stat label="Voting"
               value={pool.activeVoting ? 'Active' : 'Idle'}
               highlight={pool.activeVoting} />
+        <Stat label="RLE Market cap"
+              value={marketCap != null ? `$${fmt(marketCap, 0)}` : '—'}
+              muted={marketCap == null} />
       </section>
 
       {/* ── Your stake actions ── */}

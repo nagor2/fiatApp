@@ -15,6 +15,7 @@ const V4_QUOTER       = '0x52f0e24d1c21c8a0cb1e5a5dd6198556bd9e1203';
 const V4_STATE_VIEW   = '0x7ffe42c4a5deea5b0fec41c94c136cf115597227';
 const DFC_ADDRESS     = '0x1f709cfa0c409e158c68edcd32453809c9eb69ee';
 const DFC_RLE_POOL_ID = '0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044';
+const DFC_ETH_POOL_ID = '0xca0a1a9ab72c583a8ccd487e6d8c75bcc62f9792b4c8c5aedd1707fe2b8bd3cf';
 const ZERO_ADDRESS    = '0x0000000000000000000000000000000000000000';
 
 // ── ABIs (minimal) ────────────────────────────────────────────────────────
@@ -103,6 +104,21 @@ async function fetchDfcEth() {
       hookData:    '0x',
     }).call();
     return Number(BigInt(result.amountOut)) / 1e18;
+  });
+}
+
+async function fetchDfcEthPool() {
+  return withFallback(async (web3) => {
+    const sv = new web3.eth.Contract(V4_STATE_SLOT0_ABI, V4_STATE_VIEW);
+    const [slot0, liquidity] = await Promise.all([
+      sv.methods.getSlot0(DFC_ETH_POOL_ID).call(),
+      sv.methods.getLiquidity(DFC_ETH_POOL_ID).call(),
+    ]);
+    return {
+      sqrtPriceX96: slot0.sqrtPriceX96.toString(),
+      tick: Number(slot0.tick),
+      liquidity: liquidity.toString(),
+    };
   });
 }
 
@@ -196,12 +212,13 @@ router.get('/', async (req, res) => {
   try {
     const rleAddress = contractService.contracts?.rule?._address || null;
 
-    const [ethUsdUniswap, dfcEth, dfcIndex, ethUsdEtherscan, ethUsd] = await Promise.allSettled([
+    const [ethUsdUniswap, dfcEth, dfcIndex, ethUsdEtherscan, ethUsd, dfcEthPool] = await Promise.allSettled([
       cachedFetch('price:eth_usd_uniswap',   CACHE_TTL_MARKET,    fetchEthUsd),
       cachedFetch('price:dfc_eth',           CACHE_TTL_MARKET,    fetchDfcEth),
       cachedFetch('price:dfc_index',         CACHE_TTL_ORACLE,    fetchDfcIndex),
       cachedFetch('price:eth_usd_etherscan', CACHE_TTL_ETHERSCAN, fetchEthUsdEtherscan),
       cachedFetch('price:eth_usd_oracle',    CACHE_TTL_ORACLE,    fetchEthUsdOracle),
+      cachedFetch('price:dfc_eth_pool',      CACHE_TTL_MARKET,    fetchDfcEthPool),
     ]);
 
     // ethUsd = oracle price (what the protocol actually uses)
@@ -212,6 +229,7 @@ router.get('/', async (req, res) => {
       ethUsdEtherscan: ethUsdEtherscan.status === 'fulfilled' ? ethUsdEtherscan.value : null,
       dfcEth:          dfcEth.status          === 'fulfilled' ? dfcEth.value          : null,
       dfcIndex:        dfcIndex.status        === 'fulfilled' ? dfcIndex.value        : null,
+      dfcEthPool:      dfcEthPool.status      === 'fulfilled' ? dfcEthPool.value      : null,
       dfcUsd:   null,
       rleDfc:   null,
       rleUsd:   null,

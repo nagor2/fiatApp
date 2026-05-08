@@ -42,7 +42,7 @@ const fmt = (n, dp = 4) => {
 export default function PoolsPage() {
   const { contracts } = useWeb3();
   const prices = usePrices();
-  const [pane, setPane]     = useState(null); // { pair }
+  const [pane, setPane]         = useState(null); // { pair }
   const [histPane, setHistPane] = useState(null); // { pair }
 
   // Pull RLE address from contracts at runtime (rule token)
@@ -55,6 +55,44 @@ export default function PoolsPage() {
   const dfcUsd        = prices?.dfcUsd                   ?? null;
   const rlePriceInDfc = prices?.rleDfc?.priceRleInDfc    ?? null;
   const rleUsd        = (rlePriceInDfc != null && dfcUsd != null) ? rlePriceInDfc * dfcUsd : null;
+
+  // DFC/ETH pool TVL — from prices.dfcEthPool (same data the backend already fetches for RLE/DFC)
+  // ETH is currency0 (address(0) < DFC address), DFC is currency1
+  const dfcEthTvl = useMemo(() => {
+    const pool = prices?.dfcEthPool;
+    const ethUsd = prices?.ethUsd ?? prices?.ethUsdUniswap;
+    const dUsd = prices?.dfcUsd;
+    if (!pool?.sqrtPriceX96 || !pool?.liquidity || !ethUsd || !dUsd) return null;
+    try {
+      // eslint-disable-next-line no-undef
+      const sqrtPrice = Number(BigInt(pool.sqrtPriceX96)) / Number(BigInt(2) ** BigInt(96));
+      // eslint-disable-next-line no-undef
+      const liqNum = Number(BigInt(pool.liquidity));
+      const amountEth = liqNum / sqrtPrice / 1e18;
+      const amountDfc = liqNum * sqrtPrice / 1e18;
+      return amountEth * ethUsd + amountDfc * dUsd;
+    } catch (_) { return null; }
+  }, [prices?.dfcEthPool, prices?.ethUsd, prices?.ethUsdUniswap, prices?.dfcUsd]);
+
+  // RLE/DFC pool TVL — pure math from prices + RLE address (same calc as ContractsPage/RLE)
+  const rleDfcTvl = useMemo(() => {
+    const rleDfc = prices?.rleDfc;
+    const rleAddr = contracts?.rule?._address;
+    if (!rleDfc?.liquidity || !rleDfc?.sqrtPriceX96 || rleUsd == null || dfcUsd == null || !rleAddr) return null;
+    try {
+      const DFC_ADDR = '0x1f709cfa0c409e158c68edcd32453809c9eb69ee';
+      const rleIsCurrency0 = rleAddr.toLowerCase() < DFC_ADDR;
+      // eslint-disable-next-line no-undef
+      const sqrtPrice = Number(BigInt(rleDfc.sqrtPriceX96)) / Number(BigInt(2) ** BigInt(96));
+      // eslint-disable-next-line no-undef
+      const liqNum = Number(BigInt(rleDfc.liquidity));
+      const amount0 = liqNum / sqrtPrice / 1e18;
+      const amount1 = liqNum * sqrtPrice / 1e18;
+      const amountRle = rleIsCurrency0 ? amount0 : amount1;
+      const amountDfc = rleIsCurrency0 ? amount1 : amount0;
+      return amountRle * rleUsd + amountDfc * dfcUsd;
+    } catch (_) { return null; }
+  }, [prices?.rleDfc, contracts?.rule?._address, rleUsd, dfcUsd]);
 
   return (
     <div className="df-page">
@@ -80,6 +118,11 @@ export default function PoolsPage() {
             quoteLabel={
               p.id === 'dfc-eth' ? '1 DFC' :
               p.id === 'rle-dfc' ? '1 RLE' :
+              null
+            }
+            tvl={
+              p.id === 'dfc-eth' ? dfcEthTvl :
+              p.id === 'rle-dfc' ? rleDfcTvl :
               null
             }
           />
@@ -116,7 +159,7 @@ export default function PoolsPage() {
 
 /* ── pool / pair card ─────────────────────────────────────────── */
 
-function PoolCard({ pair, tokens, onTrade, onHistory, quote, quoteLabel }) {
+function PoolCard({ pair, tokens, onTrade, onHistory, quote, quoteLabel, tvl }) {
   const a = tokens[pair.from];
   const b = tokens[pair.to];
   const soon = a?.comingSoon || b?.comingSoon;
@@ -146,6 +189,12 @@ function PoolCard({ pair, tokens, onTrade, onHistory, quote, quoteLabel }) {
           <div className="df-pool-card-v2__quote">
             <span className="df-muted">{quoteLabel} ≈</span>
             <strong className="df-accent">{quote}</strong>
+          </div>
+        )}
+        {tvl != null && (
+          <div className="df-pool-card-v2__tvl">
+            <span className="df-muted">TVL</span>
+            <strong>${fmt(tvl, 2)}</strong>
           </div>
         )}
       </div>

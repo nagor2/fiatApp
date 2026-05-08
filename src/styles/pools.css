@@ -232,3 +232,11 @@
   border-top: 1px solid var(--df-border);
   font-size: 14px;
 }
+
+.df-pool-card-v2__tvl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--df-muted);
+}
