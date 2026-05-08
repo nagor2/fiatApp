@@ -3,7 +3,7 @@ const https = require('https');
 const logger = require('../utils/logger');
 const router = express.Router();
 
-router.use('*', (req, res) => {
+router.use((req, res) => {
   const apiKey = process.env.ZEROEX_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'ZEROEX_API_KEY not configured on server' });
 
