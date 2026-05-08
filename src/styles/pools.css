@@ -64,7 +64,7 @@
 
 .df-pool-card-v2__foot {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .df-pools-note {
@@ -102,6 +102,12 @@
   transition: opacity .15s ease;
 }
 .df-swap-field.is-muted { opacity: 0.6; }
+
+.df-swap-field__usd {
+  font-size: 12px;
+  color: var(--df-muted);
+  margin-top: 4px;
+}
 
 .df-swap-field__label {
   font-size: 12px;

@@ -1,6 +1,7 @@
 /* global BigInt */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWeb3 } from '../../contexts/Web3Context';
+import { usePrices } from '../../contexts/PricesContext';
 import { use0xSwap, ZEROEX_NATIVE_ETH } from '../../hooks/use0xSwap';
 import Icon from './Icons';
 import TokenMark from './TokenMark';
@@ -64,6 +65,7 @@ function fromUnits(units, decimals) {
 
 export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl }) {
   const { account, walletConnected, getAccount, contracts, ethPriceEtherscan } = useWeb3();
+  const prices = usePrices();
   // pairProp (from PoolsPage) takes priority over the token-derived default
   const initialPair = useMemo(
     () => pairProp ? { ...pairFor(token), ...pairProp } : pairFor(token),
@@ -126,6 +128,10 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
         taker: account,
         slippageBps: Math.round(slippage * 100),
       });
+      if (q.liquidityAvailable === false) {
+        setQuoteErr(`No liquidity available via 0x for ${tFrom.symbol}/${tTo.symbol}. Use Uniswap directly.`);
+        return;
+      }
       q._inverted = inverted;
       setQuote(q);
     } catch (e) {
@@ -153,6 +159,15 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
 
   const displaySell = inputSide === 'sell' ? sellAmount : (computedSell != null ? fmt(computedSell, 6) : '');
   const displayBuy  = inputSide === 'buy'  ? buyInput   : (computedBuy  != null ? fmt(computedBuy,  6) : '');
+
+  const sellUsd = useMemo(() => {
+    const n = inputSide === 'sell' ? Number(sellAmount) : computedSell;
+    if (!n || !Number.isFinite(n)) return null;
+    if (tFrom?.native)              return ethPriceEtherscan  ? n * ethPriceEtherscan          : null;
+    if (tFrom?.symbol === 'DFC')    return prices?.dfcUsd     ? n * prices.dfcUsd              : null;
+    if (tFrom?.symbol === 'RLE')    return prices?.rleUsd     ? n * prices.rleUsd              : null;
+    return null;
+  }, [inputSide, sellAmount, computedSell, tFrom, ethPriceEtherscan, prices]);
 
   const price = computedBuy != null && computedSell != null && Number(computedSell) > 0
     ? computedBuy / Number(computedSell)
@@ -237,6 +252,7 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
                 value={displaySell}
                 onChange={(v) => { setSellAmount(v); setInputSide('sell'); setBuyInput(''); }}
                 muted={inputSide === 'buy' && quoting}
+                usdValue={sellUsd}
               />
 
               <div className="df-swap-flip">
@@ -258,9 +274,13 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
                 {!quoting && price != null && (
                   <span>
                     1 {tFrom.symbol} ≈ <strong>{fmt(price, 6)}</strong> {tTo.symbol}
-                    {ethPriceEtherscan && (() => {
-                      const usd = tFrom.native ? ethPriceEtherscan
-                                : tTo.native   ? price * ethPriceEtherscan
+                    {(() => {
+                      const ethP = ethPriceEtherscan;
+                      const usd = tFrom.native              ? ethP
+                                : tTo.native                ? price * ethP
+                                : tFrom.symbol === 'DFC'    ? prices?.dfcUsd
+                                : tFrom.symbol === 'RLE'    ? prices?.rleUsd
+                                : tTo.symbol   === 'DFC'    ? price * prices?.dfcUsd
                                 : null;
                       return usd != null ? (
                         <span className="df-muted" style={{ marginLeft: 8 }}>
@@ -323,7 +343,7 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
   );
 }
 
-function Field({ label, token, value, onChange, readOnly, muted }) {
+function Field({ label, token, value, onChange, readOnly, muted, usdValue }) {
   return (
     <label className={`df-swap-field ${muted ? 'is-muted' : ''}`}>
       <div className="df-swap-field__label">{label}</div>
@@ -342,6 +362,9 @@ function Field({ label, token, value, onChange, readOnly, muted }) {
           <strong>{token.symbol}</strong>
         </div>
       </div>
+      {usdValue != null && (
+        <div className="df-swap-field__usd">≈ ${usdValue.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</div>
+      )}
     </label>
   );
 }
