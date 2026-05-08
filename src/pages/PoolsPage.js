@@ -6,6 +6,7 @@ import Icon from '../components/redesign/Icons';
 import TokenMark from '../components/redesign/TokenMark';
 import PageHead from '../components/redesign/PageHead';
 import TradeWidget from '../components/redesign/TradeWidget';
+import PoolHistoryWidget from '../components/redesign/PoolHistoryWidget';
 import '../styles/balances.css';
 import '../styles/auctions.css';
 import '../styles/pools.css';
@@ -20,8 +21,8 @@ const TOKENS = {
 };
 
 const PAIRS = [
-  { id: 'dfc-eth', from: 'DFC', to: 'ETH', label: 'Dotflat / ETH', sub: 'V4 pool · 0.30% fee', uniswap: 'https://app.uniswap.org/explore/tokens/ethereum/0x1f709cfa0c409e158c68edcd32453809c9eb69ee' },
-  { id: 'rle-dfc', from: 'RLE', to: 'DFC', label: 'Rule / Dotflat', sub: 'V4 pool · 0.30% fee', uniswap: 'https://app.uniswap.org/explore/pools/ethereum/0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044' },
+  { id: 'dfc-eth', from: 'DFC', to: 'ETH', label: 'Dotflat / ETH', sub: 'V4 pool · 0.30% fee', uniswap: 'https://app.uniswap.org/explore/tokens/ethereum/0x1f709cfa0c409e158c68edcd32453809c9eb69ee', poolId: '0xca0a1a9ab72c583a8ccd487e6d8c75bcc62f9792b4c8c5aedd1707fe2b8bd3cf' },
+  { id: 'rle-dfc', from: 'RLE', to: 'DFC', label: 'Rule / Dotflat', sub: 'V4 pool · 0.30% fee', uniswap: 'https://app.uniswap.org/explore/pools/ethereum/0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044', poolId: '0xac5ddf400a6183d7e86b9ab8afa892e8f02d5498ebb9c6e2774c461320f9f044' },
   { id: 'gld-dfc', from: 'GLD', to: 'DFC', label: 'Gold / Dotflat', sub: 'Coming soon' },
 ];
 
@@ -41,7 +42,8 @@ const fmt = (n, dp = 4) => {
 export default function PoolsPage() {
   const { contracts } = useWeb3();
   const prices = usePrices();
-  const [pane, setPane] = useState(null); // { pair }
+  const [pane, setPane]     = useState(null); // { pair }
+  const [histPane, setHistPane] = useState(null); // { pair }
 
   // Pull RLE address from contracts at runtime (rule token)
   const tokens = useMemo(() => {
@@ -69,6 +71,7 @@ export default function PoolsPage() {
             pair={p}
             tokens={tokens}
             onTrade={() => setPane({ pair: p })}
+            onHistory={() => setHistPane({ pair: p })}
             quote={
               p.id === 'dfc-eth' ? (dfcUsd != null ? `$${fmt(dfcUsd, 4)}` : null) :
               p.id === 'rle-dfc' ? (rlePriceInDfc != null ? `${fmt(rlePriceInDfc, 6)} DFC${rleUsd != null ? ` ($${fmt(rleUsd, 4)})` : ''}` : null) :
@@ -99,13 +102,21 @@ export default function PoolsPage() {
           onClose={() => setPane(null)}
         />
       )}
+
+      {histPane && (
+        <PoolHistoryWidget
+          pair={histPane.pair}
+          tokens={tokens}
+          onClose={() => setHistPane(null)}
+        />
+      )}
     </div>
   );
 }
 
 /* ── pool / pair card ─────────────────────────────────────────── */
 
-function PoolCard({ pair, tokens, onTrade, quote, quoteLabel }) {
+function PoolCard({ pair, tokens, onTrade, onHistory, quote, quoteLabel }) {
   const a = tokens[pair.from];
   const b = tokens[pair.to];
   const soon = a?.comingSoon || b?.comingSoon;
@@ -145,9 +156,16 @@ function PoolCard({ pair, tokens, onTrade, quote, quoteLabel }) {
             <Icon name="clock" size={16} /> Coming soon
           </button>
         ) : (
-          <button className="df-btn df-btn--primary" onClick={onTrade}>
-            <Icon name="swap" size={16} /> Trade
-          </button>
+          <>
+            <button className="df-btn df-btn--primary" onClick={onTrade}>
+              <Icon name="swap" size={16} /> Trade
+            </button>
+            {pair.poolId && (
+              <button className="df-btn df-btn--ghost df-pool-hist-btn" onClick={onHistory} title="Pool transaction history">
+                <Icon name="receipt" size={16} />
+              </button>
+            )}
+          </>
         )}
       </footer>
     </article>

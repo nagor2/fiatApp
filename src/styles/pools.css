@@ -64,7 +64,25 @@
 
 .df-pool-card-v2__foot {
   display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-start;
+}
+
+.df-pool-hist-btn {
+  padding: 0 10px;
+  height: 36px;
+  color: var(--df-muted);
+}
+.df-pool-hist-btn:hover {
+  color: var(--df-text);
+}
+
+/* Pool history drawer */
+.df-pool-hist__liq-delta {
+  font-size: 12px;
+  color: var(--df-muted);
+  font-weight: 400;
 }
 
 .df-pools-note {

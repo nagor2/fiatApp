@@ -931,11 +931,18 @@ class BlockWatcher {
       
       // Проверяем транзакции с нашими контрактами
       if (toAddress && this.watchedAddresses.has(toAddress)) {
-        hasRelevantTx = true;
         const contractInfo = this.watchedAddresses.get(toAddress);
-        
+
+        // For contracts with poolIds (e.g. Uniswap V4 PoolManager) relevance
+        // requires matching pool events in the receipt — not just any tx to
+        // that address. A global contract like PoolManager receives thousands
+        // of unrelated-pool transactions per day and must not pollute
+        // lastRelevantBlock. For all other watched contracts, any tx is relevant.
+        const needsEventCheck = !!contractInfo.poolIds;
+        if (!needsEventCheck) hasRelevantTx = true;
+
         logger.info(`New transaction to ${contractInfo.name}: ${tx.hash}`);
-        
+
         // Получаем полные данные транзакции из блока
         const fullTxData = {
           hash: tx.hash,
@@ -950,16 +957,17 @@ class BlockWatcher {
           contractAddress: toAddress,
           indexed_at: new Date().toISOString()
         };
-        
+
         // Получаем receipt для gasUsed, isError и событий
         try {
           const receipt = await this.web3.eth.getTransactionReceipt(tx.hash);
           fullTxData.gasUsed = receipt.gasUsed?.toString() || '0';
           fullTxData.isError = receipt.status ? '0' : '1';
-          
+
           // Декодируем события из receipt
-          await this.processReceiptEvents(receipt, contractInfo, toAddress, blockNumber);
-          
+          const eventsIndexed = await this.processReceiptEvents(receipt, contractInfo, toAddress, blockNumber);
+          if (needsEventCheck && eventsIndexed > 0) hasRelevantTx = true;
+
         } catch (error) {
           logger.warn(`Failed to get receipt for ${tx.hash}: ${error.message}`);
         }
@@ -1011,7 +1019,7 @@ class BlockWatcher {
   
   async processReceiptEvents(receipt, contractInfo, contractAddress, blockNumber) {
     if (!receipt.logs || receipt.logs.length === 0) {
-      return;
+      return 0;
     }
 
     // Раньше здесь стоял `if (log.address !== contractAddress) continue;`,
@@ -1023,6 +1031,7 @@ class BlockWatcher {
     //
     // Теперь: для каждого лога определяем watched-контракт по log.address
     // и декодируем его ABI'ем. Если адрес не watched — пропускаем без шума.
+    let indexedCount = 0;
     for (const log of receipt.logs) {
       const logAddress = log.address.toLowerCase();
       const logContractInfo = this.watchedAddresses.get(logAddress);
@@ -1045,6 +1054,17 @@ class BlockWatcher {
           continue;
         }
 
+        // For contracts filtered by poolIds (e.g. Uniswap V4 PoolManager),
+        // skip events that don't belong to one of our pools. The PoolManager
+        // emits events for every pool on Uniswap V4 — indexing unrelated ones
+        // would pollute our event store and falsely advance lastRelevantBlock.
+        if (logContractInfo.poolIds) {
+          const eventPoolId = decodedEvent.returnValues?.id?.toLowerCase();
+          if (!eventPoolId || !logContractInfo.poolIds.includes(eventPoolId)) {
+            continue;
+          }
+        }
+
         const event = {
           event: decodedEvent.event,
           returnValues: decodedEvent.returnValues,
@@ -1054,6 +1074,7 @@ class BlockWatcher {
         };
 
         await this.indexEvent(event, logContractInfo.contractKey, logAddress);
+        indexedCount++;
         logger.debug(`Indexed ${event.event} for ${logContractInfo.name} (via tx to ${contractInfo.name})`);
 
       } catch (decodeError) {
@@ -1064,6 +1085,7 @@ class BlockWatcher {
         logger.warn(`Failed to decode log for ${logContractInfo.name}: ${decodeError.message}`);
       }
     }
+    return indexedCount;
   }
 
   // Подхват событий контракта ровно для одного блока через getPastEvents.
