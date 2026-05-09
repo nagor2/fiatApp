@@ -33,13 +33,14 @@ function toSerializable(value) {
 }
 
 class HealthServer {
-  constructor(port, getHealthStatus, getWatchedContracts, getContractTransactions, getContractEvents, renewContractCache, web3, redisClient, contracts, settings = {}) {
+  constructor(port, getHealthStatus, getWatchedContracts, getContractTransactions, getContractEvents, renewContractCache, triggerResync, web3, redisClient, contracts, settings = {}) {
     this.port = port;
     this.getHealthStatus = getHealthStatus;
     this.getWatchedContracts = getWatchedContracts;
     this.getContractTransactions = getContractTransactions;
     this.getContractEvents = getContractEvents;
     this.renewContractCache = renewContractCache;
+    this.triggerResync = triggerResync;
     this.web3 = web3;
     this.redisClient = redisClient;
     this.contracts = contracts;
@@ -195,6 +196,24 @@ class HealthServer {
         return;
       }
       
+      // POST /api/resync — clear all indexes + both cache namespaces, re-run historical sync
+      if (pathname === '/api/resync') {
+        if (req.method !== 'POST') {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method Not Allowed. Use POST.' }));
+          return;
+        }
+        try {
+          const result = await this.triggerResync();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (error) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
       // Универсальный endpoint для вызова методов контрактов с кэшированием
       // GET /api/call/{contractKey}/{method}?args=["arg1","arg2"]
       if (pathname.startsWith('/api/eth/getBalance')) {

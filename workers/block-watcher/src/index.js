@@ -1156,20 +1156,22 @@ class BlockWatcher {
       }
 
       const contractKey = contractInfo.contractKey;
-      const cachePrefix = `contract:v2:${contractKey}`;
 
-      const [keys, depKeyResults] = await Promise.all([
-        this.scanKeys(`${cachePrefix}:*`),
+      const deps = this.cacheDependencies?.[contractKey] || [];
+      const [v2Keys, beKeys, depKeyResults] = await Promise.all([
+        this.scanKeys(`contract:v2:${contractKey}:*`),
+        this.scanKeys(`contract:${contractKey}:*`),   // backend cache (no v2 prefix)
         Promise.all(
-          (this.cacheDependencies?.[contractKey] || []).map(async depKey => ({
+          deps.map(async depKey => ({
             depKey,
-            keys: await this.scanKeys(`contract:v2:${depKey}:*`),
+            v2: await this.scanKeys(`contract:v2:${depKey}:*`),
+            be: await this.scanKeys(`contract:${depKey}:*`),
           }))
         ),
       ]);
 
-      const toDelete = [...keys, `eth:balance:${address}`];
-      for (const { keys: dk } of depKeyResults) toDelete.push(...dk);
+      const toDelete = [...v2Keys, ...beKeys, `eth:balance:${address}`];
+      for (const { v2, be } of depKeyResults) toDelete.push(...v2, ...be);
 
       if (toDelete.length > 0) {
         await this.redisClient.del(toDelete);
@@ -1180,6 +1182,43 @@ class BlockWatcher {
     }
   }
   
+  // ===== Full resync — clear all indexes + call caches, re-run historicalSync =====
+
+  async resync() {
+    logger.info('Full resync requested via API');
+    this.health.status = 'syncing';
+    try {
+      // 1. Clear watcher event/tx index data
+      await this.clearWatcherData();
+
+      // 2. Clear both call-cache namespaces: watcher (contract:v2:*) and backend (contract:*)
+      //    Scanning contract:* covers both since v2 keys are a subset.
+      const contractCacheKeys = await this.scanKeys('contract:*');
+      if (contractCacheKeys.length > 0) {
+        await this.redisClient.del(contractCacheKeys);
+        logger.info(`Cleared ${contractCacheKeys.length} contract cache keys`);
+      }
+
+      // 3. Reset in-memory counters
+      this.health.transactionsIndexed = 0;
+      this.health.eventsIndexed = 0;
+      this.health.lastProcessedBlock = null;
+      this.health.lastRelevantBlock = null;
+
+      // 4. Re-run historical sync from startBlock to now
+      const currentBlock = Number(await this.web3.eth.getBlockNumber());
+      await this.historicalSync(this.startBlock, currentBlock);
+      this.health.lastProcessedBlock = currentBlock;
+      this.health.status = 'healthy';
+      logger.info(`Full resync complete — synced to block ${currentBlock}`);
+      return { success: true, syncedTo: currentBlock };
+    } catch (error) {
+      this.health.status = 'error';
+      logger.error('Full resync failed:', error);
+      throw error;
+    }
+  }
+
   // ===== Watchdog — detects and recovers from stalled block processing =====
 
   startWatchdog(staleThresholdMs = 60_000, checkIntervalMs = 30_000) {
@@ -1246,6 +1285,7 @@ class BlockWatcher {
       (addr, options) => this.getContractTransactions(addr, options),
       (addr, eventName, options) => this.getContractEvents(addr, eventName, options),
       (contractNameOrAddress) => this.renewContractCache(contractNameOrAddress),
+      () => this.resync(),
       this.web3,
       this.redisClient,
       this.contracts,

@@ -41,6 +41,12 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -73,8 +79,8 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
     >
       <div className="df-drawer">
         <header className="df-drawer__head">
-          <button className="df-btn df-btn--ghost df-drawer__close" onClick={onClose}>
-            <Icon name="close" size={18} />
+          <button className="df-icon-btn df-drawer__close" onClick={onClose} aria-label="Close">
+            <Icon name="close" />
           </button>
           <div className="df-drawer__title">
             <Icon name="receipt" size={20} />
