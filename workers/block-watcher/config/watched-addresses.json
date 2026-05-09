@@ -28,7 +28,7 @@
     "oracle": ["basket", "cdp"],
     "basket": ["cdp"],
     "rule": ["dao", "auction"],
-    "flatCoin": ["dao"],
+    "flatCoin": ["dao", "cdp", "deposit", "auction"],
     "cdp": ["flatCoin"],
     "deposit": ["flatCoin"],
     "auction": ["flatCoin", "rule"],
