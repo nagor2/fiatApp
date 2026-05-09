@@ -13,6 +13,7 @@ import { batchCachedContractCalls } from '../utils/cachedContractCall';
 import { parseTxError } from '../utils/txError';
 import { KNOWN_PARAMS, KNOWN_ADDRESSES, VOTING_TYPES, formatParamValue } from '../hooks/useGovernance';
 import Icon from './redesign/Icons';
+import Spinner from './Spinner';
 
 /* ── tiny formatters (local; matches PoolPage) ──────── */
 
@@ -63,15 +64,18 @@ export function PoolTokensForm({ pool, onDone }) {
   const { balance, allowance, reload } = useRuleContext(pool);
   const [amount, setAmount] = useState('');
   const [busy, setBusy]     = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const num = Number(amount) || 0;
   const enough = num <= balance + 1e-9;
   const canSubmit = !busy && num > 0 && enough;
 
+  const onTxHash = () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); };
+
   const submit = async () => {
     if (!canSubmit) return;
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Preparing transaction…' });
     try {
       const wei = web3.utils.toWei(String(num));
@@ -79,17 +83,20 @@ export function PoolTokensForm({ pool, onDone }) {
         setStatus({ kind: 'pending', msg: `Approving ${fmt(num, 4)} RLE…` });
         await contracts.rule.methods
           .approve(pool.daoAddress, wei)
-          .send({ from: account });
+          .send({ from: account })
+          .on('transactionHash', onTxHash);
+        setConfirming(false);
       }
       setStatus({ kind: 'pending', msg: 'Pooling tokens…' });
-      await contracts.dao.methods.poolTokens().send({ from: account });
+      await contracts.dao.methods.poolTokens().send({ from: account })
+        .on('transactionHash', onTxHash);
       setStatus({ kind: 'ok', msg: 'Tokens pooled.' });
       await reload();
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -133,13 +140,15 @@ export function PoolTokensForm({ pool, onDone }) {
 
       <button type="button" className="df-btn df-btn--primary df-btn--block"
               disabled={!canSubmit} onClick={submit}>
-        {busy
-          ? 'Working…'
-          : !enough
-            ? 'Insufficient RLE'
-            : allowance + 1e-12 < num
-              ? `Approve & pool ${fmt(num, 4)} RLE`
-              : `Pool ${fmt(num, 4)} RLE`}
+        {confirming
+          ? <><Spinner size={14} /> Waiting for confirmation…</>
+          : busy
+            ? <><Spinner size={14} /> Working…</>
+            : !enough
+              ? 'Insufficient RLE'
+              : allowance + 1e-12 < num
+                ? `Approve & pool ${fmt(num, 4)} RLE`
+                : `Pool ${fmt(num, 4)} RLE`}
       </button>
 
       {status && <StatusLine status={status} />}
@@ -152,19 +161,21 @@ export function PoolTokensForm({ pool, onDone }) {
 export function ReturnTokensForm({ pool, onDone }) {
   const { account, contracts } = useWeb3();
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const submit = async () => {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Returning tokens…' });
     try {
-      await contracts.dao.methods.returnTokens().send({ from: account });
+      await contracts.dao.methods.returnTokens().send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Tokens returned.' });
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -187,7 +198,7 @@ export function ReturnTokensForm({ pool, onDone }) {
       <button type="button" className="df-btn df-btn--primary df-btn--block"
               disabled={busy || pool.userPooled <= 0}
               onClick={submit}>
-        {busy ? 'Working…' : `Return ${fmt(pool.userPooled, 4)} RLE`}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Working…</> : `Return ${fmt(pool.userPooled, 4)} RLE`}
       </button>
 
       {status && <StatusLine status={status} />}
@@ -201,20 +212,22 @@ export function VoteForm({ pool, onDone }) {
   const { account, contracts } = useWeb3();
   const [decision, setDecision] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
   const v = pool.voting;
 
   const submit = async () => {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Casting vote…' });
     try {
-      await contracts.dao.methods.vote(decision).send({ from: account });
+      await contracts.dao.methods.vote(decision).send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Vote cast.' });
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -249,11 +262,13 @@ export function VoteForm({ pool, onDone }) {
       <button type="button" className="df-btn df-btn--primary df-btn--block"
               disabled={busy || pool.userPooled <= 0}
               onClick={submit}>
-        {busy
-          ? 'Working…'
-          : pool.userPooled <= 0
-            ? 'Pool RLE first to vote'
-            : `Vote ${decision ? 'For' : 'Against'}`}
+        {confirming
+          ? <><Spinner size={14} /> Waiting for confirmation…</>
+          : busy
+            ? <><Spinner size={14} /> Working…</>
+            : pool.userPooled <= 0
+              ? 'Pool RLE first to vote'
+              : `Vote ${decision ? 'For' : 'Against'}`}
       </button>
 
       {status && <StatusLine status={status} />}
@@ -266,20 +281,22 @@ export function VoteForm({ pool, onDone }) {
 export function ClaimToFinalizeForm({ pool, onDone }) {
   const { account, contracts } = useWeb3();
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
   const v = pool.voting;
 
   const submit = async () => {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Finalizing…' });
     try {
-      await contracts.dao.methods.claimToFinalizeCurrentVoting().send({ from: account });
+      await contracts.dao.methods.claimToFinalizeCurrentVoting().send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Voting finalized.' });
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -295,7 +312,7 @@ export function ClaimToFinalizeForm({ pool, onDone }) {
 
       <button type="button" className="df-btn df-btn--primary df-btn--block"
               disabled={busy} onClick={submit}>
-        {busy ? 'Working…' : 'Claim & finalize'}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Working…</> : 'Claim & finalize'}
       </button>
 
       {status && <StatusLine status={status} />}
@@ -314,8 +331,9 @@ export function NewVotingForm({ pool, onDone }) {
   const [addrValue,   setAddrValue]   = useState('');
   const [decision,    setDecision]    = useState(true);
   const [authName,    setAuthName]    = useState('');
-  const [busy, setBusy]   = useState(false);
-  const [status, setStatus] = useState(null);
+  const [busy, setBusy]       = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [status, setStatus]   = useState(null);
 
   const currentParamMeta = useMemo(
     () => KNOWN_PARAMS.find((p) => p.name === paramName),
@@ -359,7 +377,7 @@ export function NewVotingForm({ pool, onDone }) {
 
   const submit = async () => {
     if (!canSubmit) return;
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Submitting proposal…' });
     try {
       let votingType, name, value, address, dec;
@@ -391,13 +409,14 @@ export function NewVotingForm({ pool, onDone }) {
 
       await contracts.dao.methods
         .addVoting(votingType, name, value, address, dec)
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Proposal submitted.' });
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -551,7 +570,7 @@ export function NewVotingForm({ pool, onDone }) {
 
       <button type="button" className="df-btn df-btn--primary df-btn--block"
               disabled={!canSubmit} onClick={submit}>
-        {busy ? 'Working…' : 'Submit proposal'}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Working…</> : 'Submit proposal'}
       </button>
 
       {status && <StatusLine status={status} />}

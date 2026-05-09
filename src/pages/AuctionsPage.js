@@ -9,6 +9,7 @@ import {
   BidHistory,
 } from '../components/AuctionsForms';
 import Icon from '../components/redesign/Icons';
+import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
 import '../styles/balances.css';
 import '../styles/deposits.css';
@@ -104,7 +105,7 @@ export default function AuctionsPage() {
       </div>
 
       {loading && rows.length === 0 ? (
-        <div className="df-loading">Loading auctions…</div>
+        <div className="df-loading"><Spinner size={20} /> Loading auctions…</div>
       ) : filtered.length === 0 ? (
         <EmptyState tab={tab} />
       ) : (

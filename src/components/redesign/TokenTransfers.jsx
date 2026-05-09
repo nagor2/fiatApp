@@ -4,6 +4,7 @@ import { dateFromTimestamp, toFloat } from '../../utils/utils';
 import { getPastEventsCached } from '../../utils/cacheApi';
 import { cachedContractCall } from '../../utils/cachedContractCall';
 import Icon from './Icons';
+import Spinner from '../Spinner';
 
 /**
  * Clean Transfers list + transfer form for a single ERC-20 token.
@@ -64,7 +65,7 @@ export default function TokenTransfers({ web3, contracts, contractName, account,
         {txs && <span className="df-muted df-mono df-sm">{txs.length} events</span>}
       </div>
 
-      {txs === null && <div className="df-loading df-loading--inline">Loading transfers…</div>}
+      {txs === null && <div className="df-loading df-loading--inline"><Spinner size={16} /> Loading transfers…</div>}
       {txs && txs.length === 0 && (
         <div className="df-empty df-empty--inline">
           <p>No transfers yet for this token.</p>
@@ -192,7 +193,7 @@ function TransferForm({ web3, contract, account, symbol, balance }) {
         onClick={send}
         disabled={!valid || busy}
       >
-        {busy ? 'Sending…' : <><Icon name="send" size={16} /> Send {symbol}</>}
+        {status?.msg?.startsWith('Sent') ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Sending…</> : <><Icon name="send" size={16} /> Send {symbol}</>}
       </button>
     </div>
   );

@@ -3,6 +3,7 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { useDeposits } from '../hooks/useDeposits';
 import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
+import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
 import { cachedContractCall } from '../utils/cachedContractCall';
 import { parseTxError } from '../utils/txError';
@@ -77,7 +78,7 @@ export default function DepositsPage() {
       </section>
 
       {loading && rows.length === 0 ? (
-        <div className="df-loading">Loading deposits…</div>
+        <div className="df-loading"><Spinner size={20} /> Loading deposits…</div>
       ) : rows.length === 0 ? (
         <div className="df-empty">
           <div className="df-empty__icon"><Icon name="deposit" /></div>
@@ -228,6 +229,7 @@ function OpenDepositForm({ onDone }) {
   const { web3, contracts, account, bal, allowance, reload } = useDfcBalanceAndAllowance();
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const num = Number(amount);
@@ -240,32 +242,34 @@ function OpenDepositForm({ onDone }) {
   const overBalance = num > 0 && bal != null && num > bal;
 
   async function approve() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Approving DFC…' });
     try {
       await contracts.flatCoin.methods
         .approve(contracts.deposit._address, web3.utils.toWei(String(amount), 'ether'))
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Approved' });
       reload();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
   async function deposit() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Opening deposit…' });
     try {
-      await contracts.deposit.methods.deposit().send({ from: account });
+      await contracts.deposit.methods.deposit().send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Deposit opened' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -286,11 +290,11 @@ function OpenDepositForm({ onDone }) {
       <div className="df-form__actions">
         {needsApproval ? (
           <button className="df-btn df-btn--primary df-btn--block" disabled={!valid || busy} onClick={approve}>
-            {busy ? 'Approving…' : `Step 1 of 2 · Approve ${amount || 0} DFC`}
+            {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Approving…</> : `Step 1 of 2 · Approve ${amount || 0} DFC`}
           </button>
         ) : (
           <button className="df-btn df-btn--primary df-btn--block" disabled={!valid || busy} onClick={deposit}>
-            {busy ? 'Opening…' : <><Icon name="deposit" size={16} /> Lock {fmt(num)} DFC into deposit</>}
+            {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Opening…</> : <><Icon name="deposit" size={16} /> Lock {fmt(num)} DFC into deposit</>}
           </button>
         )}
       </div>
@@ -305,6 +309,7 @@ function TopUpForm({ depositId, onDone }) {
   const { web3, contracts, account, bal, allowance, reload } = useDfcBalanceAndAllowance();
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const num = Number(amount);
@@ -314,32 +319,34 @@ function TopUpForm({ depositId, onDone }) {
   const overBalance = num > 0 && bal != null && num > bal;
 
   async function approve() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Approving DFC…' });
     try {
       await contracts.flatCoin.methods
         .approve(contracts.deposit._address, web3.utils.toWei(String(amount), 'ether'))
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Approved' });
       reload();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
   async function topUp() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Topping up…' });
     try {
-      await contracts.deposit.methods.topUp(depositId).send({ from: account });
+      await contracts.deposit.methods.topUp(depositId).send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Top-up confirmed' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -359,11 +366,11 @@ function TopUpForm({ depositId, onDone }) {
       {status && <div className={`df-status df-status--${status.kind}`}>{status.msg}</div>}
       {needsApproval ? (
         <button className="df-btn df-btn--primary df-btn--block" disabled={!valid || busy} onClick={approve}>
-          {busy ? 'Approving…' : `Step 1 of 2 · Approve ${amount || 0} DFC`}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Approving…</> : `Step 1 of 2 · Approve ${amount || 0} DFC`}
         </button>
       ) : (
         <button className="df-btn df-btn--primary df-btn--block" disabled={!valid || busy} onClick={topUp}>
-          {busy ? 'Topping up…' : <><Icon name="plus" size={16} /> Add {fmt(num)} DFC to deposit</>}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Topping up…</> : <><Icon name="plus" size={16} /> Add {fmt(num)} DFC to deposit</>}
         </button>
       )}
     </div>
@@ -374,24 +381,26 @@ function WithdrawForm({ deposit, onDone }) {
   const { web3, contracts, account } = useWeb3();
   const [amount, setAmount] = useState(String(deposit.coinsDeposited));
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const num = Number(amount);
   const valid = num > 0 && num <= deposit.coinsDeposited;
 
   async function withdraw() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Withdrawing…' });
     try {
       await contracts.deposit.methods
         .withdraw(deposit.id, web3.utils.toWei(String(amount), 'ether'))
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Withdrawn' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -400,7 +409,7 @@ function WithdrawForm({ deposit, onDone }) {
       <AmountField symbol="DFC" balance={deposit.coinsDeposited} balanceLabel="In deposit" value={amount} onChange={setAmount} />
       {status && <div className={`df-status df-status--${status.kind}`}>{status.msg}</div>}
       <button className="df-btn df-btn--primary df-btn--block" disabled={!valid || busy} onClick={withdraw}>
-        {busy ? 'Withdrawing…' : <><Icon name="arrow-down-left" size={16} /> Withdraw {fmt(num)} DFC</>}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Withdrawing…</> : <><Icon name="arrow-down-left" size={16} /> Withdraw {fmt(num)} DFC</>}
       </button>
       <p className="df-fineprint">
         Interest accrued so far ({fmt(deposit.accumulatedInterest, 4)} DFC) is paid out separately — use Claim interest from the detail view.
@@ -412,19 +421,21 @@ function WithdrawForm({ deposit, onDone }) {
 function DepositDetail({ deposit, onDone }) {
   const { web3, contracts, account } = useWeb3();
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   async function claim() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Claiming interest…' });
     try {
-      await contracts.deposit.methods.claimInterest(deposit.id).send({ from: account });
+      await contracts.deposit.methods.claimInterest(deposit.id).send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Claimed' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -438,7 +449,7 @@ function DepositDetail({ deposit, onDone }) {
       </dl>
       {status && <div className={`df-status df-status--${status.kind}`}>{status.msg}</div>}
       <button className="df-btn df-btn--primary df-btn--block" disabled={busy || deposit.accumulatedInterest <= 0} onClick={claim}>
-        {busy ? 'Claiming…' : <><Icon name="send" size={16} /> Claim {fmt(deposit.accumulatedInterest, 4)} DFC interest</>}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Claiming…</> : <><Icon name="send" size={16} /> Claim {fmt(deposit.accumulatedInterest, 4)} DFC interest</>}
       </button>
     </>
   );

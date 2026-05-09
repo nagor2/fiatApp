@@ -3,6 +3,7 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { useCredits } from '../hooks/useCredits';
 import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
+import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
 import { cachedContractCall } from '../utils/cachedContractCall';
 import { parseTxError } from '../utils/txError';
@@ -113,7 +114,7 @@ export default function CreditsPage() {
       </section>
 
       {loading && rows.length === 0 ? (
-        <div className="df-loading">Loading positions…</div>
+        <div className="df-loading"><Spinner size={20} /> Loading positions…</div>
       ) : rows.length === 0 ? (
         <div className="df-empty">
           <div className="df-empty__icon"><Icon name="loan" /></div>

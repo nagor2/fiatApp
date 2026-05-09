@@ -1,5 +1,6 @@
 import './styles/index.css';
 import React, { Suspense, lazy } from 'react';
+import Spinner from './components/Spinner';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Web3Provider } from './contexts/Web3Context';
 import { PricesProvider } from './contexts/PricesContext';
@@ -27,7 +28,9 @@ const eventEmitter = new events.EventEmitter();
 eventEmitter.setMaxListeners(13);
 
 const PageFallback = () => (
-  <div style={{ padding: 40, textAlign: 'center', color: 'var(--df-muted)' }}>Loading…</div>
+  <div style={{ padding: 40, textAlign: 'center', color: 'var(--df-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+    <Spinner size={20} /> Loading…
+  </div>
 );
 
 function App() {

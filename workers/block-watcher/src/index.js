@@ -1079,7 +1079,7 @@ class BlockWatcher {
           returnValues: decodedEvent.returnValues,
           blockNumber: blockNumber,
           transactionHash: receipt.transactionHash,
-          logIndex: log.logIndex
+          logIndex: Number(log.logIndex)
         };
 
         await this.indexEvent(event, logContractInfo.contractKey, logAddress);

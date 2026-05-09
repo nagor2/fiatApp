@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWorkerWithTimeout } from '../utils/workerCircuitBreaker';
 import Icon from '../components/redesign/Icons';
 import PageHead from '../components/redesign/PageHead';
+import Spinner from '../components/Spinner';
 import '../styles/balances.css';
 import '../styles/auctions.css';
 import '../styles/watcher.css';
@@ -211,7 +212,7 @@ export default function BlockWatcherPage() {
               </>
             )}
           </dl>
-        ) : <p className="df-muted">Loading worker status…</p>}
+        ) : <p className="df-muted"><Spinner size={16} /> Loading worker status…</p>}
       </section>
 
       <section className="df-watcher-controls">
@@ -235,7 +236,7 @@ export default function BlockWatcherPage() {
       </section>
 
       <section className="df-watcher-table">
-        {loading && <p className="df-muted">Loading…</p>}
+        {loading && <p className="df-muted"><Spinner size={16} /> Loading…</p>}
         {tab === 'events' && !loading && (
           events.length ? (
             <table className="df-table">

@@ -17,6 +17,7 @@ import { cachedContractCall, batchCachedContractCalls } from '../utils/cachedCon
 import { parseTxError } from '../utils/txError';
 import { useAuctionBids } from '../hooks/useAuctions';
 import Icon from './redesign/Icons';
+import Spinner from './Spinner';
 import TokenMark from './redesign/TokenMark';
 
 /* ── tiny formatting helpers (local; matches AuctionsPage) ────────── */
@@ -96,6 +97,7 @@ export function MakeBidForm({ auction, onDone }) {
   const [amount, setAmount] = useState(() => String(auction.nextBid || ''));
   const [status, setStatus] = useState(null);
   const [busy, setBusy]     = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const num = Number(amount) || 0;
   const min = auction.bestBidID > 0 ? auction.nextBid : (auction.nextBid || 0.0001);
@@ -106,27 +108,30 @@ export function MakeBidForm({ auction, onDone }) {
     : num >= min;
   const canSubmit = !busy && num > 0 && enough && aboveMin;
 
+  const onTxHash = () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); };
+
   const submit = async () => {
     if (!canSubmit) return;
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Preparing transaction…' });
     try {
       const auctionAddr = contracts.auction._address;
       const wei = web3.utils.toWei(String(num));
 
-      // Step 1: approve if we don't already cover the bid.
       if (allowance + 1e-12 < num) {
         setStatus({ kind: 'pending', msg: `Approving ${fmt(num)} ${auction.paymentSymbol}…` });
         await payContract.methods
           .approve(auctionAddr, wei)
-          .send({ from: account });
+          .send({ from: account })
+          .on('transactionHash', onTxHash);
+        setConfirming(false);
       }
 
-      // Step 2: make the bid.
       setStatus({ kind: 'pending', msg: 'Placing bid…' });
       await contracts.auction.methods
         .makeBid(auction.id, wei)
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', onTxHash);
 
       setStatus({ kind: 'ok', msg: 'Bid placed.' });
       await reload();
@@ -134,7 +139,7 @@ export function MakeBidForm({ auction, onDone }) {
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -185,17 +190,19 @@ export function MakeBidForm({ auction, onDone }) {
         disabled={!canSubmit}
         onClick={submit}
       >
-        {busy
-          ? 'Working…'
-          : !enough
-            ? `Insufficient ${auction.paymentSymbol}`
-            : !aboveMin
-              ? auction.type === 'dfc-buyout'
-                ? `Must be ≤ ${fmt(auction.nextBid)} ${auction.paymentSymbol}`
-                : `Must be ≥ ${fmt(min)} ${auction.paymentSymbol}`
-              : allowance + 1e-12 < num
-                ? `Approve & bid ${fmt(num)} ${auction.paymentSymbol}`
-                : `Place bid for ${fmt(num)} ${auction.paymentSymbol}`}
+        {confirming
+          ? <><Spinner size={14} /> Waiting for confirmation…</>
+          : busy
+            ? <><Spinner size={14} /> Working…</>
+            : !enough
+              ? `Insufficient ${auction.paymentSymbol}`
+              : !aboveMin
+                ? auction.type === 'dfc-buyout'
+                  ? `Must be ≤ ${fmt(auction.nextBid)} ${auction.paymentSymbol}`
+                  : `Must be ≥ ${fmt(min)} ${auction.paymentSymbol}`
+                : allowance + 1e-12 < num
+                  ? `Approve & bid ${fmt(num)} ${auction.paymentSymbol}`
+                  : `Place bid for ${fmt(num)} ${auction.paymentSymbol}`}
       </button>
 
       {status && <StatusLine status={status} />}
@@ -211,6 +218,7 @@ export function ImproveBidForm({ auction, bid, onDone }) {
   const [amount, setAmount] = useState(() => String(auction.nextBid || bid?.amount || ''));
   const [status, setStatus] = useState(null);
   const [busy, setBusy]     = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const num = Number(amount) || 0;
   // For RLE/liquidation: must be > existing. For DFC-buyout: must be < existing.
@@ -221,26 +229,30 @@ export function ImproveBidForm({ auction, bid, onDone }) {
   const enough = direction === 'up' ? (delta <= balance + 1e-9) : true;
   const canSubmit = !busy && aboveCurrent && meetsStep && enough && num > 0;
 
+  const onTxHash = () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); };
+
   const submit = async () => {
     if (!canSubmit) return;
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Preparing transaction…' });
     try {
       const auctionAddr = contracts.auction._address;
       const wei = web3.utils.toWei(String(num));
 
-      // For "up" auctions we may need more allowance than the current bid.
       if (direction === 'up' && allowance + 1e-12 < num) {
         setStatus({ kind: 'pending', msg: `Approving ${fmt(num)} ${auction.paymentSymbol}…` });
         await payContract.methods
           .approve(auctionAddr, wei)
-          .send({ from: account });
+          .send({ from: account })
+          .on('transactionHash', onTxHash);
+        setConfirming(false);
       }
 
       setStatus({ kind: 'pending', msg: 'Improving bid…' });
       await contracts.auction.methods
         .improveBid(bid.id, wei)
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', onTxHash);
 
       setStatus({ kind: 'ok', msg: 'Bid improved.' });
       await reload();
@@ -248,7 +260,7 @@ export function ImproveBidForm({ auction, bid, onDone }) {
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -283,15 +295,17 @@ export function ImproveBidForm({ auction, bid, onDone }) {
         disabled={!canSubmit}
         onClick={submit}
       >
-        {busy
-          ? 'Working…'
-          : !aboveCurrent
-            ? direction === 'up' ? 'Must be higher' : 'Must be lower'
-            : !meetsStep
-              ? `Must reach ${fmt(auction.nextBid)} ${auction.paymentSymbol}`
-              : !enough
-                ? `Need ${fmt(delta)} more ${auction.paymentSymbol}`
-                : `Improve to ${fmt(num)} ${auction.paymentSymbol}`}
+        {confirming
+          ? <><Spinner size={14} /> Waiting for confirmation…</>
+          : busy
+            ? <><Spinner size={14} /> Working…</>
+            : !aboveCurrent
+              ? direction === 'up' ? 'Must be higher' : 'Must be lower'
+              : !meetsStep
+                ? `Must reach ${fmt(auction.nextBid)} ${auction.paymentSymbol}`
+                : !enough
+                  ? `Need ${fmt(delta)} more ${auction.paymentSymbol}`
+                  : `Improve to ${fmt(num)} ${auction.paymentSymbol}`}
       </button>
 
       {status && <StatusLine status={status} />}
@@ -304,21 +318,23 @@ export function ImproveBidForm({ auction, bid, onDone }) {
 export function CancelBidConfirm({ auction, bid, onDone }) {
   const { account, contracts } = useWeb3();
   const [busy, setBusy]     = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const submit = async () => {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Cancelling bid…' });
     try {
       await contracts.auction.methods
         .cancelBid(bid.id)
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Bid cancelled.' });
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -339,7 +355,7 @@ export function CancelBidConfirm({ auction, bid, onDone }) {
           Keep bid
         </button>
         <button className="df-btn df-btn--danger" onClick={submit} disabled={busy}>
-          {busy ? 'Cancelling…' : 'Cancel bid'}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Cancelling…</> : 'Cancel bid'}
         </button>
       </div>
 
@@ -353,21 +369,23 @@ export function CancelBidConfirm({ auction, bid, onDone }) {
 export function FinalizeAuctionConfirm({ auction, onDone }) {
   const { account, contracts } = useWeb3();
   const [busy, setBusy]     = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   const submit = async () => {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Claiming auction…' });
     try {
       await contracts.auction.methods
         .claimToFinalizeAuction(auction.id)
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Auction finalized.' });
       onDone?.();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   };
 
@@ -395,7 +413,7 @@ export function FinalizeAuctionConfirm({ auction, onDone }) {
         disabled={busy}
         onClick={submit}
       >
-        {busy ? 'Claiming…' : 'Claim & finalize'}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Claiming…</> : 'Claim & finalize'}
       </button>
 
       {status && <StatusLine status={status} />}

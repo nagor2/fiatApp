@@ -4,6 +4,7 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { useBalances } from '../hooks/useBalances';
 import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
+import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
 import TokenTransfers from '../components/redesign/TokenTransfers';
 import TradeWidget from '../components/redesign/TradeWidget';
@@ -72,7 +73,7 @@ export default function BalancesPage() {
 
       <section className="df-cards">
         {loading && rows.length === 0 ? (
-          <div className="df-loading">Loading balances…</div>
+          <div className="df-loading"><Spinner size={20} /> Loading balances…</div>
         ) : (
           rows.map(row => (
             <BalanceCard
@@ -96,7 +97,7 @@ export default function BalancesPage() {
       )}
 
       {tradeFor && (
-        <TradeWidget token={tradeFor} onClose={() => setTradeFor(null)} />
+        <TradeWidget token={tradeFor} onClose={() => setTradeFor(null)} onSwapDone={refresh} />
       )}
     </>
   );

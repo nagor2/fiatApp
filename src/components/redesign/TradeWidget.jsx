@@ -4,6 +4,8 @@ import { useWeb3 } from '../../contexts/Web3Context';
 import { usePrices } from '../../contexts/PricesContext';
 import { use0xSwap, ZEROEX_NATIVE_ETH } from '../../hooks/use0xSwap';
 import Icon from './Icons';
+import Spinner from '../Spinner';
+import { renewWorkerCache } from '../../utils/cachedContractCall';
 import TokenMark from './TokenMark';
 
 /**
@@ -63,7 +65,9 @@ function fromUnits(units, decimals) {
 
 /* ── component ──────────────────────────────────────────── */
 
-export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl }) {
+const SYMBOL_TO_CONTRACT_KEY = { DFC: 'flatCoin', RLE: 'rule' };
+
+export default function TradeWidget({ token, pair: pairProp, onClose, onSwapDone, uniswapUrl }) {
   const { account, walletConnected, getAccount, contracts, ethPriceEtherscan } = useWeb3();
   const prices = usePrices();
   // pairProp (from PoolsPage) takes priority over the token-derived default
@@ -204,6 +208,12 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
         slippageBps: Math.round(slippage * 100),
       });
       setDoneTx(receipt.transactionHash);
+      // Invalidate cached balances for swapped tokens so parent sees fresh data.
+      const keys = [...new Set(
+        [tFrom.symbol, tTo.symbol].map(s => SYMBOL_TO_CONTRACT_KEY[s]).filter(Boolean)
+      )];
+      await Promise.all(keys.map(k => renewWorkerCache(k)));
+      onSwapDone?.();
     } catch (_) {}
   };
 
@@ -270,7 +280,7 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
               />
 
               <div className="df-swap-meta">
-                {quoting && <span className="df-muted">Fetching best price…</span>}
+                {quoting && <span className="df-muted"><Spinner size={10}/>Fetching best price…</span>}
                 {!quoting && price != null && (
                   <span>
                     1 {tFrom.symbol} ≈ <strong>{fmt(price, 6)}</strong> {tTo.symbol}
@@ -313,11 +323,13 @@ export default function TradeWidget({ token, pair: pairProp, onClose, uniswapUrl
                 <button className="df-btn df-btn--primary df-btn--block"
                         disabled={!quote || swap0x.busy}
                         onClick={onConfirm}>
-                  {swap0x.busy
-                    ? 'Confirming in wallet…'
-                    : quote
-                      ? `Swap ${fmt(computedSell, 6)} ${tFrom.symbol} → ${fmt(computedBuy, 6)} ${tTo.symbol}`
-                      : 'Enter an amount'}
+                  {swap0x.phase === 'confirming'
+                    ? <><Spinner size={14} /> Waiting for confirmation…</>
+                    : swap0x.busy
+                      ? <><Spinner size={14} /> Confirm in wallet…</>
+                      : quote
+                        ? `Swap ${fmt(computedSell, 6)} ${tFrom.symbol} → ${fmt(computedBuy, 6)} ${tTo.symbol}`
+                        : 'Enter an amount'}
                 </button>
               )}
 

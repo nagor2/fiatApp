@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { getContractEvents } from '../../utils/cacheApi';
 import { UNISWAP_CONFIG } from '../../utils/uniswap-config';
 import Icon from './Icons';
+import Spinner from '../Spinner';
 
 const POOL_MANAGER = UNISWAP_CONFIG.V4.POOL_MANAGER.toLowerCase();
 // ETH in Uniswap V4 is address(0), not the 0xEeee… sentinel used by 0x
@@ -92,7 +93,7 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
         <div className="df-drawer__body">
           {loading && (
             <div className="df-empty" style={{ fontSize: 14 }}>
-              <Icon name="clock" size={28} />
+              <Spinner size={28} />
               Loading events…
             </div>
           )}

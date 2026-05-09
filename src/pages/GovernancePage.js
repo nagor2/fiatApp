@@ -11,6 +11,7 @@ import {
   ProposalSummary,
 } from '../components/GovernanceForms';
 import Icon from '../components/redesign/Icons';
+import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
 import PageHead from '../components/redesign/PageHead';
 import '../styles/balances.css';
@@ -62,7 +63,7 @@ export default function GovernancePage() {
   const onDone  = () => { setPane(null); refresh(); };
 
   if (loading && !pool) {
-    return <div className="df-page"><div className="df-loading">Loading governance state…</div></div>;
+    return <div className="df-page"><div className="df-loading"><Spinner size={20} /> Loading governance state…</div></div>;
   }
   if (!pool) {
     return (

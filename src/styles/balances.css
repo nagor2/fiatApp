@@ -186,7 +186,7 @@
 }
 .df-empty .df-btn { margin-top: 10px; }
 
-.df-loading { padding: 40px; text-align: center; color: var(--df-muted); }
+.df-loading { padding: 40px; text-align: center; color: var(--df-muted); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .df-loading--inline { padding: 20px; }
 
 .df-mono { font-family: var(--df-mono); }

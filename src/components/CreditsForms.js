@@ -9,6 +9,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
 import Icon from './redesign/Icons';
+import Spinner from './Spinner';
 import { cachedContractCall, cachedEthBalance } from '../utils/cachedContractCall';
 import { parseTxError } from '../utils/txError';
 /* global BigInt */
@@ -127,8 +128,10 @@ export function OpenCreditForm({ onDone }) {
     if (maxMintable != null) setAmount(maxMintable.toFixed(2));
   };
 
+  const [confirming, setConfirming] = useState(false);
+
   async function open() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Opening credit position…' });
     try {
       await contracts.cdp.methods
@@ -136,13 +139,14 @@ export function OpenCreditForm({ onDone }) {
         .send({
           from: account,
           value: web3.utils.toWei(String(collateral), 'ether'),
-        });
+        })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Credit opened' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -200,7 +204,7 @@ export function OpenCreditForm({ onDone }) {
         disabled={!valid || busy}
         onClick={open}
       >
-        {busy ? 'Opening…' : <><Icon name="loan" size={16} /> Lock ETH and mint {fmt(amtNum)} DFC</>}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Opening…</> : <><Icon name="loan" size={16} /> Lock ETH and mint {fmt(amtNum)} DFC</>}
       </button>
 
       <p className="df-fineprint">
@@ -219,6 +223,7 @@ export function UpdateCreditForm({ position, onDone }) {
   const [maxMintable, setMaxMintable] = useState(null);
   const [ethBalance, setEthBalance] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
   const debounceRef = useRef(null);
 
@@ -265,23 +270,23 @@ export function UpdateCreditForm({ position, onDone }) {
   const valid = !tryingToReduceCollateral && !overBalance && !overMintable && !tooSmall && contracts?.cdp;
 
   async function update() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Updating position…' });
     try {
       const amountWei = web3.utils.toWei(String(amount), 'ether');
       const collateralWei = web3.utils.toWei(String(collateral), 'ether');
       const lockedWei = position._ethAmountLockedRaw;
-      // BigInt arithmetic — never use Number for wei diffs.
       const value = BigInt(collateralWei) - BigInt(lockedWei);
       await contracts.cdp.methods
         .updateCDP(position.id, amountWei)
-        .send({ from: account, value: value < 0n ? '0' : value.toString() });
+        .send({ from: account, value: value < 0n ? '0' : value.toString() })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Position updated' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -337,7 +342,8 @@ export function UpdateCreditForm({ position, onDone }) {
         disabled={!valid || busy}
         onClick={update}
       >
-        {busy ? 'Updating…'
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</>
+          : busy ? <><Spinner size={14} /> Updating…</>
           : collDelta > 1e-9 ? <><Icon name="plus" size={16} /> Add {fmt(collDelta, 4)} ETH and update</>
           : <><Icon name="edit" size={16} /> Update position</>}
       </button>
@@ -352,6 +358,7 @@ export function PayInterestForm({ position, onDone }) {
   const [bal, setBal] = useState(null);
   const [allowance, setAllowance] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   // We need a small buffer above accrued — interest keeps ticking between
@@ -375,32 +382,34 @@ export function PayInterestForm({ position, onDone }) {
   const enoughBalance = bal != null && bal + 1e-9 >= required;
 
   async function approve() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Approving DFC for interest…' });
     try {
       await contracts.flatCoin.methods
         .approve(contracts.cdp._address, web3.utils.toWei(String(required.toFixed(6)), 'ether'))
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Approved' });
       reload();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
   async function pay() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Transferring interest…' });
     try {
-      await contracts.cdp.methods.transferInterest(position.id).send({ from: account });
+      await contracts.cdp.methods.transferInterest(position.id).send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Interest paid' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -428,7 +437,7 @@ export function PayInterestForm({ position, onDone }) {
           disabled={!enoughBalance || busy}
           onClick={approve}
         >
-          {busy ? 'Approving…' : `Step 1 of 2 · Approve ${fmt(required, 4)} DFC`}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Approving…</> : `Step 1 of 2 · Approve ${fmt(required, 4)} DFC`}
         </button>
       ) : (
         <button
@@ -437,7 +446,7 @@ export function PayInterestForm({ position, onDone }) {
           disabled={!enoughBalance || busy || position.interestAccrued <= 0}
           onClick={pay}
         >
-          {busy ? 'Paying…' : <><Icon name="receipt" size={16} /> Pay {fmt(position.interestAccrued, 4)} DFC interest</>}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Paying…</> : <><Icon name="receipt" size={16} /> Pay {fmt(position.interestAccrued, 4)} DFC interest</>}
         </button>
       )}
 
@@ -455,6 +464,7 @@ export function WithdrawEthForm({ position, onDone }) {
   const [maxOut, setMaxOut] = useState(null);
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   // Re-compute the safe max ETH that can be withdrawn while still keeping
@@ -500,18 +510,19 @@ export function WithdrawEthForm({ position, onDone }) {
   const valid = num > 0 && !overMax && contracts?.cdp;
 
   async function withdraw() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Withdrawing ETH…' });
     try {
       await contracts.cdp.methods
         .withdrawEther(position.id, web3.utils.toWei(String(amount), 'ether'))
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'ETH withdrawn' });
       setTimeout(onDone, 800);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -545,7 +556,7 @@ export function WithdrawEthForm({ position, onDone }) {
         disabled={!valid || busy}
         onClick={withdraw}
       >
-        {busy ? 'Withdrawing…' : <><Icon name="arrow-down-left" size={16} /> Withdraw {fmt(num, 4)} ETH</>}
+        {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Withdrawing…</> : <><Icon name="arrow-down-left" size={16} /> Withdraw {fmt(num, 4)} ETH</>}
       </button>
 
       <p className="df-fineprint">
@@ -562,6 +573,7 @@ export function CloseCreditForm({ position, onDone }) {
   const [bal, setBal] = useState(null);
   const [allowance, setAllowance] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState(null);
 
   // Need to approve principal + 1.2× fee buffer (matches legacy CloseCDP).
@@ -584,32 +596,34 @@ export function CloseCreditForm({ position, onDone }) {
   const enoughBalance = bal != null && bal + 1e-9 >= required;
 
   async function approve() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: `Approving ${fmt(required)} DFC…` });
     try {
       await contracts.flatCoin.methods
         .approve(contracts.cdp._address, web3.utils.toWei(String(required.toFixed(6)), 'ether'))
-        .send({ from: account });
+        .send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Approved' });
       reload();
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
   async function close() {
-    setBusy(true);
+    setBusy(true); setConfirming(false);
     setStatus({ kind: 'pending', msg: 'Closing position…' });
     try {
-      await contracts.cdp.methods.closeCDP(position.id).send({ from: account });
+      await contracts.cdp.methods.closeCDP(position.id).send({ from: account })
+        .on('transactionHash', () => { setConfirming(true); setStatus({ kind: 'pending', msg: 'Waiting for confirmation…' }); });
       setStatus({ kind: 'ok', msg: 'Position closed. ETH returned.' });
       setTimeout(onDone, 1200);
     } catch (e) {
       setStatus(parseTxError(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setConfirming(false);
     }
   }
 
@@ -639,7 +653,7 @@ export function CloseCreditForm({ position, onDone }) {
           disabled={!enoughBalance || busy}
           onClick={approve}
         >
-          {busy ? 'Approving…' : `Step 1 of 2 · Approve ${fmt(required)} DFC`}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Approving…</> : `Step 1 of 2 · Approve ${fmt(required)} DFC`}
         </button>
       ) : (
         <button
@@ -648,7 +662,7 @@ export function CloseCreditForm({ position, onDone }) {
           disabled={!enoughBalance || busy}
           onClick={close}
         >
-          {busy ? 'Closing…' : <><Icon name="close" size={16} /> Repay {fmt(position.debtTotal)} DFC and close</>}
+          {confirming ? <><Spinner size={14} /> Waiting for confirmation…</> : busy ? <><Spinner size={14} /> Closing…</> : <><Icon name="close" size={16} /> Repay {fmt(position.debtTotal)} DFC and close</>}
         </button>
       )}
 

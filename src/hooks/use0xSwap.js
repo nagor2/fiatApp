@@ -54,6 +54,7 @@ export function use0xSwap() {
   const { web3, account } = useWeb3();
 
   const [busy, setBusy]           = useState(false);
+  const [phase, setPhase]         = useState(null); // null | 'confirming'
   const [error, setError]         = useState(null);
   const [lastQuote, setLastQuote] = useState(null);
 
@@ -89,7 +90,7 @@ export function use0xSwap() {
     sellToken, buyToken, sellAmount, taker, slippageBps = 100,
   }) => {
     if (!web3 || !account) throw new Error('Wallet not connected.');
-    setBusy(true); setError(null);
+    setBusy(true); setPhase(null); setError(null);
     try {
       // 1) get the firm quote (with tx data)
       const params = new URLSearchParams({
@@ -120,23 +121,25 @@ export function use0xSwap() {
 
       // 3) send the swap tx
       const tx = q.transaction;
-      const receipt = await web3.eth.sendTransaction({
+      const sendTx = web3.eth.sendTransaction({
         from: account,
         to: tx.to,
         data: tx.data,
         value: tx.value || '0',
         gas: tx.gas ? Math.ceil(Number(tx.gas) * 1.2) : undefined,
       });
+      sendTx.on('transactionHash', () => setPhase('confirming'));
+      const receipt = await sendTx;
       return { receipt, quote: q };
     } catch (e) {
       setError(e.message || String(e));
       throw e;
     } finally {
-      setBusy(false);
+      setBusy(false); setPhase(null);
     }
   }, [web3, account]);
 
-  return { quote, swap, busy, error, lastQuote, reset };
+  return { quote, swap, busy, phase, error, lastQuote, reset };
 }
 
 export const ZEROEX_NATIVE_ETH = NATIVE_ETH;

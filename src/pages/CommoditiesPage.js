@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
+import Spinner from '../components/Spinner';
 import config from '../utils/config';
 import useExchangeRate from '../hooks/useExchangeRate';
 import useBasket from '../hooks/useBasket';
@@ -151,7 +152,7 @@ function IndexTab({ explorer }) {
   for (let t = Math.floor(dMin / 0.5) * 0.5; t <= dMax; t += 0.5) ticks.push(Math.round(t * 10) / 10);
   if (!ticks.includes(1)) { ticks.push(1); ticks.sort((a, b) => a - b); }
 
-  if (loading) return <div className="df-empty"><div className="df-empty__title">Loading oracle data…</div></div>;
+  if (loading) return <div className="df-loading"><Spinner size={20} /> Loading oracle data…</div>;
   if (error)   return <div className="df-empty"><div className="df-empty__title">Failed to load</div><div className="df-empty__sub">{error}</div></div>;
 
   return (
@@ -310,7 +311,7 @@ function BasketTab({ explorer }) {
   const chartData = items.map((i) => ({ ...i, name: i.symbol, value: i.share || 0 }));
   const total = chartData.reduce((s, x) => s + x.value, 0);
 
-  if (loading) return <div className="df-empty"><div className="df-empty__title">Loading basket data…</div></div>;
+  if (loading) return <div className="df-loading"><Spinner size={20} /> Loading basket data…</div>;
   if (error)   return <div className="df-empty"><div className="df-empty__title">Failed to load</div><div className="df-empty__sub">{error}</div></div>;
 
   return (
