@@ -9,6 +9,7 @@ import {
   BidHistory,
 } from '../components/AuctionsForms';
 import Icon from '../components/redesign/Icons';
+import { invalidateWorkerCache } from '../utils/cachedContractCall';
 import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
 import '../styles/balances.css';
@@ -74,7 +75,7 @@ export default function AuctionsPage() {
 
   const onRowClick = (auction) => setPane({ kind: 'detail', auction });
   const onClose    = () => setPane(null);
-  const onDone     = () => { setPane(null); refresh(); };
+  const onDone     = () => { setPane(null); invalidateWorkerCache('auction', 'flatCoin', 'rule').then(refresh); };
 
   return (
     <div className="df-page">

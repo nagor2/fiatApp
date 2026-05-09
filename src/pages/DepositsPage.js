@@ -5,7 +5,7 @@ import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
 import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
-import { cachedContractCall } from '../utils/cachedContractCall';
+import { cachedContractCall, invalidateWorkerCache } from '../utils/cachedContractCall';
 import { parseTxError } from '../utils/txError';
 
 const fmt = (n, dp = 2) => {
@@ -106,7 +106,7 @@ export default function DepositsPage() {
         <DepositDrawer
           pane={pane}
           onClose={() => setPane(null)}
-          onDone={() => { setPane(null); refresh(); }}
+          onDone={() => { setPane(null); invalidateWorkerCache('deposit', 'flatCoin').then(refresh); }}
         />
       )}
     </>

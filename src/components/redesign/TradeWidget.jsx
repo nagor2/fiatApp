@@ -5,7 +5,7 @@ import { usePrices } from '../../contexts/PricesContext';
 import { use0xSwap, ZEROEX_NATIVE_ETH } from '../../hooks/use0xSwap';
 import Icon from './Icons';
 import Spinner from '../Spinner';
-import { renewWorkerCache } from '../../utils/cachedContractCall';
+import { invalidateWorkerCache } from '../../utils/cachedContractCall';
 import TokenMark from './TokenMark';
 
 /**
@@ -212,7 +212,7 @@ export default function TradeWidget({ token, pair: pairProp, onClose, onSwapDone
       const keys = [...new Set(
         [tFrom.symbol, tTo.symbol].map(s => SYMBOL_TO_CONTRACT_KEY[s]).filter(Boolean)
       )];
-      await Promise.all(keys.map(k => renewWorkerCache(k)));
+      await invalidateWorkerCache(...keys);
       onSwapDone?.();
     } catch (_) {}
   };

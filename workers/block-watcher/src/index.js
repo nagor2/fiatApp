@@ -98,7 +98,7 @@ class BlockWatcher {
   }
   
   async clearWatcherData() {
-    const patterns = ['event:*', 'events:*', 'txs:*', 'tx:*', 'watcher:*'];
+    const patterns = ['event:*', 'events:*', 'txs:*', 'tx:*', 'watcher:*', 'contract:*', 'eth:balance:*'];
     let deleted = 0;
     for (const pattern of patterns) {
       let cursor = 0;

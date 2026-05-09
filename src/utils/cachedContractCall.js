@@ -260,6 +260,29 @@ export async function renewWorkerCache(contractKeyOrName) {
 }
 
 /**
+ * Lightweight cache invalidation — only deletes Redis call-cache keys, no re-indexing.
+ * Use this right before a manual refresh so cachedContractCall gets a cache miss.
+ * Never throws — best-effort.
+ */
+export async function invalidateWorkerCache(...contractKeys) {
+  if (isWorkerCircuitOpen()) return false;
+  try {
+    await Promise.all(contractKeys.map(key =>
+      fetchWorkerWithTimeout(
+        `${getWorkerBaseUrl()}/api/invalidateCache/${encodeURIComponent(key)}`,
+        { method: 'POST' },
+        WORKER_CALL_TIMEOUT_MS
+      ).catch(() => {})
+    ));
+    recordWorkerSuccess();
+    return true;
+  } catch (error) {
+    recordWorkerFailure(classifyWorkerError(error));
+    return false;
+  }
+}
+
+/**
  * Получить ETH-баланс адреса с кэшированием и fallback.
  *
  * Тот же паттерн что и cachedContractCall: сначала worker (с таймаутом),

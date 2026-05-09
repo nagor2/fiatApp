@@ -5,7 +5,7 @@ import PageHead from '../components/redesign/PageHead';
 import Icon from '../components/redesign/Icons';
 import Spinner from '../components/Spinner';
 import TokenMark from '../components/redesign/TokenMark';
-import { cachedContractCall } from '../utils/cachedContractCall';
+import { cachedContractCall, invalidateWorkerCache } from '../utils/cachedContractCall';
 import { parseTxError } from '../utils/txError';
 import {
   OpenCreditForm, UpdateCreditForm, PayInterestForm,
@@ -132,7 +132,7 @@ export default function CreditsPage() {
         </section>
       )}
 
-      <Drawer pane={pane} onClose={() => setPane(null)} setPane={setPane} onDone={() => { setPane(null); refresh(); }} />
+      <Drawer pane={pane} onClose={() => setPane(null)} setPane={setPane} onDone={() => { setPane(null); invalidateWorkerCache('cdp', 'flatCoin').then(refresh); }} />
     </>
   );
 }

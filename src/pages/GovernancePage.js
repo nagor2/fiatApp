@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { invalidateWorkerCache } from '../utils/cachedContractCall';
 import { usePrices } from '../contexts/PricesContext';
 import { usePool as useGovernance } from '../hooks/useGovernance';
 import {
@@ -50,7 +51,8 @@ const fmtRel = (d) => {
  *   4. Drawer panes for: pool, return, vote, finalize, propose
  */
 export default function GovernancePage() {
-  const { explorer, walletConnected } = useWeb3();
+  const { walletConnected } = useWeb3();
+  const explorer = 'https://etherscan.io/';
   const { pool, stats, loading, refresh } = useGovernance();
   const prices = usePrices();
   const marketCap = (pool?.ruleSupply != null && prices?.rleUsd != null)
@@ -60,7 +62,7 @@ export default function GovernancePage() {
   const [pane, setPane] = useState(null);       // { kind: ... } | null
 
   const onClose = () => setPane(null);
-  const onDone  = () => { setPane(null); refresh(); };
+  const onDone  = () => { setPane(null); invalidateWorkerCache('dao', 'rule', 'flatCoin').then(refresh); };
 
   if (loading && !pool) {
     return <div className="df-page"><div className="df-loading"><Spinner size={20} /> Loading governance state…</div></div>;
@@ -142,9 +144,7 @@ export default function GovernancePage() {
         </div>
         <div className="df-pool-toolbar-meta">
           <span className="df-muted">DAO contract:</span>{' '}
-          <a className="df-link"
-             href={`${explorer}address/${pool.daoAddress}`}
-             target="_blank" rel="noreferrer">
+          <a className="df-link" href={`${explorer}address/${pool.daoAddress}`} target="_blank" rel="noreferrer">
             {pool.daoAddress.slice(0, 6)}…{pool.daoAddress.slice(-4)}
           </a>
         </div>
@@ -271,8 +271,7 @@ function ContractsGrid({ pool, explorer }) {
           </div>
           <div className="df-pool-card__value df-pool-card__value--addr">
             {a.value ? (
-              <a className="df-link" target="_blank" rel="noreferrer"
-                 href={`${explorer}address/${a.value}`}>
+              <a className="df-link" href={`${explorer}address/${a.value}`} target="_blank" rel="noreferrer">
                 {a.value.slice(0, 8)}…{a.value.slice(-6)}
               </a>
             ) : <span className="df-muted">unset</span>}

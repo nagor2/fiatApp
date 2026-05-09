@@ -124,6 +124,14 @@ export function useBalances() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, contracts, web3]);
 
+  // Auto-refresh every 30 s so balances stay current without a manual reload.
+  useEffect(() => {
+    if (!account || !web3) return;
+    const t = setInterval(load, 30_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, contracts, web3]);
+
   // Patch prices into existing rows when PricesContext updates (no balance re-fetch needed)
   useEffect(() => {
     if (!prices || rows.length === 0) return;

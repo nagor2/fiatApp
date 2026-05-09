@@ -196,6 +196,45 @@ class HealthServer {
         return;
       }
       
+      // POST /api/invalidateCache/:contractKey — lightweight: just clear call-cache keys, no re-index
+      if (pathname.startsWith('/api/invalidateCache/')) {
+        if (req.method !== 'POST') {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method Not Allowed. Use POST.' }));
+          return;
+        }
+        const contractKey = decodeURIComponent(pathname.split('/api/invalidateCache/')[1] || '');
+        if (!contractKey) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Contract key required' }));
+          return;
+        }
+        try {
+          const scan = async (pattern) => {
+            const keys = [];
+            let cursor = 0;
+            do {
+              const r = await this.redisClient.scan(cursor, { MATCH: pattern, COUNT: 200 });
+              cursor = r.cursor;
+              keys.push(...r.keys);
+            } while (cursor !== 0);
+            return keys;
+          };
+          const [v2Keys, beKeys] = await Promise.all([
+            scan(`contract:v2:${contractKey}:*`),
+            scan(`contract:${contractKey}:*`),
+          ]);
+          const toDelete = [...v2Keys, ...beKeys];
+          if (toDelete.length > 0) await this.redisClient.del(toDelete);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, deleted: toDelete.length }));
+        } catch (error) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
       // POST /api/resync — clear all indexes + both cache namespaces, re-run historical sync
       if (pathname === '/api/resync') {
         if (req.method !== 'POST') {

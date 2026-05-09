@@ -119,6 +119,13 @@ export function useDeposits({ pollInterestMs = 20000 } = {}) {
 
   useEffect(() => { loadList(); }, [loadList]);
 
+  // Auto-refresh the full list every 30 s.
+  useEffect(() => {
+    if (!account || !contracts?.deposit) return;
+    const t = setInterval(loadList, 30_000);
+    return () => clearInterval(t);
+  }, [loadList, account, contracts?.deposit]);
+
   // Silently keep accumulatedInterest fresh — it ticks per block.
   useEffect(() => {
     if (!rows.length || !pollInterestMs) return;
