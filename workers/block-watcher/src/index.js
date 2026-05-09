@@ -968,6 +968,15 @@ class BlockWatcher {
           const eventsIndexed = await this.processReceiptEvents(receipt, contractInfo, toAddress, blockNumber);
           if (needsEventCheck && eventsIndexed > 0) hasRelevantTx = true;
 
+          // Invalidate cache for any other watched contract that emitted logs in
+          // this tx (e.g. flatCoin Transfer fired inside a PoolManager swap tx).
+          const extraAddresses = new Set(
+            (receipt.logs || [])
+              .map(l => l.address?.toLowerCase())
+              .filter(a => a && a !== toAddress && this.watchedAddresses.has(a))
+          );
+          await Promise.all([...extraAddresses].map(a => this.invalidateBackendCache(a)));
+
         } catch (error) {
           logger.warn(`Failed to get receipt for ${tx.hash}: ${error.message}`);
         }
