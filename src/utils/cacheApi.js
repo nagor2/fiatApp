@@ -311,20 +311,16 @@ export async function getPastEventsCached(contract, eventName, options = {}, web
     return applyRangeFilters(workerEvents, options).map(normalizeCachedEvent);
   }
 
-  // Worker returned null (failed/timed-out) or an empty array.
-  // An empty array can legitimately mean "no events" but can also mean the
-  // watcher hasn't indexed this contract from genesis (e.g. user opened a
-  // position before the watcher's START_BLOCK). Always try Etherscan so
-  // historical events are never silently lost.
+  // Worker returned an empty array — it's up and watching this contract, trust the result.
+  if (workerEvents !== null) return [];
+
+  // Worker returned null — it failed or timed out. Fall back to Etherscan.
   try {
     console.log(`[Etherscan fallback] ${eventName || 'all events'} on ${contractAddress}`);
     const events = await fetchEtherscanEvents(contract, eventName, options);
-    const filtered = applyRangeFilters(events, options).map(normalizeCachedEvent);
-    if (filtered.length > 0) return filtered;
-    // Etherscan also returned 0 — return whatever the worker gave us (could be []).
-    return workerEvents ?? [];
+    return applyRangeFilters(events, options).map(normalizeCachedEvent);
   } catch (error) {
     console.error(`[Etherscan fallback] failed: ${error.message}`);
-    return workerEvents ?? [];
+    return [];
   }
 }

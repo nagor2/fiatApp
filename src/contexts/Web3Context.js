@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Web3 from 'web3';
 import config from '../utils/config';
-import {getPastEventsCached} from "../utils/cacheApi";
 import { usePrices } from './PricesContext';
 
 const Web3Context = createContext();
@@ -64,29 +63,8 @@ export const Web3Provider = ({ children }) => {
 
     if (contractsObj.oracle) {
       contractsObj.oracle.methods.getPrice('eth').call().then((price) => {
-        console.log("price: " + price);
         setEthPrice((parseFloat(price) / 10 ** 6).toFixed(2));
       }).catch(() => {});
-
-      getPastEventsCached(
-        contractsObj.oracle,
-        'priceUpdated',
-        { fromBlock: 0, toBlock: 'latest' },
-        web3Instance,
-      ).then(async (events) => {
-        if (events.length > 0) {
-          const lastEvent = events[events.length - 1];
-          const blockNum = typeof lastEvent.blockNumber === 'bigint'
-            ? Number(lastEvent.blockNumber)
-            : lastEvent.blockNumber;
-          const block = await web3Instance.eth.getBlock(blockNum);
-          const blockTimestamp = typeof block.timestamp === 'bigint'
-            ? Number(block.timestamp)
-            : block.timestamp;
-          console.log("Last ETH price update block:", blockNum);
-          setEthPriceLastUpdate(new Date(blockTimestamp * 1000));
-        }
-      }).catch(err => console.error('Failed to get price update events:', err));
     }
 
     setContracts(contractsObj);

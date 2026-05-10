@@ -10,6 +10,7 @@ import DepositsPage from './pages/DepositsPage';
 import BalancesPage from './pages/BalancesPage';
 import HomePage         from './pages/HomePage';
 
+const YandexMetrika = lazy(() => import('./components/YandexMetrika'));
 const CreditsPage = lazy(() => import('./pages/CreditsPage'));
 const AuctionsPage = lazy(() => import('./pages/AuctionsPage'));
 const PoolsPage = lazy(() => import('./pages/PoolsPage'));
@@ -36,6 +37,7 @@ const PageFallback = () => (
 function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={null}><YandexMetrika /></Suspense>
       <PricesProvider>
         <Web3Provider>
         <Suspense fallback={<PageFallback />}>

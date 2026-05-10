@@ -3,6 +3,7 @@ import { getContractEvents } from '../../utils/cacheApi';
 import { UNISWAP_CONFIG } from '../../utils/uniswap-config';
 import Icon from './Icons';
 import Spinner from '../Spinner';
+import TokenMark from './TokenMark';
 
 const POOL_MANAGER = UNISWAP_CONFIG.V4.POOL_MANAGER.toLowerCase();
 // ETH in Uniswap V4 is address(0), not the 0xEeee… sentinel used by 0x
@@ -23,17 +24,19 @@ const fmtTime = (ts) => {
 };
 
 // Determine currency0/currency1 symbols for a V4 pool based on address ordering.
-// V4 always puts the lower address as currency0.
+// V4 always puts the lower address as currency0. Also returns primaryIs0 so callers
+// know which side is pair.from (the pool's "base" token — DFC, RLE, etc.).
 function poolCurrencies(pair, tokens) {
   const addrA = (tokens[pair.from]?.address || '').toLowerCase();
   const addrB = (tokens[pair.to]?.address || '').toLowerCase();
   // Treat 0x Eeee… sentinel as V4 native (address(0))
   const v4A = addrA.startsWith('0xeeee') ? ETH_V4 : addrA;
   const v4B = addrB.startsWith('0xeeee') ? ETH_V4 : addrB;
-  if (!v4A || !v4B) return { c0: pair.from, c1: pair.to };
-  return v4A < v4B
-    ? { c0: pair.from, c1: pair.to }
-    : { c0: pair.to, c1: pair.from };
+  if (!v4A || !v4B) return { c0: pair.from, c1: pair.to, primaryIs0: true };
+  const fromIsC0 = v4A < v4B;
+  return fromIsC0
+    ? { c0: pair.from, c1: pair.to,   primaryIs0: true  }
+    : { c0: pair.to,   c1: pair.from, primaryIs0: false };
 }
 
 export default function PoolHistoryWidget({ pair, tokens, onClose }) {
@@ -70,7 +73,7 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
     load();
   }, [load]);
 
-  const { c0, c1 } = poolCurrencies(pair, tokens);
+  const { c0, c1, primaryIs0 } = poolCurrencies(pair, tokens);
 
   return (
     <div
@@ -83,8 +86,14 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
             <Icon name="close" />
           </button>
           <div className="df-drawer__title">
-            <Icon name="receipt" size={20} />
-            <h3>{pair.label} · History</h3>
+            <div className="df-pair-mark">
+              <TokenMark symbol={pair.from} size={36} />
+              <TokenMark symbol={pair.to} size={36} />
+            </div>
+            <div>
+              <div className="df-eyebrow">Pool · history</div>
+              <h3>{pair.label}</h3>
+            </div>
           </div>
           <button
             className="df-btn df-btn--ghost"
@@ -126,6 +135,7 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
                   ev={ev}
                   c0={c0}
                   c1={c1}
+                  primaryIs0={primaryIs0}
                 />
               ))}
             </div>
@@ -136,7 +146,7 @@ export default function PoolHistoryWidget({ pair, tokens, onClose }) {
   );
 }
 
-function PoolEventRow({ ev, c0, c1 }) {
+function PoolEventRow({ ev, c0, c1, primaryIs0 }) {
   const { event, returnValues: rv, blockTimestamp, blockNumber, transactionHash } = ev;
   const isSwap = event === 'Swap';
   const isLiq = event === 'ModifyLiquidity';
@@ -145,18 +155,23 @@ function PoolEventRow({ ev, c0, c1 }) {
   const raw0 = rv?.amount0 != null ? Number(rv.amount0) / 1e18 : null;
   const raw1 = rv?.amount1 != null ? Number(rv.amount1) / 1e18 : null;
 
-  // For Swap: the positive side is what went INTO the pool (sold by user),
-  // the negative side is what came OUT (received by user).
+  // V4 Swap amounts are from the caller's (user's) perspective:
+  //   negative = token sent by user (sold), positive = token received by user (bought).
   let sellSym, sellAmt, buySym, buyAmt;
   if (isSwap && raw0 != null && raw1 != null) {
-    if (raw0 >= 0) {
-      sellSym = c0; sellAmt = raw0;
-      buySym  = c1; buyAmt  = Math.abs(raw1);
+    if (raw0 < 0) {
+      // user sent c0, received c1 → bought c1
+      sellSym = c0; sellAmt = Math.abs(raw0);
+      buySym  = c1; buyAmt  = raw1;
     } else {
-      sellSym = c1; sellAmt = raw1;
-      buySym  = c0; buyAmt  = Math.abs(raw0);
+      // user received c0, sent c1 → sold c1
+      sellSym = c1; sellAmt = Math.abs(raw1);
+      buySym  = c0; buyAmt  = raw0;
     }
   }
+
+  // primaryAmt: the pool's base token (pair.from). Positive = user received it (bought).
+  const primaryAmt = primaryIs0 ? raw0 : raw1;
 
   const liqDelta = rv?.liquidityDelta != null ? Number(rv.liquidityDelta) : null;
   const isAdd = liqDelta != null && liqDelta > 0;
@@ -167,7 +182,7 @@ function PoolEventRow({ ev, c0, c1 }) {
 
   return (
     <div className="df-tx">
-      <div className={`df-tx__dir ${isAdd || (isSwap && raw0 != null && raw0 < 0) ? 'df-tx__dir--in' : 'df-tx__dir--out'}`}>
+      <div className={`df-tx__dir ${isAdd || (isSwap && primaryAmt != null && primaryAmt > 0) ? 'df-tx__dir--in' : 'df-tx__dir--out'}`}>
         <Icon name={isSwap ? 'swap' : 'pool'} size={14} />
       </div>
 
@@ -195,10 +210,10 @@ function PoolEventRow({ ev, c0, c1 }) {
         </div>
       </div>
 
-      {isSwap && sellAmt != null && (
-        <div className="df-tx__amount df-tx__amount--out">
-          {fmt(sellAmt)}{' '}
-          <span className="df-tx__sym">{sellSym}</span>
+      {isSwap && buyAmt != null && (
+        <div className="df-tx__amount df-tx__amount--in">
+          {fmt(buyAmt)}{' '}
+          <span className="df-tx__sym">{buySym}</span>
         </div>
       )}
 
