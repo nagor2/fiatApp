@@ -5,10 +5,16 @@
 }
 .df-spinner {
   display: inline-block;
-  animation: df-spin 0.8s linear infinite;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--df-accent, #3aa86e);
+  border-right-color: var(--df-accent, #3aa86e);
+  animation: df-spin 0.7s linear infinite;
   vertical-align: middle;
   flex-shrink: 0;
-  margin: 0 2px;
+  box-sizing: border-box;
 }
 
 /* Layout shell */

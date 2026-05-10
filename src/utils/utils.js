@@ -68,7 +68,7 @@ export function dateFromTimestamp(timeStamp){
 
 export class Loader extends React.Component{
     render(){
-        return <div><img className={'loader abs-centered'} src='/img/loading.png' width={'50'} height={'50'} alt={'loader'}/></div>;
+        return <div><span className="df-spinner abs-centered" style={{width:50,height:50,borderWidth:6}} aria-hidden="true"/></div>;
     }
 }
 

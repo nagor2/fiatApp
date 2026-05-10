@@ -115,7 +115,7 @@ export default function useExchangeRate() {
       }
 
       // History via worker only
-      const txs = await getContractTransactions(oracleAddress, 100);
+      const txs = await getContractTransactions(oracleAddress, 50);
       const transactions = txs.filter((tx) => tx.method === 'updateSeveralPrices');
 
       const priceMap = new Map();
@@ -172,10 +172,8 @@ export default function useExchangeRate() {
       }
       const currentDfc = totalShares > 0 ? currentSum / totalShares : 0;
 
-      // sort + normalize
+      // sort — DFC is already an absolute ratio since basket inception, no normalization needed
       const priceHistory = Array.from(priceMap.values()).sort((a, b) => a.timestamp - b.timestamp);
-      const firstDFC = priceHistory.length > 0 ? priceHistory[0].DFC : null;
-      if (firstDFC && firstDFC > 0) priceHistory.forEach((e) => { if (e.DFC) e.DFC /= firstDFC; });
 
       for (const [symbol, info] of basketSymbolToOracleId) {
         if (info.initialPrice && info.initialPrice > 0) {
@@ -188,7 +186,7 @@ export default function useExchangeRate() {
         priceHistory.forEach((e) => { if (e.ETH !== undefined) e.ETH /= firstETHRaw; });
       }
 
-      const normalizedCurrentDFC = firstDFC && firstDFC > 0 ? currentDfc / firstDFC : currentDfc;
+      const normalizedCurrentDFC = currentDfc;
       const ethInst = ethOracleId !== null ? instrumentsMap.get(ethOracleId) : null;
 
       const instruments = [
