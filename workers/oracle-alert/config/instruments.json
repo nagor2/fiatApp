@@ -1,0 +1,23 @@
+{
+  "instruments": [
+    {
+      "id": 1,
+      "symbol": "ETH/USD",
+      "coingeckoId": "ethereum",
+      "vsUsd": true
+    },
+    {
+      "id": 2,
+      "symbol": "XAU/USD",
+      "coingeckoId": "gold",
+      "vsUsd": true
+    },
+    {
+      "id": 3,
+      "symbol": "BTC/USD",
+      "coingeckoId": "bitcoin",
+      "vsUsd": true
+    }
+  ],
+  "comment": "Add your instruments here. coingeckoId is used to fetch market price from CoinGecko (leave empty for commodities — bot will compare with previous on-chain price instead)."
+}

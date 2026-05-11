@@ -151,8 +151,38 @@ services:
       - prod
       - workers
 
+  # CryptoFiat oracle alert bot
+  oracle-alert:
+    build:
+      context: workers/oracle-alert
+      dockerfile: Dockerfile
+    container_name: cryptofiat-oracle-alert
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - DAO_ADDRESS=${CRYPTOFIAT_DAO_ADDRESS}
+      - RPC_HTTP_URL=${RPC_HTTP_URL:-https://ethereum.publicnode.com}
+      - RPC_WS_URL=${RPC_WS_URL}
+      - TELEGRAM_BOT_TOKEN=${ORACLE_ALERT_TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHANNEL_ID=${ORACLE_ALERT_TELEGRAM_CHANNEL_ID}
+      - BLOCK_WATCHER_URL=http://app-workers:3002
+      - REDIS_URL=redis://redis:6379
+      - BW_ORACLE_KEY=${BW_ORACLE_KEY:-oracle}
+      - BW_CDP_KEY=${BW_CDP_KEY:-cdp}
+      - PRICE_ALERT_THRESHOLD_PCT=${ORACLE_ALERT_THRESHOLD_PCT:-3}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - oracle-alert-data:/app/data
+    restart: unless-stopped
+    profiles:
+      - oracle-alert
+      - workers
+
 volumes:
   redis-data:
+    driver: local
+  oracle-alert-data:
     driver: local
 
 networks:
