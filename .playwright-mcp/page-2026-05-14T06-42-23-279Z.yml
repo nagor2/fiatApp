@@ -1,0 +1,756 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Skip to content" [ref=e4] [cursor=pointer]:
+      - /url: "#start-of-content"
+    - banner [ref=e6]:
+      - heading "Navigation Menu" [level=2] [ref=e7]
+      - generic [ref=e8]:
+        - link "Homepage" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img [ref=e11]
+        - generic [ref=e13]:
+          - navigation "Global" [ref=e16]:
+            - list [ref=e17]:
+              - listitem [ref=e18]:
+                - button "Platform" [ref=e20] [cursor=pointer]:
+                  - text: Platform
+                  - img [ref=e21]
+              - listitem [ref=e23]:
+                - button "Solutions" [ref=e25] [cursor=pointer]:
+                  - text: Solutions
+                  - img [ref=e26]
+              - listitem [ref=e28]:
+                - button "Resources" [ref=e30] [cursor=pointer]:
+                  - text: Resources
+                  - img [ref=e31]
+              - listitem [ref=e33]:
+                - button "Open Source" [ref=e35] [cursor=pointer]:
+                  - text: Open Source
+                  - img [ref=e36]
+              - listitem [ref=e38]:
+                - button "Enterprise" [ref=e40] [cursor=pointer]:
+                  - text: Enterprise
+                  - img [ref=e41]
+              - listitem [ref=e43]:
+                - link "Pricing" [ref=e44] [cursor=pointer]:
+                  - /url: https://github.com/pricing
+                  - generic [ref=e45]: Pricing
+          - generic [ref=e46]:
+            - button "Search or jump to…" [ref=e49] [cursor=pointer]:
+              - img [ref=e51]
+            - link "Sign in" [ref=e54] [cursor=pointer]:
+              - /url: /login?return_to=https%3A%2F%2Fgithub.com%2FDefiLlama%2FDefiLlama-Adapters
+            - link "Sign up" [ref=e55] [cursor=pointer]:
+              - /url: /signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E&source=header-repo&source_repo=DefiLlama%2FDefiLlama-Adapters
+            - button "Appearance settings" [ref=e58] [cursor=pointer]:
+              - img
+  - main [ref=e62]:
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e66]:
+          - img [ref=e67]
+          - link "DefiLlama" [ref=e70] [cursor=pointer]:
+            - /url: /DefiLlama
+          - generic [ref=e71]: /
+          - strong [ref=e72]:
+            - link "DefiLlama-Adapters" [ref=e73] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters
+          - generic [ref=e74]: Public
+        - generic [ref=e75]:
+          - list:
+            - listitem [ref=e76]:
+              - link "You must be signed in to change notification settings" [ref=e77] [cursor=pointer]:
+                - /url: /login?return_to=%2FDefiLlama%2FDefiLlama-Adapters
+                - img [ref=e78]
+                - text: Notifications
+            - listitem [ref=e80]:
+              - link "Fork 7.3k" [ref=e81] [cursor=pointer]:
+                - /url: /login?return_to=%2FDefiLlama%2FDefiLlama-Adapters
+                - img [ref=e82]
+                - text: Fork
+                - generic "7,259" [ref=e84]: 7.3k
+            - listitem [ref=e85]:
+              - link "You must be signed in to star a repository" [ref=e87] [cursor=pointer]:
+                - /url: /login?return_to=%2FDefiLlama%2FDefiLlama-Adapters
+                - img [ref=e88]
+                - text: Star
+                - generic "1186 users starred this repository" [ref=e90]: 1.2k
+      - navigation "Repository" [ref=e91]:
+        - list [ref=e92]:
+          - listitem [ref=e93]:
+            - link "Code" [ref=e94] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters
+              - img [ref=e95]
+              - generic [ref=e97]: Code
+          - listitem [ref=e98]:
+            - link "Issues 61" [ref=e99] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/issues
+              - img [ref=e100]
+              - generic [ref=e103]: Issues
+              - generic "61" [ref=e104]
+          - listitem [ref=e105]:
+            - link "Pull requests 77" [ref=e106] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/pulls
+              - img [ref=e107]
+              - generic [ref=e109]: Pull requests
+              - generic "77" [ref=e110]
+          - listitem [ref=e111]:
+            - link "Discussions" [ref=e112] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/discussions
+              - img [ref=e113]
+              - generic [ref=e115]: Discussions
+          - listitem [ref=e116]:
+            - link "Actions" [ref=e117] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/actions
+              - img [ref=e118]
+              - generic [ref=e120]: Actions
+          - listitem [ref=e121]:
+            - link "Projects" [ref=e122] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/projects
+              - img [ref=e123]
+              - generic [ref=e125]: Projects
+          - listitem [ref=e126]:
+            - link "Security and quality" [ref=e127] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/security
+              - img [ref=e128]
+              - generic [ref=e130]: Security and quality
+          - listitem [ref=e131]
+        - button "Additional navigation options" [ref=e135] [cursor=pointer]:
+          - img
+    - generic [ref=e148]:
+      - heading "DefiLlama/DefiLlama-Adapters" [level=1] [ref=e150]
+      - generic [ref=e151]:
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - generic [ref=e156]:
+              - button "main branch" [ref=e158] [cursor=pointer]:
+                - generic [ref=e159]:
+                  - generic [ref=e161]:
+                    - img [ref=e163]
+                    - generic [ref=e166]: main
+                  - generic:
+                    - img
+              - generic [ref=e167]:
+                - link "Go to Branches page" [ref=e168] [cursor=pointer]:
+                  - /url: /DefiLlama/DefiLlama-Adapters/branches
+                  - img [ref=e169]
+                - link "Go to Tags page" [ref=e171] [cursor=pointer]:
+                  - /url: /DefiLlama/DefiLlama-Adapters/tags
+                  - img [ref=e172]
+            - generic [ref=e174]:
+              - generic [ref=e178]:
+                - img [ref=e180]
+                - combobox "Go to file" [ref=e182]
+              - button "Code" [ref=e183] [cursor=pointer]:
+                - generic [ref=e184]:
+                  - generic:
+                    - img
+                  - generic [ref=e185]: Code
+                  - generic:
+                    - img
+          - generic [ref=e186]:
+            - generic [ref=e187]:
+              - heading "Folders and files" [level=2] [ref=e188]
+              - table "Folders and files" [ref=e189]:
+                - rowgroup:
+                  - row "Name Last commit message Last commit date":
+                    - columnheader "Name"
+                    - columnheader "Last commit message":
+                      - generic "Last commit message"
+                    - columnheader "Last commit date":
+                      - generic "Last commit date"
+                - rowgroup [ref=e190]:
+                  - row "Latest commit RohanNero commits by RohanNero fix(contango-v2) update subgraph endpoint and pagination (#19089) success Commit db3f9b5 · May 14, 20262 hours ago History 34,507 Commits" [ref=e191]:
+                    - cell "Latest commit RohanNero commits by RohanNero fix(contango-v2) update subgraph endpoint and pagination (#19089) success Commit db3f9b5 · May 14, 20262 hours ago History 34,507 Commits" [ref=e192]:
+                      - generic [ref=e193]:
+                        - heading "Latest commit" [level=2] [ref=e194]
+                        - generic [ref=e195]:
+                          - generic [ref=e197]:
+                            - link "RohanNero" [ref=e198] [cursor=pointer]:
+                              - /url: /RohanNero
+                              - img "RohanNero" [ref=e199]
+                            - link "commits by RohanNero" [ref=e200] [cursor=pointer]:
+                              - /url: /DefiLlama/DefiLlama-Adapters/commits?author=RohanNero
+                              - text: RohanNero
+                          - generic [ref=e201]:
+                            - generic [ref=e203]:
+                              - link "fix(contango-v2) update subgraph endpoint and pagination (" [ref=e204] [cursor=pointer]:
+                                - /url: /DefiLlama/DefiLlama-Adapters/commit/db3f9b5d9090839797c75ed65b8294d4b4bb4109
+                              - link "#19089" [ref=e205] [cursor=pointer]:
+                                - /url: https://github.com/DefiLlama/DefiLlama-Adapters/pull/19089
+                              - link ")" [ref=e206] [cursor=pointer]:
+                                - /url: /DefiLlama/DefiLlama-Adapters/commit/db3f9b5d9090839797c75ed65b8294d4b4bb4109
+                            - button "success" [ref=e207] [cursor=pointer]:
+                              - img [ref=e208]
+                        - generic [ref=e210]:
+                          - generic [ref=e212]:
+                            - link "Commit db3f9b5" [ref=e213] [cursor=pointer]:
+                              - /url: /DefiLlama/DefiLlama-Adapters/commit/db3f9b5d9090839797c75ed65b8294d4b4bb4109
+                              - text: db3f9b5
+                            - text: ·
+                            - generic "May 14, 2026, 11:38 AM GMT+7" [ref=e214]: May 14, 20262 hours ago
+                          - generic [ref=e215]:
+                            - heading "History" [level=2] [ref=e216]
+                            - link "34,507 Commits" [ref=e217] [cursor=pointer]:
+                              - /url: /DefiLlama/DefiLlama-Adapters/commits/main/
+                              - generic [ref=e218]:
+                                - generic:
+                                  - img
+                                - generic [ref=e219]: 34,507 Commits
+                  - row ".github, (Directory) protect code owners Apr 20, 20263 weeks ago" [ref=e220]:
+                    - cell ".github, (Directory)" [ref=e221]:
+                      - generic [ref=e222]:
+                        - img [ref=e223]
+                        - link ".github, (Directory)" [ref=e228] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/.github
+                          - text: .github
+                    - cell "protect code owners" [ref=e229]:
+                      - link "protect code owners" [ref=e232] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/33864e79ffe9ab93d8efe2e8166faf5d00192f96
+                    - cell "Apr 20, 20263 weeks ago" [ref=e233]:
+                      - generic [ref=e234]: Apr 20, 20263 weeks ago
+                  - row "projects, (Directory) fix(contango-v2) update subgraph endpoint and pagination (#19089) May 14, 20262 hours ago" [ref=e235]:
+                    - cell "projects, (Directory)" [ref=e236]:
+                      - generic [ref=e237]:
+                        - img [ref=e238]
+                        - link "projects, (Directory)" [ref=e243] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/projects
+                          - text: projects
+                    - cell "fix(contango-v2) update subgraph endpoint and pagination (#19089)" [ref=e244]:
+                      - generic [ref=e246]:
+                        - link "fix(contango-v2) update subgraph endpoint and pagination (" [ref=e247] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/db3f9b5d9090839797c75ed65b8294d4b4bb4109
+                        - link "#19089" [ref=e248] [cursor=pointer]:
+                          - /url: https://github.com/DefiLlama/DefiLlama-Adapters/pull/19089
+                        - link ")" [ref=e249] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/db3f9b5d9090839797c75ed65b8294d4b4bb4109
+                    - cell "May 14, 20262 hours ago" [ref=e250]:
+                      - generic [ref=e251]: May 14, 20262 hours ago
+                  - row "registries, (Directory) fix cream May 13, 2026yesterday" [ref=e252]:
+                    - cell "registries, (Directory)" [ref=e253]:
+                      - generic [ref=e254]:
+                        - img [ref=e255]
+                        - link "registries, (Directory)" [ref=e260] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/registries
+                          - text: registries
+                    - cell "fix cream" [ref=e261]:
+                      - link "fix cream" [ref=e264] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/3f5b1a4eea732bed3d664cd7ac47d14950664bc6
+                    - cell "May 13, 2026yesterday" [ref=e265]:
+                      - generic [ref=e266]: May 13, 2026yesterday
+                  - row "scripts, (Directory) clean-up Mar 4, 20262 months ago" [ref=e267]:
+                    - cell "scripts, (Directory)" [ref=e268]:
+                      - generic [ref=e269]:
+                        - img [ref=e270]
+                        - link "scripts, (Directory)" [ref=e275] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/scripts
+                          - text: scripts
+                    - cell "clean-up" [ref=e276]:
+                      - link "clean-up" [ref=e279] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/dc9e5bceeabb4da6e4c3d6041a4b27689fa280f9
+                    - cell "Mar 4, 20262 months ago" [ref=e280]:
+                      - generic [ref=e281]: Mar 4, 20262 months ago
+                  - row "skills/adapter-author, (Directory) add defillama tvl adapter authoring agent skill (#19143) May 9, 20265 days ago" [ref=e282]:
+                    - cell "skills/adapter-author, (Directory)" [ref=e283]:
+                      - generic [ref=e284]:
+                        - img [ref=e285]
+                        - link "skills/adapter-author, (Directory)" [ref=e290] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/skills/adapter-author
+                          - text: skills/adapter-author
+                    - cell "add defillama tvl adapter authoring agent skill (#19143)" [ref=e291]:
+                      - generic [ref=e293]:
+                        - link "add defillama tvl adapter authoring agent skill (" [ref=e294] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/d4d0cfeb95923f2345b13817125baf2744308150
+                        - link "#19143" [ref=e295] [cursor=pointer]:
+                          - /url: https://github.com/DefiLlama/DefiLlama-Adapters/pull/19143
+                        - link ")" [ref=e296] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/d4d0cfeb95923f2345b13817125baf2744308150
+                    - cell "May 9, 20265 days ago" [ref=e297]:
+                      - generic [ref=e298]: May 9, 20265 days ago
+                  - row "typings, (Directory) Dex custom backfill (#3485) Aug 9, 20224 years ago" [ref=e299]:
+                    - cell "typings, (Directory)" [ref=e300]:
+                      - generic [ref=e301]:
+                        - img [ref=e302]
+                        - link "typings, (Directory)" [ref=e307] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/typings
+                          - text: typings
+                    - cell "Dex custom backfill (#3485)" [ref=e308]:
+                      - generic [ref=e310]:
+                        - link "Dex custom backfill (" [ref=e311] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/2cb3685ad8369eea9241c6856785b6f002a667c6
+                        - link "#3485" [ref=e312] [cursor=pointer]:
+                          - /url: https://github.com/DefiLlama/DefiLlama-Adapters/pull/3485
+                        - link ")" [ref=e313] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/2cb3685ad8369eea9241c6856785b6f002a667c6
+                    - cell "Aug 9, 20224 years ago" [ref=e314]:
+                      - generic [ref=e315]: Aug 9, 20224 years ago
+                  - row "utils, (Directory) fix May 6, 2026last week" [ref=e316]:
+                    - cell "utils, (Directory)" [ref=e317]:
+                      - generic [ref=e318]:
+                        - img [ref=e319]
+                        - link "utils, (Directory)" [ref=e324] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/tree/main/utils
+                          - text: utils
+                    - cell "fix" [ref=e325]:
+                      - link "fix" [ref=e328] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/ae6b5ac1c8ffbaf6c5d0d30bd76edb6a139d7708
+                    - cell "May 6, 2026last week" [ref=e329]:
+                      - generic [ref=e330]: May 6, 2026last week
+                  - row ".gitignore, (File) consolidate erc4626 adapters Feb 19, 20263 months ago" [ref=e331]:
+                    - cell ".gitignore, (File)" [ref=e332]:
+                      - generic [ref=e333]:
+                        - img [ref=e334]
+                        - link ".gitignore, (File)" [ref=e339] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/.gitignore
+                          - text: .gitignore
+                    - cell "consolidate erc4626 adapters" [ref=e340]:
+                      - link "consolidate erc4626 adapters" [ref=e343] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/1d6b5196599d38d7b35b605fdb009c3e447867f8
+                    - cell "Feb 19, 20263 months ago" [ref=e344]:
+                      - generic [ref=e345]: Feb 19, 20263 months ago
+                  - row ".prettierignore, (File) stop prettier Jul 4, 20242 years ago" [ref=e346]:
+                    - cell ".prettierignore, (File)" [ref=e347]:
+                      - generic [ref=e348]:
+                        - img [ref=e349]
+                        - link ".prettierignore, (File)" [ref=e354] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/.prettierignore
+                          - text: .prettierignore
+                    - cell "stop prettier" [ref=e355]:
+                      - link "stop prettier" [ref=e358] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/f84435184a132be71222dfa3eedba8d3774c727e
+                    - cell "Jul 4, 20242 years ago" [ref=e359]:
+                      - generic [ref=e360]: Jul 4, 20242 years ago
+                  - 'row "README.md, (File) Docs: README cleanup (#19216) May 12, 20262 days ago" [ref=e361]':
+                    - cell "README.md, (File)" [ref=e362]:
+                      - generic [ref=e363]:
+                        - img [ref=e364]
+                        - link "README.md, (File)" [ref=e369] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/README.md
+                          - text: README.md
+                    - 'cell "Docs: README cleanup (#19216)" [ref=e370]':
+                      - generic [ref=e372]:
+                        - 'link "Docs: README cleanup (" [ref=e373] [cursor=pointer]':
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/3a93a7c52b5c19bd053fa8e539066aee722756b0
+                        - link "#19216" [ref=e374] [cursor=pointer]:
+                          - /url: https://github.com/DefiLlama/DefiLlama-Adapters/pull/19216
+                        - link ")" [ref=e375] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/3a93a7c52b5c19bd053fa8e539066aee722756b0
+                    - cell "May 12, 20262 days ago" [ref=e376]:
+                      - generic [ref=e377]: May 12, 20262 days ago
+                  - row "env.sample, (File) cleanup Apr 1, 2025last year" [ref=e378]:
+                    - cell "env.sample, (File)" [ref=e379]:
+                      - generic [ref=e380]:
+                        - img [ref=e381]
+                        - link "env.sample, (File)" [ref=e386] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/env.sample
+                          - text: env.sample
+                    - cell "cleanup" [ref=e387]:
+                      - link "cleanup" [ref=e390] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/42814305e68041a9b0f72350e0524c8abad7e4d5
+                    - cell "Apr 1, 2025last year" [ref=e391]:
+                      - generic [ref=e392]: Apr 1, 2025last year
+                  - row "eslint.config.js, (File) test pnpn cache (#16743) Oct 19, 20257 months ago" [ref=e393]:
+                    - cell "eslint.config.js, (File)" [ref=e394]:
+                      - generic [ref=e395]:
+                        - img [ref=e396]
+                        - link "eslint.config.js, (File)" [ref=e401] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/eslint.config.js
+                          - text: eslint.config.js
+                    - cell "test pnpn cache (#16743)" [ref=e402]:
+                      - generic [ref=e404]:
+                        - link "test pnpn cache (" [ref=e405] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/6ed331ffcb48ff10d4bc3fbe844382db9fd5769c
+                        - link "#16743" [ref=e406] [cursor=pointer]:
+                          - /url: https://github.com/DefiLlama/DefiLlama-Adapters/pull/16743
+                        - link ")" [ref=e407] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/commit/6ed331ffcb48ff10d4bc3fbe844382db9fd5769c
+                    - cell "Oct 19, 20257 months ago" [ref=e408]:
+                      - generic [ref=e409]: Oct 19, 20257 months ago
+                  - row "funding.json, (File) Create funding.json Apr 14, 2025last year" [ref=e410]:
+                    - cell "funding.json, (File)" [ref=e411]:
+                      - generic [ref=e412]:
+                        - img [ref=e413]
+                        - link "funding.json, (File)" [ref=e418] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/funding.json
+                          - text: funding.json
+                    - cell "Create funding.json" [ref=e419]:
+                      - link "Create funding.json" [ref=e422] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/21841ecf8ba9daa0a4605ffcb128da289aa6e124
+                    - cell "Apr 14, 2025last year" [ref=e423]:
+                      - generic [ref=e424]: Apr 14, 2025last year
+                  - row "package.json, (File) update @defillama/sdk version May 12, 20262 days ago" [ref=e425]:
+                    - cell "package.json, (File)" [ref=e426]:
+                      - generic [ref=e427]:
+                        - img [ref=e428]
+                        - link "package.json, (File)" [ref=e433] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/package.json
+                          - text: package.json
+                    - cell "update @defillama/sdk version" [ref=e434]:
+                      - link "update @defillama/sdk version" [ref=e437] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/0ddf36370e484df895618045886c3b2b7e6382e8
+                    - cell "May 12, 20262 days ago" [ref=e438]:
+                      - generic [ref=e439]: May 12, 20262 days ago
+                  - row "pnpm-lock.yaml, (File) update @defillama/sdk version May 12, 20262 days ago" [ref=e440]:
+                    - cell "pnpm-lock.yaml, (File)" [ref=e441]:
+                      - generic [ref=e442]:
+                        - img [ref=e443]
+                        - link "pnpm-lock.yaml, (File)" [ref=e448] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/pnpm-lock.yaml
+                          - text: pnpm-lock.yaml
+                    - cell "update @defillama/sdk version" [ref=e449]:
+                      - link "update @defillama/sdk version" [ref=e452] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/0ddf36370e484df895618045886c3b2b7e6382e8
+                    - cell "May 12, 20262 days ago" [ref=e453]:
+                      - generic [ref=e454]: May 12, 20262 days ago
+                  - 'row "pnpm-workspace.yaml, (File) chore: add empty packages array to pnpm workspace configuration May 11, 20263 days ago" [ref=e455]':
+                    - cell "pnpm-workspace.yaml, (File)" [ref=e456]:
+                      - generic [ref=e457]:
+                        - img [ref=e458]
+                        - link "pnpm-workspace.yaml, (File)" [ref=e463] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/pnpm-workspace.yaml
+                          - text: pnpm-workspace.yaml
+                    - 'cell "chore: add empty packages array to pnpm workspace configuration" [ref=e464]':
+                      - 'link "chore: add empty packages array to pnpm workspace configuration" [ref=e467] [cursor=pointer]':
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/e7795cf3f8446732dd20ceee129391311e7eef0d
+                    - cell "May 11, 20263 days ago" [ref=e468]:
+                      - generic [ref=e469]: May 11, 20263 days ago
+                  - row "pull_request_template.md, (File) cleanup Mar 19, 20262 months ago" [ref=e470]:
+                    - cell "pull_request_template.md, (File)" [ref=e471]:
+                      - generic [ref=e472]:
+                        - img [ref=e473]
+                        - link "pull_request_template.md, (File)" [ref=e478] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/pull_request_template.md
+                          - text: pull_request_template.md
+                    - cell "cleanup" [ref=e479]:
+                      - link "cleanup" [ref=e482] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/a54d9811e98a5b1e8c47816fda96960a82354c35
+                    - cell "Mar 19, 20262 months ago" [ref=e483]:
+                      - generic [ref=e484]: Mar 19, 20262 months ago
+                  - row "test.js, (File) log errors Apr 24, 20263 weeks ago" [ref=e485]:
+                    - cell "test.js, (File)" [ref=e486]:
+                      - generic [ref=e487]:
+                        - img [ref=e488]
+                        - link "test.js, (File)" [ref=e493] [cursor=pointer]:
+                          - /url: /DefiLlama/DefiLlama-Adapters/blob/main/test.js
+                          - text: test.js
+                    - cell "log errors" [ref=e494]:
+                      - link "log errors" [ref=e497] [cursor=pointer]:
+                        - /url: /DefiLlama/DefiLlama-Adapters/commit/0451ce20ed13cc3acec538ec3094200fd98b93e8
+                    - cell "Apr 24, 20263 weeks ago" [ref=e498]:
+                      - generic [ref=e499]: Apr 24, 20263 weeks ago
+            - generic [ref=e501]:
+              - generic [ref=e502]:
+                - heading "Repository files navigation" [level=2] [ref=e503]
+                - navigation "Repository files" [ref=e504]:
+                  - list [ref=e505]:
+                    - listitem [ref=e506]:
+                      - link "README" [ref=e507] [cursor=pointer]:
+                        - /url: "#"
+                        - img [ref=e509]
+                        - generic [ref=e511]: README
+                - button "Outline" [ref=e512] [cursor=pointer]:
+                  - img [ref=e513]
+              - article [ref=e516]:
+                - generic [ref=e517]:
+                  - heading "Defillama Adapters" [level=1] [ref=e518]
+                  - 'link "Permalink: Defillama Adapters" [ref=e519] [cursor=pointer]':
+                    - /url: "#defillama-adapters"
+                    - img [ref=e520]
+                - paragraph [ref=e522]:
+                  - text: Follow
+                  - link "this guide" [ref=e523] [cursor=pointer]:
+                    - /url: https://docs.llama.fi/submit-a-project
+                  - text: to create an adapter and submit a PR with it.
+                - paragraph [ref=e524]:
+                  - text: Also, don't hesitate to send a message on
+                  - link "our discord" [ref=e525] [cursor=pointer]:
+                    - /url: https://discord.defillama.com/
+                  - text: if we're late to merge your PR.
+                - blockquote [ref=e526]:
+                  - paragraph [ref=e527]:
+                    - text: This repo is for
+                    - strong [ref=e528]: TVL
+                    - text: adapters. For other metrics such as
+                    - code [ref=e529]: volume
+                    - text: ","
+                    - code [ref=e530]: fees
+                    - text: ","
+                    - code [ref=e531]: revenue
+                    - text: ","
+                    - code [ref=e532]: aggregators
+                    - text: ","
+                    - code [ref=e533]: open-interest
+                    - text: ","
+                    - code [ref=e534]: active-users
+                    - text: ", etc. submit the PR to"
+                    - link "DefiLlama/dimension-adapters" [ref=e535] [cursor=pointer]:
+                      - /url: https://github.com/DefiLlama/dimension-adapters
+                    - text: .
+                - list [ref=e536]:
+                  - listitem [ref=e537]:
+                    - text: PLEASE PLEASE
+                    - strong [ref=e538]: enable "Allow edits by maintainers" while putting up the PR.
+                  - listitem [ref=e539]: Once your adapter has been merged, it takes time to show on the UI. No need to notify us on Discord.
+                  - listitem [ref=e540]:
+                    - text: "TVL must be computed from blockchain data (reason:"
+                    - link "#432" [ref=e541] [cursor=pointer]:
+                      - /url: https://github.com/DefiLlama/DefiLlama-Adapters/discussions/432
+                    - text: ), if you have trouble with creating the adapter, please hop onto our discord, we are happy to assist you.
+                  - listitem [ref=e542]:
+                    - strong [ref=e543]: For updating listing info
+                    - text: "It is a different repo, you can find your listing in this file:"
+                    - link "https://github.com/DefiLlama/defillama-server/blob/master/defi/src/protocols/data2.ts" [ref=e544] [cursor=pointer]:
+                      - /url: https://github.com/DefiLlama/defillama-server/blob/master/defi/src/protocols/data2.ts
+                    - text: ", you can edit it there and put up a PR"
+                  - listitem [ref=e545]:
+                    - text: Do not edit/push
+                    - code [ref=e546]: pnpm-lock.yaml
+                    - text: or
+                    - code [ref=e547]: pnpm-workspace.yaml
+                    - text: files as part of your changes, that messes up our CI.
+                  - listitem [ref=e548]: No need to go to our discord and announce that you've created a PR, we monitor all PRs and will review it asap
+                - generic [ref=e549]:
+                  - heading "Getting listed" [level=2] [ref=e550]
+                  - 'link "Permalink: Getting listed" [ref=e551] [cursor=pointer]':
+                    - /url: "#getting-listed"
+                    - img [ref=e552]
+                - paragraph [ref=e554]:
+                  - text: Please send answers to questions there
+                  - link "https://github.com/DefiLlama/DefiLlama-Adapters/blob/main/pull_request_template.md" [ref=e555] [cursor=pointer]:
+                    - /url: https://github.com/DefiLlama/DefiLlama-Adapters/blob/main/pull_request_template.md
+                  - text: when creating a PR.
+                - generic [ref=e556]:
+                  - heading "Agent skill" [level=2] [ref=e557]
+                  - 'link "Permalink: Agent skill" [ref=e558] [cursor=pointer]':
+                    - /url: "#agent-skill"
+                    - img [ref=e559]
+                - paragraph [ref=e561]:
+                  - text: This repo includes an agent skill at
+                  - code [ref=e562]: skills/adapter-author/
+                  - text: for AI-assisted DefiLlama TVL adapter authoring. It helps coding agents validate whether a request belongs in
+                  - code [ref=e563]: DefiLlama-Adapters
+                  - text: ", choose existing adapter patterns, implement TVL adapters in repo style, run"
+                  - code [ref=e564]: node test.js
+                  - text: ", and prepare PR metadata. See"
+                  - code [ref=e565]: skills/adapter-author/SKILL.md
+                  - text: for usage.
+                - generic [ref=e566]:
+                  - heading "Work in progress" [level=2] [ref=e567]
+                  - 'link "Permalink: Work in progress" [ref=e568] [cursor=pointer]':
+                    - /url: "#work-in-progress"
+                    - img [ref=e569]
+                - paragraph [ref=e571]: This is a work in progress. DefiLlama aims to be transparent, accurate, and open source.
+                - paragraph [ref=e572]:
+                  - text: If you have any suggestions, want to contribute or want to chat, please join
+                  - link "our discord" [ref=e573] [cursor=pointer]:
+                    - /url: https://discord.defillama.com/
+                  - text: and drop a message.
+                - generic [ref=e574]:
+                  - heading "Testing adapters" [level=2] [ref=e575]
+                  - 'link "Permalink: Testing adapters" [ref=e576] [cursor=pointer]':
+                    - /url: "#testing-adapters"
+                    - img [ref=e577]
+                - generic [ref=e579]:
+                  - generic [ref=e580]:
+                    - text: node test.js projects/pangolin/index.js
+                    - generic [ref=e581]: "# Add a timestamp at the end to run the adapter at a historical timestamp"
+                    - text: node test.js projects/aave/v3.js 1729080692
+                    - generic [ref=e582]: "# or using YYYY-MM-DD"
+                    - text: node test.js projects/aave/v3.js 2024-10-16
+                  - button "Copy code to clipboard" [ref=e584] [cursor=pointer]:
+                    - img [ref=e585]
+                - generic [ref=e588]:
+                  - heading "Changing RPC providers" [level=2] [ref=e589]
+                  - 'link "Permalink: Changing RPC providers" [ref=e590] [cursor=pointer]':
+                    - /url: "#changing-rpc-providers"
+                    - img [ref=e591]
+                - paragraph [ref=e593]:
+                  - text: If you want to change RPC providers because you need archive node access or because the default ones don't work well enough you can do so by creating an
+                  - code [ref=e594]: .env
+                  - text: "file and filling it with the env variables to overwrite:"
+                - generic [ref=e595]:
+                  - code [ref=e597]: ETHEREUM_RPC="..." BSC_RPC="..." POLYGON_RPC="..."
+                  - button "Copy code to clipboard" [ref=e599] [cursor=pointer]:
+                    - img [ref=e600]
+                - paragraph [ref=e603]:
+                  - text: The name of each rpc is
+                  - code [ref=e604]: "{CHAIN-NAME}_RPC"
+                  - text: ", and the name we use for each chain can be found"
+                  - link "here" [ref=e605] [cursor=pointer]:
+                    - /url: https://unpkg.com/@defillama/sdk@latest/build/providers.json
+                  - text: . If you run into issues with a chain make sure to update the sdk with
+                  - code [ref=e606]: npm update @defillama/sdk
+                  - text: .
+                - generic [ref=e607]:
+                  - heading "Adapter rules" [level=2] [ref=e608]
+                  - 'link "Permalink: Adapter rules" [ref=e609] [cursor=pointer]':
+                    - /url: "#adapter-rules"
+                    - img [ref=e610]
+                - list [ref=e612]:
+                  - listitem [ref=e613]: Never add extra npm packages, if you need a chain-level package for your chain, ask us, and we'll consider it, but we can't accept any npm package that is project-specific
+        - generic [ref=e617]:
+          - generic [ref=e620]:
+            - heading "About" [level=2] [ref=e621]
+            - generic [ref=e622]: No description, website, or topics provided.
+            - heading "Resources" [level=3] [ref=e623]
+            - link "Readme" [ref=e625] [cursor=pointer]:
+              - /url: "#readme-ov-file"
+              - img [ref=e626]
+              - text: Readme
+            - link "Activity" [ref=e629] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/activity
+              - img [ref=e630]
+              - text: Activity
+            - link "Custom properties" [ref=e633] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/custom-properties
+              - img [ref=e634]
+              - text: Custom properties
+            - heading "Stars" [level=3] [ref=e636]
+            - link "1.2k stars" [ref=e638] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/stargazers
+              - img [ref=e639]
+              - strong [ref=e641]: 1.2k
+              - text: stars
+            - heading "Watchers" [level=3] [ref=e642]
+            - link "27 watching" [ref=e644] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/watchers
+              - img [ref=e645]
+              - strong [ref=e647]: "27"
+              - text: watching
+            - heading "Forks" [level=3] [ref=e648]
+            - link "7.3k forks" [ref=e650] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/forks
+              - img [ref=e651]
+              - strong [ref=e653]: 7.3k
+              - text: forks
+            - link "Report repository" [ref=e655] [cursor=pointer]:
+              - /url: /contact/report-content?content_url=https%3A%2F%2Fgithub.com%2FDefiLlama%2FDefiLlama-Adapters&report=DefiLlama+%28user%29
+          - generic [ref=e657]:
+            - heading "Releases 1" [level=2] [ref=e658]:
+              - link "Releases 1" [ref=e659] [cursor=pointer]:
+                - /url: /DefiLlama/DefiLlama-Adapters/releases
+                - text: Releases
+                - generic "1" [ref=e660]
+            - link "Latest tvlModules Latest Oct 17, 2025on Oct 17, 2025" [ref=e661] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/releases/tag/latest
+              - img [ref=e662]
+              - generic [ref=e664]:
+                - generic [ref=e665]:
+                  - generic [ref=e666]: Latest tvlModules
+                  - 'generic "Label: Latest" [ref=e667]': Latest
+                - generic [ref=e668]: Oct 17, 2025on Oct 17, 2025
+          - generic [ref=e670]:
+            - heading "Packages" [level=2] [ref=e671]:
+              - link "Packages" [ref=e672] [cursor=pointer]:
+                - /url: /orgs/DefiLlama/packages?repo_name=DefiLlama-Adapters
+            - generic [ref=e673]: No packages published
+          - generic [ref=e675]:
+            - heading "Contributors 4,478" [level=2] [ref=e676]:
+              - link "Contributors 4,478" [ref=e677] [cursor=pointer]:
+                - /url: /DefiLlama/DefiLlama-Adapters/graphs/contributors
+                - text: Contributors
+                - generic "4,478" [ref=e678]
+            - list [ref=e679]:
+              - listitem [ref=e680]:
+                - link "@g1nt0ki" [ref=e681] [cursor=pointer]:
+                  - /url: https://github.com/g1nt0ki
+                  - img "@g1nt0ki" [ref=e682]
+              - listitem [ref=e683]:
+                - link "@0xngmi" [ref=e684] [cursor=pointer]:
+                  - /url: https://github.com/0xngmi
+                  - img "@0xngmi" [ref=e685]
+              - listitem [ref=e686]:
+                - link "@waynebruce0x" [ref=e687] [cursor=pointer]:
+                  - /url: https://github.com/waynebruce0x
+                  - img "@waynebruce0x" [ref=e688]
+              - listitem [ref=e689]:
+                - link "@realdealshaman" [ref=e690] [cursor=pointer]:
+                  - /url: https://github.com/realdealshaman
+                  - img "@realdealshaman" [ref=e691]
+              - listitem [ref=e692]:
+                - link "@Define101" [ref=e693] [cursor=pointer]:
+                  - /url: https://github.com/Define101
+                  - img "@Define101" [ref=e694]
+              - listitem [ref=e695]:
+                - link "@0xpeluche" [ref=e696] [cursor=pointer]:
+                  - /url: https://github.com/0xpeluche
+                  - img "@0xpeluche" [ref=e697]
+              - listitem [ref=e698]:
+                - link "@RohanNero" [ref=e699] [cursor=pointer]:
+                  - /url: https://github.com/RohanNero
+                  - img "@RohanNero" [ref=e700]
+              - listitem [ref=e701]:
+                - link "@Llama0x" [ref=e702] [cursor=pointer]:
+                  - /url: https://github.com/Llama0x
+                  - img "@Llama0x" [ref=e703]
+              - listitem [ref=e704]:
+                - link "@Nemusonaneko" [ref=e705] [cursor=pointer]:
+                  - /url: https://github.com/Nemusonaneko
+                  - img "@Nemusonaneko" [ref=e706]
+              - listitem [ref=e707]:
+                - link "@dtmkeng" [ref=e708] [cursor=pointer]:
+                  - /url: https://github.com/dtmkeng
+                  - img "@dtmkeng" [ref=e709]
+              - listitem [ref=e710]:
+                - link "@noateden" [ref=e711] [cursor=pointer]:
+                  - /url: https://github.com/noateden
+                  - img "@noateden" [ref=e712]
+              - listitem [ref=e713]:
+                - link "@useername" [ref=e714] [cursor=pointer]:
+                  - /url: https://github.com/useername
+                  - img "@useername" [ref=e715]
+              - listitem [ref=e716]:
+                - link "@jo-chemla" [ref=e717] [cursor=pointer]:
+                  - /url: https://github.com/jo-chemla
+                  - img "@jo-chemla" [ref=e718]
+              - listitem [ref=e719]:
+                - link "@0xStrobe" [ref=e720] [cursor=pointer]:
+                  - /url: https://github.com/0xStrobe
+                  - img "@0xStrobe" [ref=e721]
+            - link "+ 4,464 contributors" [ref=e723] [cursor=pointer]:
+              - /url: /DefiLlama/DefiLlama-Adapters/graphs/contributors
+          - generic [ref=e725]:
+            - heading "Languages" [level=2] [ref=e726]
+            - list [ref=e730]:
+              - listitem [ref=e731]:
+                - link "JavaScript 100.0%" [ref=e732] [cursor=pointer]:
+                  - /url: /DefiLlama/DefiLlama-Adapters/search?l=javascript
+                  - img [ref=e733]
+                  - generic [ref=e735]: JavaScript
+                  - generic [ref=e736]: 100.0%
+  - contentinfo [ref=e738]:
+    - heading "Footer" [level=2] [ref=e739]
+    - generic [ref=e740]:
+      - generic [ref=e741]:
+        - link "GitHub Homepage" [ref=e742] [cursor=pointer]:
+          - /url: https://github.com
+          - img [ref=e743]
+        - generic [ref=e745]: © 2026 GitHub, Inc.
+      - navigation "Footer" [ref=e746]:
+        - heading "Footer navigation" [level=3] [ref=e747]
+        - list "Footer navigation" [ref=e748]:
+          - listitem [ref=e749]:
+            - link "Terms" [ref=e750] [cursor=pointer]:
+              - /url: https://docs.github.com/site-policy/github-terms/github-terms-of-service
+          - listitem [ref=e751]:
+            - link "Privacy" [ref=e752] [cursor=pointer]:
+              - /url: https://docs.github.com/site-policy/privacy-policies/github-privacy-statement
+          - listitem [ref=e753]:
+            - link "Security" [ref=e754] [cursor=pointer]:
+              - /url: https://github.com/security
+          - listitem [ref=e755]:
+            - link "Status" [ref=e756] [cursor=pointer]:
+              - /url: https://www.githubstatus.com/
+          - listitem [ref=e757]:
+            - link "Community" [ref=e758] [cursor=pointer]:
+              - /url: https://github.community/
+          - listitem [ref=e759]:
+            - link "Docs" [ref=e760] [cursor=pointer]:
+              - /url: https://docs.github.com/
+          - listitem [ref=e761]:
+            - link "Contact" [ref=e762] [cursor=pointer]:
+              - /url: https://support.github.com?tags=dotcom-footer
+          - listitem [ref=e763]:
+            - button "Manage cookies" [ref=e765] [cursor=pointer]
+          - listitem [ref=e766]:
+            - button "Do not share my personal information" [ref=e768] [cursor=pointer]

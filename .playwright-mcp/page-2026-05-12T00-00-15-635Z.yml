@@ -1,0 +1,372 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - img "Ecosystem Support Program logo" [ref=e8] [cursor=pointer]
+        - list [ref=e10]:
+          - listitem [ref=e11]:
+            - link "Home" [ref=e12] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e13]
+          - listitem [ref=e14]:
+            - img [ref=e15]
+            - link "How to Apply" [ref=e17] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e18]
+          - listitem [ref=e19]:
+            - img [ref=e20]
+            - link "Funded Projects" [ref=e22] [cursor=pointer]:
+              - /url: /funded-projects
+              - heading "Funded Projects" [level=4] [ref=e23]
+          - listitem [ref=e24]:
+            - img [ref=e25]
+            - link "About ESP" [ref=e27] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e28]
+          - listitem [ref=e29]:
+            - img [ref=e30]
+            - link "Blog" [ref=e32] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e33]
+    - main [ref=e35]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - heading "How to Apply" [level=1] [ref=e40]
+          - paragraph [ref=e41]: Whether you're working on a specific project, or you're still exploring possibilities, you can connect with our team for guidance.
+        - img "Kid watching plants grow" [ref=e43]
+      - tablist [ref=e46]:
+        - tab "Overview" [ref=e47] [cursor=pointer]:
+          - heading "Overview" [level=2] [ref=e48]
+        - tab "Office Hours" [ref=e49] [cursor=pointer]:
+          - heading "Office Hours" [level=2] [ref=e50]
+        - tab "Wishlist" [selected] [ref=e51] [cursor=pointer]:
+          - heading "Wishlist" [level=2] [ref=e52]
+        - tab "RFPs" [ref=e53] [cursor=pointer]:
+          - heading "RFPs" [level=2] [ref=e54]
+        - tab "Open Rounds" [ref=e55] [cursor=pointer]:
+          - heading "Open Rounds" [level=2] [ref=e56]
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - heading "Apply for Glamsterdam Grants Round" [level=2] [ref=e62]
+          - paragraph [ref=e63]: Please review the item details carefully and explain how your background and approach align with the requirements. Be specific about your methodology, timeline, and expected deliverables.
+          - paragraph [ref=e64]:
+            - text: By submitting this application, you confirm that you have read and agree to our
+            - link "Privacy Policy" [ref=e65] [cursor=pointer]:
+              - /url: https://ethereum.org/en/privacy-policy/
+            - text: .
+        - generic [ref=e69]:
+          - generic [ref=e71]:
+            - paragraph [ref=e72]: "Selected Wishlist:"
+            - paragraph [ref=e73]: Glamsterdam Grants Round
+            - paragraph [ref=e74]: "The upcoming Glamsterdam upgrade is expected to introduce changes to EVM capabilities, protocol architecture, Ethereum's gas pricing, etc. Among the changes being considered are a comprehensive gas repricing package, new EVM opcodes, increased max contract size, native ETH transfer logs, validator exit/consolidation improvements, and two protocol-level headliners: Enshrined Proposer-Builder Separation (ePBS) and Block-Level Access Lists (BALs). Some of these changes, particularly gas repricing, may affect every transaction and deployed contract on Ethereum. We are seeking grant proposals that help the Ethereum community prepare for and adapt to the Glamsterdam upgrade. Areas of interest include, but are not limited to: - Developer tooling updates - Impact analysis tooling - Added support for block explorers and indexers - Validator tooling - Monitoring tooling - Data-driven research Proposals should include clear deliverables, milestones, and a realistic timeline. Evidence of demonstrable prior relevant work – such as contributions to previous upgrade readiness efforts, existing open-source Ethereum tooling, or published research on protocol changes – will be considered favourably during evaluation. For reference, the previous Pectra Grant Round awarded a total of around $250k across more than 10 projects. Note: some Glamsterdam EIPs are still under consideration and may not be included in the final upgrade. Applicants should review the current status of relevant EIPs via EIP-7773 and Forkcast.org."
+          - generic [ref=e75]:
+            - heading "Contact Information" [level=3] [ref=e76]
+            - generic [ref=e77]:
+              - group [ref=e78]:
+                - generic [ref=e79]:
+                  - paragraph [ref=e80]: First name
+                  - text: "*"
+                - textbox "First name" [ref=e81]: Dmitry
+              - group [ref=e82]:
+                - generic [ref=e83]:
+                  - paragraph [ref=e84]: Last name
+                  - text: "*"
+                - textbox "Last name" [ref=e85]: Nagornykh
+            - group [ref=e86]:
+              - generic [ref=e87]:
+                - paragraph [ref=e88]: Email
+                - text: "*"
+              - textbox "Email" [ref=e89]: dmitrynagornyh2@gmail.com
+            - group [ref=e90]:
+              - generic [ref=e91]:
+                - paragraph [ref=e92]: Company
+                - text: "*"
+              - text: Name of company, team, or organization. If you do not have an organization name, write "N/A"
+              - textbox "Company" [ref=e93]: N/A
+            - group [ref=e94]:
+              - generic [ref=e95]:
+                - paragraph [ref=e96]: Profile Type
+                - text: "*"
+              - generic [ref=e100]:
+                - generic [ref=e101]:
+                  - generic [ref=e393]: Individual
+                  - combobox [ref=e104]
+                - generic [ref=e105]:
+                  - separator [ref=e106]
+                  - img [ref=e108]
+            - group [ref=e110]:
+              - paragraph [ref=e112]: Alternative Contact Info
+              - textbox "Alternative Contact Info" [ref=e113]: "@hypermosu"
+            - group [ref=e114]:
+              - paragraph [ref=e116]: Website
+              - textbox "Website" [ref=e117]: https://github.com/nagor2/blockpulse
+            - generic [ref=e118]:
+              - group [ref=e119]:
+                - generic [ref=e120]:
+                  - paragraph [ref=e121]: Country
+                  - text: "*"
+                - generic [ref=e125]:
+                  - generic [ref=e126]:
+                    - generic [ref=e401]: Russian Federation
+                    - combobox [ref=e129]
+                  - generic [ref=e130]:
+                    - separator [ref=e131]
+                    - img [ref=e133]
+              - group [ref=e135]:
+                - generic [ref=e136]:
+                  - paragraph [ref=e137]: Time Zone
+                  - text: "*"
+                - generic [ref=e141]:
+                  - generic [ref=e142]:
+                    - generic [ref=e619]: GMT+07:00 Indochina Time (Asia/Bangkok)
+                    - combobox [ref=e145]
+                  - generic [ref=e146]:
+                    - separator [ref=e147]
+                    - img [ref=e149]
+            - group [ref=e151]:
+              - generic [ref=e152]:
+                - paragraph [ref=e153]: Applicant Profile
+                - text: "*"
+              - text: Briefly provide a biography of yourself and your team including relevant experience and expertise.
+              - textbox "Applicant Profile" [ref=e154]: Solo developer with 5+ years of production Node.js and TypeScript experience. Built and deployed DotFlat — a commodity-backed collateralized stablecoin protocol — on Ethereum mainnet, including smart contracts (Solidity, Hardhat, OpenZeppelin), a React 19 frontend, and Node.js backend infrastructure. Blockpulse originated as the block-watcher service inside DotFlat, running in production on Ethereum mainnet. Academic background in ML and mathematics (Novosibirsk State University).2
+              - generic [ref=e394]: Applicant profile must contain at least 500 character(s)
+          - generic [ref=e155]:
+            - heading "Budget" [level=3] [ref=e156]
+            - generic [ref=e157]:
+              - group [ref=e158]:
+                - generic [ref=e159]:
+                  - paragraph [ref=e160]: Budget Request
+                  - text: "*"
+                - textbox "Budget Request" [ref=e161]: "21000"
+              - group [ref=e162]:
+                - generic [ref=e163]:
+                  - paragraph [ref=e164]: Currency
+                  - text: "*"
+                - generic [ref=e168]:
+                  - generic [ref=e169]:
+                    - generic [ref=e631]: USD
+                    - combobox [ref=e172]
+                  - generic [ref=e173]:
+                    - separator [ref=e174]
+                    - img [ref=e176]
+            - heading "Project Overview" [level=3] [ref=e178]
+            - group [ref=e179]:
+              - generic [ref=e180]:
+                - paragraph [ref=e181]: Project Name
+                - text: "*"
+              - text: Provide a concise title for your project.
+              - textbox "Project Name" [ref=e182]: Blockpulse
+            - group [ref=e183]:
+              - generic [ref=e184]:
+                - paragraph [ref=e185]: Project Summary
+                - text: "*"
+              - text: Describe your project in a few sentences, including what is being built and why it matters. Provide links to any existing public or published work.
+              - textbox "Project Summary" [ref=e186]: "Blockpulse is an open-source Node.js service that watches Ethereum contracts and invalidates Redis cache entries the moment a transaction is mined. It eliminates the TTL-based caching tradeoff for dApp developers: cache entries live indefinitely and are deleted only when on-chain state actually changes. Blockpulse also indexes decoded events and transactions, serves a REST API for cached contract method calls, and backfills history via Etherscan API. It has been running in production on Ethereum mainnet as part of DotFlat (https://github.com/nagor2/blockpulse). The Glamsterdam-specific deliverable: full support for native ETH transfer logs (EIP included in Glamsterdam), making Blockpulse the first open-source tool enabling event-driven Redis invalidation for native ETH transfers."
+            - group [ref=e187]:
+              - paragraph [ref=e189]: Project Repo Link
+              - text: "Include a link to a repository for this project: Github, Gitlab, HackMD"
+              - textbox "Project Repo Link" [ref=e190]: https://github.com/nagor2/blockpulse
+            - group [ref=e191]:
+              - generic [ref=e192]:
+                - paragraph [ref=e193]: Domain
+                - text: "*"
+              - text: Select a domain for this project.
+              - generic [ref=e197]:
+                - generic [ref=e198]:
+                  - generic [ref=e652]: Application Infrastructure
+                  - combobox [ref=e201]
+                - generic [ref=e202]:
+                  - separator [ref=e203]
+                  - img [ref=e205]
+            - group [ref=e207]:
+              - generic [ref=e208]:
+                - paragraph [ref=e209]: Output
+                - text: "*"
+              - text: Select an expected outcome of this project.
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - generic [ref=e660]: Developer tooling
+                  - combobox [ref=e217]
+                - generic [ref=e218]:
+                  - separator [ref=e219]
+                  - img [ref=e221]
+          - generic [ref=e223]:
+            - heading "Project Details" [level=3] [ref=e224]
+            - group [ref=e225]:
+              - generic [ref=e226]:
+                - paragraph [ref=e227]: Project Structure
+                - text: "*"
+              - text: Provide a detailed breakdown of the project scope of work and timeline including milestones, deliverables, and expected outcomes.
+              - textbox "Project Structure" [ref=e228]: "Week 1-2: Test suite — unit and integration tests, CI pipeline setup, coverage reporting (target: 80%+). Week 3-4: Full API documentation and JSDoc, architecture diagrams. Week 5-6: Integration guides for Express, Next.js, Fastify with code examples. Week 7-8: Native ETH transfer logs support (Glamsterdam EIP) — update event listener to handle new log format; example repos published; Docker Compose production templates. Week 9-10: Security review of codebase. Week 11-12: Documentation site, community articles on Dev.to and Ethereum StackExchange, ecosystem outreach. Deliverables: test suite with 80%+ coverage, full API docs, 2+ integration example repos, native ETH transfer log support, security review report, documentation site."
+            - group [ref=e229]:
+              - generic [ref=e230]:
+                - paragraph [ref=e231]: Sustainability Plan
+                - text: "*"
+              - text: Share plans towards achieving sustainability (both financial and non-financial) for this project in future.
+              - textbox "Sustainability Plan" [ref=e232]: "Blockpulse is already being used in production (DotFlat on Ethereum mainnet) so the core tool is self-sustaining as long as DotFlat operates. Long-term, the plan is an open-core model: the self-hosted tool remains MIT-licensed and free forever, while a managed cloud version (hosted Blockpulse with dashboard, alerting, and multi-chain support) is offered as a paid SaaS. This follows the model of tools like Grafana, Sentry, and Posthog. The open source community adoption and GitHub stars from the grant-funded outreach will directly support the commercial viability of the managed offering."
+            - group [ref=e233]:
+              - generic [ref=e234]:
+                - paragraph [ref=e235]: Funding
+                - text: "*"
+              - text: Have you received or discussed funding for this project from other parties?
+              - textbox "Funding" [ref=e236]: No external funding received or discussed for Blockpulse. The project was self-funded as part of DotFlat development.
+            - group [ref=e237]:
+              - generic [ref=e238]:
+                - paragraph [ref=e239]: Problem Being Solved
+                - text: "*"
+              - text: Within this domain, what is the problem identified, who is affected by it, and how does this project provide a solution? Provide concrete examples.
+              - textbox "Problem Being Solved" [ref=e240]: "dApp developers caching Ethereum contract reads use TTL-based expiry (typically 60 seconds). This creates two problems: (1) data is always stale by design — users see outdated state for up to 60 seconds after their transaction confirms; (2) RPC calls happen on a timer regardless of on-chain activity — pure waste during quiet periods. Blockpulse solves this by watching for transactions to configured contracts and deleting Redis keys immediately when state changes. With TTL=0, cache entries are valid indefinitely and invalidated only on actual on-chain events. For a lending protocol with low activity, this means zero RPC calls during quiet periods and fresh data within one block of any transaction. The Glamsterdam-specific extension: native ETH transfer logs will enable the same event-driven invalidation for ETH balances — currently impossible because native ETH transfers emit no logs. Blockpulse will be updated to consume these new logs on day one of Glamsterdam."
+            - group [ref=e241]:
+              - generic [ref=e242]:
+                - paragraph [ref=e243]: Measured Impact
+                - text: "*"
+              - text: Depending on the stage of this project, provide metrics for the project's current impact on the ecosystem, e.g. users, page visits, code contributors.
+              - textbox "Measured Impact" [ref=e244]: "Blockpulse has been running in production as part of DotFlat on Ethereum mainnet since 2025, watching 7 smart contracts including CDP, oracle, deposit, auction, and Uniswap V4 PoolManager. It processes every Ethereum mainnet block and has handled all DotFlat user transactions without downtime. The codebase is ~1,700 lines of production-hardened Node.js. As of launch on GitHub (May 2026): early community interest via posts on r/ethdev and Dev.to."
+            - group [ref=e245]:
+              - generic [ref=e246]:
+                - paragraph [ref=e247]: Success Metrics
+                - text: "*"
+              - text: What quantifiable measurements will be used to gauge the success of this project after completion?
+              - textbox "Success Metrics" [ref=e248]: "- Test coverage >= 80% (measurable via CI) - Full API reference documentation published - >= 2 open-source integration example repositories - Native ETH transfer log support shipped before Glamsterdam mainnet activation - Security review completed and report published publicly - >= 50 GitHub stars within 3 months of grant completion - >= 3 external projects publicly integrating Blockpulse"
+              - generic [ref=e661]: Success metrics must contain at least 500 character(s)
+            - group [ref=e249]:
+              - generic [ref=e250]:
+                - paragraph [ref=e251]: Ecosystem Fit
+                - text: "*"
+              - text: Compare your project to 2-3 similar projects in the ecosystem. How is your work unique or novel?
+              - textbox "Ecosystem Fit" [ref=e252]: "1. Eventeum (507 stars, Java) — closest conceptual match but abandoned since 2020, Java-only, no Redis integration, no REST API. 2. Alchemy Notify / QuickNode Streams — webhook services that notify your app of transactions but do NOT perform cache invalidation; require a paid external service. 3. DIY polling loops — the most common approach; every team rebuilds the same solution from scratch with no shared open-source baseline. Blockpulse is unique in: (a) being purpose-built for Redis cache invalidation rather than general event notification; (b) providing a REST API for cached contract calls alongside invalidation; (c) being self-hostable with zero vendor dependency; (d) supporting Glamsterdam native ETH transfer logs from day one."
+            - group [ref=e253]:
+              - generic [ref=e254]:
+                - paragraph [ref=e255]: Community Feedback
+                - text: "*"
+              - text: What domain expert or community feedback have you received for this project?
+              - textbox "Community Feedback" [ref=e256]: The project was just open-sourced (May 2026) after being extracted from DotFlat. Initial posts on r/ethdev and Dev.to are live. No formal expert review yet — part of the grant deliverables is broader community engagement and feedback collection. The DotFlat community (users of the stablecoin protocol on mainnet) has validated the approach through production use.
+            - group [ref=e257]:
+              - generic [ref=e258]:
+                - paragraph [ref=e259]: Open Source License
+                - text: "*"
+              - text: Specify which open source license you are using for this project.
+              - generic [ref=e260]:
+                - generic [ref=e262]: option MIT, selected. Select is focused ,type to refine list, press Down to open the menu,
+                - generic [ref=e263]:
+                  - generic [ref=e264]:
+                    - generic [ref=e676]: MIT
+                    - combobox [active] [ref=e267]
+                  - generic [ref=e268]:
+                    - separator [ref=e269]
+                    - img [ref=e271]
+          - generic [ref=e273]:
+            - heading "Additional Details" [level=3] [ref=e274]
+            - group [ref=e275]:
+              - generic [ref=e276]:
+                - paragraph [ref=e277]: Have you applied before to any grants at the Ethereum Foundation?
+                - text: "*"
+              - radiogroup [ref=e278]:
+                - generic [ref=e279]:
+                  - generic [ref=e280] [cursor=pointer]:
+                    - radio "Yes" [ref=e281]
+                    - paragraph [ref=e284]: "Yes"
+                  - generic [ref=e285] [cursor=pointer]:
+                    - radio "No" [ref=e286]
+                    - paragraph [ref=e289]: "No"
+            - group [ref=e290]:
+              - paragraph [ref=e292]: Referral(s)
+              - text: Do you have an Ethereum Foundation referral for this project?
+              - textbox "Referral(s)" [ref=e293]
+            - group [ref=e294]:
+              - paragraph [ref=e296]: Additional questions or comments?
+              - textbox "Additional questions or comments?" [ref=e297]
+            - group [ref=e298]:
+              - paragraph [ref=e300]: Allow contact from Ethereum Foundation about other opportunities?
+              - radiogroup [ref=e301]:
+                - generic [ref=e302]:
+                  - generic [ref=e303] [cursor=pointer]:
+                    - radio "Yes" [ref=e304]
+                    - paragraph [ref=e307]: "Yes"
+                  - generic [ref=e308] [cursor=pointer]:
+                    - radio "No" [ref=e309]
+                    - paragraph [ref=e312]: "No"
+          - group [ref=e313]:
+            - paragraph [ref=e315]: PDF Proposal
+            - text: Attach a PDF proposal if you’d like to share additional details not covered in the application form.
+            - button "Upload file Click here or drag a file into this box." [ref=e316] [cursor=pointer]:
+              - generic [ref=e318]:
+                - img "Upload file" [ref=e321]
+                - generic [ref=e323]: Click here or drag a file into this box.
+          - iframe [ref=e382]:
+            - generic [ref=f2e2] [cursor=pointer]:
+              - checkbox "'I am human', Select in order to trigger the challenge, or to bypass it if you have an accessibility cookie" [ref=f2e7]
+              - generic [ref=f2e11]: I am human
+              - generic [ref=f2e12]:
+                - generic "hCaptcha" [ref=f2e13]:
+                  - button "hCaptcha logo, opens new window with more information" [ref=f2e14]:
+                    - img [ref=f2e16]
+                - generic [ref=f2e78]:
+                  - link "hCaptcha Privacy Policy, opens in a new tab" [ref=f2e79]:
+                    - /url: https://hcaptcha.com/privacy?ref=esp.ethereum.foundation&utm_campaign=e70148dc-98d7-488b-ae36-fd3f09ced9fc&utm_medium=checkbox&hl=en
+                    - text: Privacy
+                  - text: "-"
+                  - link "hCaptcha Terms of Service, opens in a new tab" [ref=f2e80]:
+                    - /url: https://hcaptcha.com/terms?ref=esp.ethereum.foundation&utm_campaign=e70148dc-98d7-488b-ae36-fd3f09ced9fc&utm_medium=checkbox&hl=en
+                    - text: Terms
+          - button "Submit Application paper plane vector" [ref=e327] [cursor=pointer]:
+            - heading "Submit Application" [level=3] [ref=e328]
+            - img "paper plane vector" [ref=e330]
+    - img "People gathered around the Ethereum tree" [ref=e333]
+    - generic [ref=e334]:
+      - generic [ref=e335]:
+        - img "Ethereum Foundation logo" [ref=e337]
+        - generic [ref=e338]:
+          - generic [ref=e339]:
+            - link "Home" [ref=e340] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e341]
+            - link "How to Apply" [ref=e342] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e343]
+            - link "About ESP" [ref=e344] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e345]
+            - link "Blog" [ref=e346] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e347]
+          - generic [ref=e348]:
+            - link "Privacy Policy" [ref=e349] [cursor=pointer]:
+              - /url: https://ethereum.org/en/privacy-policy/
+              - heading "Privacy Policy" [level=4] [ref=e350]
+            - link "Terms of Use" [ref=e351] [cursor=pointer]:
+              - /url: https://ethereum.org/en/terms-of-use/
+              - heading "Terms of Use" [level=4] [ref=e352]
+            - link "Cookie Policy" [ref=e353] [cursor=pointer]:
+              - /url: https://ethereum.org/en/cookie-policy/
+              - heading "Cookie Policy" [level=4] [ref=e354]
+            - link "Ethereum.org" [ref=e355] [cursor=pointer]:
+              - /url: https://ethereum.org/
+              - heading "Ethereum.org" [level=4] [ref=e356]
+        - generic [ref=e357]:
+          - link "Farcaster logo" [ref=e359] [cursor=pointer]:
+            - /url: https://farcaster.xyz/ef-esp
+            - img "Farcaster logo" [ref=e360]
+          - link "Lens logo" [ref=e362] [cursor=pointer]:
+            - /url: https://hey.xyz/u/ef_esp
+            - img "Lens logo" [ref=e363]
+          - link "Bluesky logo" [ref=e365] [cursor=pointer]:
+            - /url: https://bsky.app/profile/ef-esp.bsky.social
+            - img "Bluesky logo" [ref=e366]
+          - link "GitHub logo" [ref=e368] [cursor=pointer]:
+            - /url: https://github.com/ethereum
+            - img "GitHub logo" [ref=e369]
+          - link "Twitter logo" [ref=e371] [cursor=pointer]:
+            - /url: https://twitter.com/EF_ESP
+            - img "Twitter logo" [ref=e372]
+      - generic [ref=e373]:
+        - separator [ref=e375]
+        - paragraph [ref=e377]: © 2026 Ethereum Foundation. All rights reserved.
+  - alert [ref=e378]
+  - generic:
+    - region "Notifications-top"
+    - region "Notifications-top-left"
+    - region "Notifications-top-right"
+    - region "Notifications-bottom-left"
+    - region "Notifications-bottom"
+    - region "Notifications-bottom-right"

@@ -1,0 +1,46 @@
+- generic [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e3]:
+    - link "CoinGecko Help Center home page" [ref=e5] [cursor=pointer]:
+      - /url: /hc/en-us
+      - img "CoinGecko Help Center home page" [ref=e6]
+    - navigation [ref=e8]:
+      - list [ref=e9]:
+        - listitem
+        - listitem [ref=e10]:
+          - link "Submit a request" [ref=e11] [cursor=pointer]:
+            - /url: /hc/en-us/requests/new
+        - listitem
+  - main [ref=e12]:
+    - generic [ref=e14]:
+      - navigation [ref=e15]:
+        - list [ref=e16]:
+          - listitem "CoinGecko" [ref=e17]:
+            - link "CoinGecko" [ref=e18] [cursor=pointer]:
+              - /url: /hc/en-us
+          - listitem "Submit a request" [ref=e19]: "> Submit a request"
+        - button "Search for anything... Ctrl K" [ref=e25] [cursor=pointer]:
+          - generic [ref=e26]:
+            - img [ref=e27]
+            - generic [ref=e29]: Search for anything...
+          - generic [ref=e30]:
+            - generic [ref=e31]: Ctrl
+            - generic [ref=e32]: K
+      - generic [ref=e33]:
+        - text: Try our
+        - link "AI support chat" [ref=e34] [cursor=pointer]:
+          - /url: https://share.inkeep.com/coingecko/9db6e7608471
+        - text: before submitting a ticket - it solves 75% of questions instantly.
+      - heading "Submit a request" [level=1] [ref=e35]
+      - generic [ref=e38]:
+        - generic [ref=e39]: Please choose your issue below
+        - generic "Please choose your issue below" [active] [ref=e40] [cursor=pointer]: "- ▾"
+  - contentinfo [ref=e41]:
+    - generic [ref=e42]:
+      - link "CoinGecko" [ref=e43] [cursor=pointer]:
+        - /url: /hc/en-us
+      - button "Cookie Settings" [ref=e44] [cursor=pointer]
+  - button "AI Support Chat avatar" [ref=e48] [cursor=pointer]:
+    - generic [ref=e49]: AI Support
+    - img "Chat avatar" [ref=e51]

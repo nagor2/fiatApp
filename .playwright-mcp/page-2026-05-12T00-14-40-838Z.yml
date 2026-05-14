@@ -1,0 +1,1259 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - link [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+      - list [ref=e19]:
+        - listitem [ref=e20]:
+          - link "Events" [ref=e21] [cursor=pointer]:
+            - /url: /events
+            - generic [ref=e22]: Events
+        - listitem [ref=e23]:
+          - link "ETHConf New" [ref=e24] [cursor=pointer]:
+            - /url: https://ethconf.com/r/egcom
+            - generic [ref=e25]:
+              - text: ETHConf
+              - generic [ref=e26]: New
+        - listitem [ref=e27]:
+          - link "Plus" [ref=e28] [cursor=pointer]:
+            - /url: /plus
+            - generic [ref=e29]: Plus
+        - listitem [ref=e30]:
+          - link "Packs" [ref=e31] [cursor=pointer]:
+            - /url: /packs
+            - generic [ref=e32]: Packs
+        - listitem [ref=e33]:
+          - link "Showcase" [ref=e34] [cursor=pointer]:
+            - /url: /showcase
+            - generic [ref=e35]: Showcase
+        - listitem [ref=e36]:
+          - link "Faucet" [ref=e37] [cursor=pointer]:
+            - /url: /faucet
+            - generic [ref=e38]: Faucet
+        - listitem [ref=e39]:
+          - link "Swag" [ref=e40] [cursor=pointer]:
+            - /url: /swag
+            - generic [ref=e41]: Swag
+        - listitem [ref=e42]:
+          - link "About" [ref=e43] [cursor=pointer]:
+            - /url: /about
+            - generic [ref=e44]: About
+      - link "Login" [ref=e46] [cursor=pointer]:
+        - /url: /auth?use_redirect=/events/newyork2026
+    - generic [ref=e49]:
+      - link "ETHGlobal New York 2026 logo" [ref=e50] [cursor=pointer]:
+        - /url: /events/newyork2026
+        - img "ETHGlobal New York 2026 logo" [ref=e51]
+      - generic [ref=e52]: ETHGlobal New York 2026
+    - navigation [ref=e53]:
+      - list [ref=e55]:
+        - listitem [ref=e56]:
+          - link "Overview" [ref=e57] [cursor=pointer]:
+            - /url: /events/newyork2026
+        - listitem [ref=e58]:
+          - link "Schedule" [ref=e59] [cursor=pointer]:
+            - /url: /events/newyork2026#schedule
+        - listitem [ref=e60]:
+          - link "Info" [ref=e61] [cursor=pointer]:
+            - /url: /events/newyork2026/info
+        - listitem [ref=e62]:
+          - link "Speakers & Judges" [ref=e63] [cursor=pointer]:
+            - /url: /events/newyork2026#speakers
+        - listitem [ref=e64]:
+          - link "Partners" [ref=e65] [cursor=pointer]:
+            - /url: /events/newyork2026#partners
+        - listitem [ref=e66]:
+          - link "Venue" [ref=e67] [cursor=pointer]:
+            - /url: /events/newyork2026#venue
+        - listitem [ref=e68]:
+          - link "Prizes" [ref=e69] [cursor=pointer]:
+            - /url: /events/newyork2026/prizes
+        - listitem [ref=e70]:
+          - link "FAQ" [ref=e71] [cursor=pointer]:
+            - /url: /events/newyork2026#faq
+    - generic [ref=e76]:
+      - heading "ETHGlobal New York 2026 logo" [level=1] [ref=e77]:
+        - img "ETHGlobal New York 2026 logo" [ref=e78]
+      - paragraph [ref=e79]: June 12 – 14, 2026
+      - paragraph [ref=e80]: New York City, United States
+      - link "Apply to attend" [ref=e82] [cursor=pointer]:
+        - /url: /events/newyork2026/apply
+      - generic [ref=e83]:
+        - text: Interested in partnering?
+        - link "Reach out to us" [ref=e84] [cursor=pointer]:
+          - /url: /partner-with-us
+          - text: Reach out to us
+          - img [ref=e85]
+    - generic [ref=e88]:
+      - generic [ref=e92]:
+        - heading "Come build our decentralized future" [level=1] [ref=e93]
+        - paragraph [ref=e94]: ETHGlobal hackathons enable you to experiment with cutting edge web3 technologies and develop an idea you're passionate about. This is your opportunity to learn about crypto, expand your network, meet industry professionals, and find like-minded people who are collectively creating a new kind of web.
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - heading "800+" [level=3] [ref=e97]
+            - paragraph [ref=e98]: Attendees
+          - generic [ref=e99]:
+            - heading "13+" [level=3] [ref=e100]
+            - paragraph [ref=e101]: Protocols
+          - generic [ref=e102]:
+            - heading "29+" [level=3] [ref=e103]
+            - paragraph [ref=e104]: Workshops
+        - list [ref=e105]:
+          - listitem [ref=e106]:
+            - img [ref=e107]
+            - text: Beginner friendly
+          - listitem [ref=e109]:
+            - img [ref=e110]
+            - text: Learn by doing
+          - listitem [ref=e112]:
+            - img [ref=e113]
+            - text: Technical mentorship
+          - listitem [ref=e115]:
+            - img [ref=e116]
+            - text: Exclusive swag
+          - listitem [ref=e118]:
+            - img [ref=e119]
+            - text: Curated content
+          - listitem [ref=e121]:
+            - img [ref=e122]
+            - text: Free food & drinks
+      - generic [ref=e135]:
+        - generic [ref=e138]:
+          - img "Pragma Stage" [ref=e139]
+          - img [ref=e140] [cursor=pointer]
+        - generic [ref=e143]:
+          - heading "Themes and Topics" [level=2] [ref=e144]
+          - generic [ref=e145]:
+            - generic [ref=e146]: Zero Knowledge Proofs
+            - generic [ref=e147]: AI x Crypto
+            - generic [ref=e148]: DeFi
+            - generic [ref=e149]: Crypto Consumer
+            - generic [ref=e150]: Layer 2s
+            - generic [ref=e151]: Interoperability
+            - generic [ref=e152]: Public Goods
+            - generic [ref=e153]: Privacy & Security
+            - generic [ref=e154]: TEEs
+            - generic [ref=e155]: Data Availability
+            - generic [ref=e156]: Identity
+            - generic [ref=e157]: DevTools
+    - generic [ref=e160]:
+      - banner [ref=e161]:
+        - heading "$200,000" [level=2] [ref=e162]
+        - heading "Available in prizes" [level=3] [ref=e163]
+      - generic [ref=e164]:
+        - link "prize Canton Network $5,000" [ref=e166] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/canton-network
+          - generic [ref=e167]:
+            - img "prize" [ref=e168]
+            - generic [ref=e169]:
+              - heading "Canton Network" [level=4] [ref=e170]
+              - paragraph [ref=e171]: $5,000
+        - link "prize Google Cloud $20,000" [ref=e173] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/google-cloud
+          - generic [ref=e174]:
+            - img "prize" [ref=e175]
+            - generic [ref=e176]:
+              - heading "Google Cloud" [level=4] [ref=e177]
+              - paragraph [ref=e178]: $20,000
+        - link "prize ENS $20,000" [ref=e180] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/ens
+          - generic [ref=e181]:
+            - img "prize" [ref=e182]
+            - generic [ref=e183]:
+              - heading "ENS" [level=4] [ref=e184]
+              - paragraph [ref=e185]: $20,000
+        - link "prize Sui $15,000" [ref=e187] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/sui
+          - generic [ref=e188]:
+            - img "prize" [ref=e189]
+            - generic [ref=e190]:
+              - heading "Sui" [level=4] [ref=e191]
+              - paragraph [ref=e192]: $15,000
+        - link "prize World $15,000" [ref=e194] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/world
+          - generic [ref=e195]:
+            - img "prize" [ref=e196]
+            - generic [ref=e197]:
+              - heading "World" [level=4] [ref=e198]
+              - paragraph [ref=e199]: $15,000
+        - link "prize Arc $15,000" [ref=e201] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/arc
+          - generic [ref=e202]:
+            - img "prize" [ref=e203]
+            - generic [ref=e204]:
+              - heading "Arc" [level=4] [ref=e205]
+              - paragraph [ref=e206]: $15,000
+        - link "prize Hedera $15,000" [ref=e208] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/hedera
+          - generic [ref=e209]:
+            - img "prize" [ref=e210]
+            - generic [ref=e211]:
+              - heading "Hedera" [level=4] [ref=e212]
+              - paragraph [ref=e213]: $15,000
+        - link "prize LI.FI $15,000" [ref=e215] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/li-fi
+          - generic [ref=e216]:
+            - img "prize" [ref=e217]
+            - generic [ref=e218]:
+              - heading "LI.FI" [level=4] [ref=e219]
+              - paragraph [ref=e220]: $15,000
+        - link "prize Uniswap Foundation $10,000" [ref=e222] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/uniswap-foundation
+          - generic [ref=e223]:
+            - img "prize" [ref=e224]
+            - generic [ref=e225]:
+              - heading "Uniswap Foundation" [level=4] [ref=e226]
+              - paragraph [ref=e227]: $10,000
+        - link "prize Chainlink $10,000" [ref=e229] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/chainlink
+          - generic [ref=e230]:
+            - img "prize" [ref=e231]
+            - generic [ref=e232]:
+              - heading "Chainlink" [level=4] [ref=e233]
+              - paragraph [ref=e234]: $10,000
+        - link "prize Ledger $10,000" [ref=e236] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/ledger
+          - generic [ref=e237]:
+            - img "prize" [ref=e238]
+            - generic [ref=e239]:
+              - heading "Ledger" [level=4] [ref=e240]
+              - paragraph [ref=e241]: $10,000
+        - link "prize Dynamic $10,000" [ref=e243] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/dynamic
+          - generic [ref=e244]:
+            - img "prize" [ref=e245]
+            - generic [ref=e246]:
+              - heading "Dynamic" [level=4] [ref=e247]
+              - paragraph [ref=e248]: $10,000
+        - link "prize Privy $5,000" [ref=e250] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/privy
+          - generic [ref=e251]:
+            - img "prize" [ref=e252]
+            - generic [ref=e253]:
+              - heading "Privy" [level=4] [ref=e254]
+              - paragraph [ref=e255]: $5,000
+        - link "prize Unlink $5,000" [ref=e257] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes/unlink
+          - generic [ref=e258]:
+            - img "prize" [ref=e259]
+            - generic [ref=e260]:
+              - heading "Unlink" [level=4] [ref=e261]
+              - paragraph [ref=e262]: $5,000
+        - link "See prize details→" [ref=e264] [cursor=pointer]:
+          - /url: /events/newyork2026/prizes
+    - generic [ref=e267]:
+      - banner [ref=e269]:
+        - heading "Make the most of your week" [level=2] [ref=e270]
+      - generic [ref=e271]:
+        - generic [ref=e272]: In town looking for places to explore? Or perhaps other events happening in the week?
+        - generic [ref=e273]:
+          - link "Check out our city guide" [ref=e274] [cursor=pointer]:
+            - /url: /events/newyork2026/city
+            - text: Check out our city guide
+            - img [ref=e275]
+          - link "Check out our side events" [ref=e277] [cursor=pointer]:
+            - /url: /events/newyork2026/side-events
+            - text: Check out our side events
+            - img [ref=e278]
+      - generic [ref=e283] [cursor=pointer]:
+        - generic [ref=e284]:
+          - img "ETHConf logo"
+        - generic [ref=e286]:
+          - generic [ref=e287]: ETHConf
+          - generic [ref=e288]: June 8 – 10, 2026
+        - link "Signup to attend" [ref=e290]:
+          - /url: /events/ethconf
+    - generic [ref=e293]:
+      - banner [ref=e294]:
+        - generic [ref=e295]:
+          - heading "Schedule" [level=2] [ref=e296]
+          - heading "June 12 – 14, 2026" [level=3] [ref=e297]
+        - generic [ref=e298]:
+          - generic [ref=e299]: "Timezone:"
+          - combobox "Timezone:" [ref=e300]:
+            - option "America/New_York" [selected]
+            - option "Anchorage (AT)"
+            - option "Los Angeles/Vancouver (PT)"
+            - option "Denver (MT)"
+            - option "Chicago/Mexico City (CT)"
+            - option "New York (ET)"
+            - option "Bogota (COT)"
+            - option "Halifax (AT)"
+            - option "Sao Paulo (BT)"
+            - option "London (GMT/BST)"
+            - option "Paris (CET/CEST)"
+            - option "Cairo (EET)"
+            - option "Istanbul (TRT)"
+            - option "Moscow (MSK)"
+            - option "Dubai (GST)"
+            - option "Kabul (AFT)"
+            - option "Karachi (PKT)"
+            - option "New Delhi (IST)"
+            - option "Kathmandu (NPT)"
+            - option "Dhaka (BST)"
+            - option "Jakarta (WIB)"
+            - option "Shanghai (CST)"
+            - option "Seoul (KST)"
+            - option "Tokyo (JST)"
+            - option "Sydney (AET)"
+            - option "Auckland (NZDT/NZST)"
+      - generic [ref=e301]:
+        - generic [ref=e302]:
+          - generic [ref=e303] [cursor=pointer]:
+            - heading "Pre-Event" [level=3] [ref=e304]
+            - paragraph [ref=e305]: Fri, May 29 - Fri, Jun 5
+          - generic [ref=e306] [cursor=pointer]:
+            - heading "Event" [level=3] [ref=e307]
+            - paragraph [ref=e308]: Fri, Jun 12 - Sun, Jun 14
+        - generic [ref=e309]:
+          - generic [ref=e310]:
+            - generic [ref=e311]: Fri, May 29
+            - generic [ref=e313]:
+              - time [ref=e315]: 11:59pm
+              - heading "Deadline to Apply" [level=3] [ref=e317]:
+                - img [ref=e318]
+                - generic [ref=e320]: Deadline to Apply
+          - generic [ref=e321]:
+            - generic [ref=e322]: Thu, Jun 4
+            - generic [ref=e324]:
+              - generic [ref=e325]:
+                - time [ref=e326]: 11:00am
+                - generic [ref=e327]: 1 hr
+              - generic [ref=e328]:
+                - 'heading "Beginner''s Workshop: What to Expect at ETHGlobal New York 2026" [level=3] [ref=e329]'
+                - generic [ref=e332]:
+                  - img "ETHGlobal logo" [ref=e333]
+                  - paragraph [ref=e334]: ETHGlobal
+          - generic [ref=e335]:
+            - generic [ref=e336]: Fri, Jun 5
+            - generic [ref=e338]:
+              - generic [ref=e339]:
+                - time [ref=e340]: 01:00pm
+                - generic [ref=e341]: 2 hr
+              - generic [ref=e342]:
+                - heading "Virtual Team Formation & Idea Brainstorming Session" [level=3] [ref=e343]
+                - generic [ref=e346]:
+                  - img "ETHGlobal logo" [ref=e347]
+                  - paragraph [ref=e348]: ETHGlobal
+    - generic [ref=e352]:
+      - banner [ref=e353]:
+        - heading "Judges, Speakers & Mentors" [level=2] [ref=e354]
+      - generic [ref=e355]:
+        - generic [ref=e356]:
+          - link "Aditya Gupta" [ref=e357] [cursor=pointer]:
+            - /url: https://x.com/0xad1eth
+            - img "Aditya Gupta" [ref=e358]
+          - generic [ref=e359]:
+            - heading "Aditya Gupta" [level=3] [ref=e360]
+            - paragraph [ref=e361]: Polymarket
+        - generic [ref=e362]:
+          - link "Alex Gluchowski" [ref=e363] [cursor=pointer]:
+            - /url: https://x.com/gluk64
+            - img "Alex Gluchowski" [ref=e364]
+          - generic [ref=e365]:
+            - heading "Alex Gluchowski" [level=3] [ref=e366]
+            - paragraph [ref=e367]: Matter Labs
+        - generic [ref=e368]:
+          - link "Amanda Cassatt" [ref=e369]:
+            - /url: "#"
+            - img "Amanda Cassatt" [ref=e370]
+          - generic [ref=e371]:
+            - heading "Amanda Cassatt" [level=3] [ref=e372]
+            - paragraph [ref=e373]: Serotonin
+        - generic [ref=e374]:
+          - link "Ameen Soleimani" [ref=e375] [cursor=pointer]:
+            - /url: https://x.com/spanktoshi
+            - img "Ameen Soleimani" [ref=e376]
+          - generic [ref=e377]:
+            - heading "Ameen Soleimani" [level=3] [ref=e378]
+            - paragraph [ref=e379]: 0xbow
+        - generic [ref=e380]:
+          - link "Andrej Bencic" [ref=e381] [cursor=pointer]:
+            - /url: https://x.com/bendzi
+            - img "Andrej Bencic" [ref=e382]
+          - generic [ref=e383]:
+            - heading "Andrej Bencic" [level=3] [ref=e384]
+            - paragraph [ref=e385]: Tenderly
+        - generic [ref=e386]:
+          - link "Ansgar Dietrichs" [ref=e387] [cursor=pointer]:
+            - /url: https://x.com/adietrichs
+            - img "Ansgar Dietrichs" [ref=e388]
+          - generic [ref=e389]:
+            - heading "Ansgar Dietrichs" [level=3] [ref=e390]
+            - paragraph [ref=e391]: Ethereum Foundation
+        - generic [ref=e392]:
+          - link "Ashley Stanhope" [ref=e393] [cursor=pointer]:
+            - /url: https://x.com/AshleyStanhope
+            - img "Ashley Stanhope" [ref=e394]
+          - generic [ref=e395]:
+            - heading "Ashley Stanhope" [level=3] [ref=e396]
+            - paragraph [ref=e397]: Hardfork Media
+        - generic [ref=e398]:
+          - link "Azeem Khan" [ref=e399] [cursor=pointer]:
+            - /url: https://x.com/azeemk
+            - img "Azeem Khan" [ref=e400]
+          - generic [ref=e401]:
+            - heading "Azeem Khan" [level=3] [ref=e402]
+            - paragraph [ref=e403]: Miden
+        - generic [ref=e404]:
+          - link "Camila Russo" [ref=e405] [cursor=pointer]:
+            - /url: https://x.com/CamiRusso
+            - img "Camila Russo" [ref=e406]
+          - generic [ref=e407]:
+            - heading "Camila Russo" [level=3] [ref=e408]
+            - paragraph [ref=e409]: The Defiant
+        - generic [ref=e410]:
+          - link "Chris Giancarlo" [ref=e411]:
+            - /url: "#"
+            - img "Chris Giancarlo" [ref=e412]
+          - generic [ref=e413]:
+            - heading "Chris Giancarlo" [level=3] [ref=e414]
+            - paragraph [ref=e415]: Former Chairman, CFTC
+        - generic [ref=e416]:
+          - link "Chris Yin" [ref=e417] [cursor=pointer]:
+            - /url: https://x.com/chriseyin
+            - img "Chris Yin" [ref=e418]
+          - generic [ref=e419]:
+            - heading "Chris Yin" [level=3] [ref=e420]
+            - paragraph [ref=e421]: Plume
+        - generic [ref=e422]:
+          - link "Christine Kim" [ref=e423] [cursor=pointer]:
+            - /url: https://x.com/christine_dkim
+            - img "Christine Kim" [ref=e424]
+          - generic [ref=e425]:
+            - heading "Christine Kim" [level=3] [ref=e426]
+            - paragraph [ref=e427]: Ready for Merge
+        - generic [ref=e428]:
+          - link "Clare Adelgren" [ref=e429]:
+            - /url: "#"
+            - img "Clare Adelgren" [ref=e430]
+          - generic [ref=e431]:
+            - heading "Clare Adelgren" [level=3] [ref=e432]
+            - paragraph [ref=e433]: EY
+        - generic [ref=e434]:
+          - link "Cole Kennelly" [ref=e435] [cursor=pointer]:
+            - /url: https://x.com/ColeGotTweets
+            - img "Cole Kennelly" [ref=e436]
+          - generic [ref=e437]:
+            - heading "Cole Kennelly" [level=3] [ref=e438]
+            - paragraph [ref=e439]: Volmex
+        - generic [ref=e440]:
+          - link "Daniela Barbosa" [ref=e441] [cursor=pointer]:
+            - /url: https://x.com/danielabarbosa
+            - img "Daniela Barbosa" [ref=e442]
+          - generic [ref=e443]:
+            - heading "Daniela Barbosa" [level=3] [ref=e444]
+            - paragraph [ref=e445]: Linux Foundation Decentralized Trust
+        - generic [ref=e446]:
+          - link "David Hoffman" [ref=e447] [cursor=pointer]:
+            - /url: https://x.com/Trustlessstate
+            - img "David Hoffman" [ref=e448]
+          - generic [ref=e449]:
+            - heading "David Hoffman" [level=3] [ref=e450]
+            - paragraph [ref=e451]: Bankless
+        - generic [ref=e452]:
+          - link "Demetrios Skalkotos" [ref=e453]:
+            - /url: "#"
+            - img "Demetrios Skalkotos" [ref=e454]
+          - generic [ref=e455]:
+            - heading "Demetrios Skalkotos" [level=3] [ref=e456]
+            - paragraph [ref=e457]: Blockdaemon
+        - generic [ref=e458]:
+          - link "Erbil Karaman" [ref=e459] [cursor=pointer]:
+            - /url: https://x.com/0xErbil
+            - img "Erbil Karaman" [ref=e460]
+          - generic [ref=e461]:
+            - heading "Erbil Karaman" [level=3] [ref=e462]
+            - paragraph [ref=e463]: Huma Finance
+        - generic [ref=e464]:
+          - link "Erik Reppel" [ref=e465] [cursor=pointer]:
+            - /url: https://x.com/programmer
+            - img "Erik Reppel" [ref=e466]
+          - generic [ref=e467]:
+            - heading "Erik Reppel" [level=3] [ref=e468]
+            - paragraph [ref=e469]: Coinbase
+        - generic [ref=e470]:
+          - link "Farooq Malik" [ref=e471] [cursor=pointer]:
+            - /url: https://x.com/rooqster
+            - img "Farooq Malik" [ref=e472]
+          - generic [ref=e473]:
+            - heading "Farooq Malik" [level=3] [ref=e474]
+            - paragraph [ref=e475]: Rain
+        - generic [ref=e476]:
+          - link "Francesco Andreoli" [ref=e477] [cursor=pointer]:
+            - /url: https://x.com/francescoswiss
+            - img "Francesco Andreoli" [ref=e478]
+          - generic [ref=e479]:
+            - heading "Francesco Andreoli" [level=3] [ref=e480]
+            - paragraph [ref=e481]: MetaMask
+        - generic [ref=e482]:
+          - link "Guy Itzhaki" [ref=e483] [cursor=pointer]:
+            - /url: https://x.com/guyitzh
+            - img "Guy Itzhaki" [ref=e484]
+          - generic [ref=e485]:
+            - heading "Guy Itzhaki" [level=3] [ref=e486]
+            - paragraph [ref=e487]: Fhenix
+        - generic [ref=e488]:
+          - link "Haonan Li" [ref=e489] [cursor=pointer]:
+            - /url: https://x.com/haonan
+            - img "Haonan Li" [ref=e490]
+          - generic [ref=e491]:
+            - heading "Haonan Li" [level=3] [ref=e492]
+            - paragraph [ref=e493]: Codex
+        - generic [ref=e494]:
+          - link "Hart Montgomery" [ref=e495]:
+            - /url: "#"
+            - img "Hart Montgomery" [ref=e496]
+          - generic [ref=e497]:
+            - heading "Hart Montgomery" [level=3] [ref=e498]
+            - paragraph [ref=e499]: Linux Foundation Decentralized Trust
+        - generic [ref=e500]:
+          - link "Haseeb Qureshi" [ref=e501] [cursor=pointer]:
+            - /url: https://x.com/hosseeb
+            - img "Haseeb Qureshi" [ref=e502]
+          - generic [ref=e503]:
+            - heading "Haseeb Qureshi" [level=3] [ref=e504]
+            - paragraph [ref=e505]: Dragonfly
+        - generic [ref=e506]:
+          - link "Hayden Adams" [ref=e507] [cursor=pointer]:
+            - /url: https://x.com/haydenzadams
+            - img "Hayden Adams" [ref=e508]
+          - generic [ref=e509]:
+            - heading "Hayden Adams" [level=3] [ref=e510]
+            - paragraph [ref=e511]: Uniswap Labs
+        - generic [ref=e512]:
+          - link "Henri Stern" [ref=e513] [cursor=pointer]:
+            - /url: https://x.com/henri_stern
+            - img "Henri Stern" [ref=e514]
+          - generic [ref=e515]:
+            - heading "Henri Stern" [level=3] [ref=e516]
+            - paragraph [ref=e517]: Privy
+        - generic [ref=e518]:
+          - link "Itai Turbahn" [ref=e519] [cursor=pointer]:
+            - /url: https://x.com/turbahn
+            - img "Itai Turbahn" [ref=e520]
+          - generic [ref=e521]:
+            - heading "Itai Turbahn" [level=3] [ref=e522]
+            - paragraph [ref=e523]: Dynamic
+        - generic [ref=e524]:
+          - link "James Kurz" [ref=e525] [cursor=pointer]:
+            - /url: https://x.com/JamesKurzFIL
+            - img "James Kurz" [ref=e526]
+          - generic [ref=e527]:
+            - heading "James Kurz" [level=3] [ref=e528]
+            - paragraph [ref=e529]: Filecoin Foundation
+        - generic [ref=e530]:
+          - link "James Waugh" [ref=e531] [cursor=pointer]:
+            - /url: https://x.com/blockchainjames
+            - img "James Waugh" [ref=e532]
+          - generic [ref=e533]:
+            - heading "James Waugh" [level=3] [ref=e534]
+            - paragraph [ref=e535]: Fire_Eyes
+        - generic [ref=e536]:
+          - link "Jan Gorzny" [ref=e537] [cursor=pointer]:
+            - /url: https://x.com/jgorzny
+            - img "Jan Gorzny" [ref=e538]
+          - generic [ref=e539]:
+            - heading "Jan Gorzny" [level=3] [ref=e540]
+            - paragraph [ref=e541]: Zircuit
+        - generic [ref=e542]:
+          - link "Jing Wang" [ref=e543] [cursor=pointer]:
+            - /url: https://x.com/jinglejamop
+            - img "Jing Wang" [ref=e544]
+          - generic [ref=e545]:
+            - heading "Jing Wang" [level=3] [ref=e546]
+            - paragraph [ref=e547]: Optimism
+        - generic [ref=e548]:
+          - link "Joe Lubin" [ref=e549] [cursor=pointer]:
+            - /url: https://x.com/ethereumJoseph
+            - img "Joe Lubin" [ref=e550]
+          - generic [ref=e551]:
+            - heading "Joe Lubin" [level=3] [ref=e552]
+            - paragraph [ref=e553]: Consensys
+        - generic [ref=e554]:
+          - link "Johnna Powell" [ref=e555] [cursor=pointer]:
+            - /url: https://x.com/jd_powell_
+            - img "Johnna Powell" [ref=e556]
+          - generic [ref=e557]:
+            - heading "Johnna Powell" [level=3] [ref=e558]
+            - paragraph [ref=e559]: DTCC
+        - generic [ref=e560]:
+          - link "Joseph Chalom" [ref=e561] [cursor=pointer]:
+            - /url: https://x.com/joechalom
+            - img "Joseph Chalom" [ref=e562]
+          - generic [ref=e563]:
+            - heading "Joseph Chalom" [level=3] [ref=e564]
+            - paragraph [ref=e565]: SharpLink
+        - generic [ref=e566]:
+          - link "Joyce Yang" [ref=e567] [cursor=pointer]:
+            - /url: https://x.com/cyndilailo
+            - img "Joyce Yang" [ref=e568]
+          - generic [ref=e569]:
+            - heading "Joyce Yang" [level=3] [ref=e570]
+            - paragraph [ref=e571]: Pivot Global
+        - generic [ref=e572]:
+          - link "Kaledora Kiernan-Linn" [ref=e573] [cursor=pointer]:
+            - /url: https://x.com/kaledora
+            - img "Kaledora Kiernan-Linn" [ref=e574]
+          - generic [ref=e575]:
+            - heading "Kaledora Kiernan-Linn" [level=3] [ref=e576]
+            - paragraph [ref=e577]: Ostium
+        - generic [ref=e578]:
+          - link "Kartik Talwar" [ref=e579] [cursor=pointer]:
+            - /url: https://x.com/therealkartik
+            - img "Kartik Talwar" [ref=e580]
+          - generic [ref=e581]:
+            - heading "Kartik Talwar" [level=3] [ref=e582]
+            - paragraph [ref=e583]: ETHGlobal
+        - generic [ref=e584]:
+          - link "Kevin Lepsoe" [ref=e585]:
+            - /url: "#"
+            - img "Kevin Lepsoe" [ref=e586]
+          - generic [ref=e587]:
+            - heading "Kevin Lepsoe" [level=3] [ref=e588]
+            - paragraph [ref=e589]: ETHGas
+        - generic [ref=e590]:
+          - link "Laszlo Szabo" [ref=e591]:
+            - /url: "#"
+            - img "Laszlo Szabo" [ref=e592]
+          - generic [ref=e593]:
+            - heading "Laszlo Szabo" [level=3] [ref=e594]
+            - paragraph [ref=e595]: Kiln
+        - generic [ref=e596]:
+          - link "Meredith Pitkoff" [ref=e597] [cursor=pointer]:
+            - /url: https://x.com/meredithpitkoff
+            - img "Meredith Pitkoff" [ref=e598]
+          - generic [ref=e599]:
+            - heading "Meredith Pitkoff" [level=3] [ref=e600]
+            - paragraph [ref=e601]: Stork
+        - generic [ref=e602]:
+          - link "Mike Cahill" [ref=e603] [cursor=pointer]:
+            - /url: https://x.com/mdomcahill
+            - img "Mike Cahill" [ref=e604]
+          - generic [ref=e605]:
+            - heading "Mike Cahill" [level=3] [ref=e606]
+            - paragraph [ref=e607]: Pyth Network
+        - generic [ref=e608]:
+          - link "Nemil Dalal" [ref=e609]:
+            - /url: "#"
+            - img "Nemil Dalal" [ref=e610]
+          - generic [ref=e611]:
+            - heading "Nemil Dalal" [level=3] [ref=e612]
+            - paragraph [ref=e613]: Y Combinator
+        - generic [ref=e614]:
+          - link "Parth Gargava" [ref=e615] [cursor=pointer]:
+            - /url: https://x.com/cryptowayne44
+            - img "Parth Gargava" [ref=e616]
+          - generic [ref=e617]:
+            - heading "Parth Gargava" [level=3] [ref=e618]
+            - paragraph [ref=e619]: Fidelity Investments
+        - generic [ref=e620]:
+          - link "Patricio Worthalter" [ref=e621] [cursor=pointer]:
+            - /url: https://x.com/worthalter
+            - img "Patricio Worthalter" [ref=e622]
+          - generic [ref=e623]:
+            - heading "Patricio Worthalter" [level=3] [ref=e624]
+            - paragraph [ref=e625]: POAP
+        - generic [ref=e626]:
+          - link "Pedro Gomes" [ref=e627] [cursor=pointer]:
+            - /url: https://x.com/pedrouid
+            - img "Pedro Gomes" [ref=e628]
+          - generic [ref=e629]:
+            - heading "Pedro Gomes" [level=3] [ref=e630]
+            - paragraph [ref=e631]: WalletConnect
+        - generic [ref=e632]:
+          - link "Peter Watts" [ref=e633] [cursor=pointer]:
+            - /url: https://x.com/ptrwtts
+            - img "Peter Watts" [ref=e634]
+          - generic [ref=e635]:
+            - heading "Peter Watts" [level=3] [ref=e636]
+            - paragraph [ref=e637]: Relay
+        - generic [ref=e638]:
+          - link "Philipp Zentner" [ref=e639] [cursor=pointer]:
+            - /url: https://x.com/philippzentner
+            - img "Philipp Zentner" [ref=e640]
+          - generic [ref=e641]:
+            - heading "Philipp Zentner" [level=3] [ref=e642]
+            - paragraph [ref=e643]: LI.FI
+        - generic [ref=e644]:
+          - link "Rene Reinsberg" [ref=e645] [cursor=pointer]:
+            - /url: https://x.com/RegenRene
+            - img "Rene Reinsberg" [ref=e646]
+          - generic [ref=e647]:
+            - heading "Rene Reinsberg" [level=3] [ref=e648]
+            - paragraph [ref=e649]: Celo
+        - generic [ref=e650]:
+          - link "Robbie Mitchnick" [ref=e651] [cursor=pointer]:
+            - /url: https://x.com/robbiemitchnick
+            - img "Robbie Mitchnick" [ref=e652]
+          - generic [ref=e653]:
+            - heading "Robbie Mitchnick" [level=3] [ref=e654]
+            - paragraph [ref=e655]: BlackRock
+        - generic [ref=e656]:
+          - link "Rodrigo Coelho" [ref=e657] [cursor=pointer]:
+            - /url: https://x.com/rodventures
+            - img "Rodrigo Coelho" [ref=e658]
+          - generic [ref=e659]:
+            - heading "Rodrigo Coelho" [level=3] [ref=e660]
+            - paragraph [ref=e661]: Edge & Node
+        - generic [ref=e662]:
+          - link "Rune Christensen" [ref=e663] [cursor=pointer]:
+            - /url: https://x.com/RuneKek
+            - img "Rune Christensen" [ref=e664]
+          - generic [ref=e665]:
+            - heading "Rune Christensen" [level=3] [ref=e666]
+            - paragraph [ref=e667]: Sky Ecosystem
+        - generic [ref=e668]:
+          - link "Sam Kazemian" [ref=e669] [cursor=pointer]:
+            - /url: https://x.com/samkazemian
+            - img "Sam Kazemian" [ref=e670]
+          - generic [ref=e671]:
+            - heading "Sam Kazemian" [level=3] [ref=e672]
+            - paragraph [ref=e673]: Frax
+        - generic [ref=e674]:
+          - link "Sam Tabar" [ref=e675]:
+            - /url: "#"
+            - img "Sam Tabar" [ref=e676]
+          - generic [ref=e677]:
+            - heading "Sam Tabar" [level=3] [ref=e678]
+            - paragraph [ref=e679]: Bit Digital
+        - generic [ref=e680]:
+          - link "Samyak Jain" [ref=e681] [cursor=pointer]:
+            - /url: https://x.com/smykjain
+            - img "Samyak Jain" [ref=e682]
+          - generic [ref=e683]:
+            - heading "Samyak Jain" [level=3] [ref=e684]
+            - paragraph [ref=e685]: Fluid
+        - generic [ref=e686]:
+          - link "Sandeep Nailwal" [ref=e687] [cursor=pointer]:
+            - /url: https://x.com/sandeepnailwal
+            - img "Sandeep Nailwal" [ref=e688]
+          - generic [ref=e689]:
+            - heading "Sandeep Nailwal" [level=3] [ref=e690]
+            - paragraph [ref=e691]: Polygon Foundation
+        - generic [ref=e692]:
+          - link "Scott Dykstra" [ref=e693] [cursor=pointer]:
+            - /url: https://x.com/chiefbuidl
+            - img "Scott Dykstra" [ref=e694]
+          - generic [ref=e695]:
+            - heading "Scott Dykstra" [level=3] [ref=e696]
+            - paragraph [ref=e697]: Space and Time
+        - generic [ref=e698]:
+          - link "Sergej Kunz" [ref=e699] [cursor=pointer]:
+            - /url: https://x.com/deacix
+            - img "Sergej Kunz" [ref=e700]
+          - generic [ref=e701]:
+            - heading "Sergej Kunz" [level=3] [ref=e702]
+            - paragraph [ref=e703]: 1inch
+        - generic [ref=e704]:
+          - link "Sergey Nazarov" [ref=e705] [cursor=pointer]:
+            - /url: https://x.com/sergeynazarov
+            - img "Sergey Nazarov" [ref=e706]
+          - generic [ref=e707]:
+            - heading "Sergey Nazarov" [level=3] [ref=e708]
+            - paragraph [ref=e709]: Chainlink Labs
+        - generic [ref=e710]:
+          - link "shafu 0x" [ref=e711] [cursor=pointer]:
+            - /url: https://x.com/shafu0x
+            - img "shafu 0x" [ref=e712]
+          - generic [ref=e713]:
+            - heading "shafu 0x" [level=3] [ref=e714]
+            - paragraph [ref=e715]: Merit Systems
+        - generic [ref=e716]:
+          - link "Shan Aggarwal" [ref=e717] [cursor=pointer]:
+            - /url: https://x.com/ShanAggarwal
+            - img "Shan Aggarwal" [ref=e718]
+          - generic [ref=e719]:
+            - heading "Shan Aggarwal" [level=3] [ref=e720]
+            - paragraph [ref=e721]: Coinbase
+        - generic [ref=e722]:
+          - link "Spencer Noon" [ref=e723]:
+            - /url: "#"
+            - img "Spencer Noon" [ref=e724]
+          - generic [ref=e725]:
+            - heading "Spencer Noon" [level=3] [ref=e726]
+            - paragraph [ref=e727]: OurNetwork
+        - generic [ref=e728]:
+          - link "Sreeram Kannan" [ref=e729] [cursor=pointer]:
+            - /url: https://x.com/sreeramkannan
+            - img "Sreeram Kannan" [ref=e730]
+          - generic [ref=e731]:
+            - heading "Sreeram Kannan" [level=3] [ref=e732]
+            - paragraph [ref=e733]: EigenLayer
+        - generic [ref=e734]:
+          - link "Stani Kulechov" [ref=e735] [cursor=pointer]:
+            - /url: https://x.com/StaniKulechov
+            - img "Stani Kulechov" [ref=e736]
+          - generic [ref=e737]:
+            - heading "Stani Kulechov" [level=3] [ref=e738]
+            - paragraph [ref=e739]: Aave
+        - generic [ref=e740]:
+          - link "Steven Goldfeder" [ref=e741] [cursor=pointer]:
+            - /url: https://x.com/sgoldfed
+            - img "Steven Goldfeder" [ref=e742]
+          - generic [ref=e743]:
+            - heading "Steven Goldfeder" [level=3] [ref=e744]
+            - paragraph [ref=e745]: Offchain Labs
+        - generic [ref=e746]:
+          - link "Tarun Chitra" [ref=e747] [cursor=pointer]:
+            - /url: https://x.com/tarunchitra
+            - img "Tarun Chitra" [ref=e748]
+          - generic [ref=e749]:
+            - heading "Tarun Chitra" [level=3] [ref=e750]
+            - paragraph [ref=e751]: Gauntlet
+        - generic [ref=e752]:
+          - link "Taylor Lindman" [ref=e753]:
+            - /url: "#"
+            - img "Taylor Lindman" [ref=e754]
+          - generic [ref=e755]:
+            - heading "Taylor Lindman" [level=3] [ref=e756]
+            - paragraph [ref=e757]: SEC
+        - generic [ref=e758]:
+          - link "Tim Beiko" [ref=e759] [cursor=pointer]:
+            - /url: https://x.com/timbeiko
+            - img "Tim Beiko" [ref=e760]
+          - generic [ref=e761]:
+            - heading "Tim Beiko" [level=3] [ref=e762]
+            - paragraph [ref=e763]: Ethereum Foundation
+        - generic [ref=e764]:
+          - link "Tom Zschach" [ref=e765]:
+            - /url: "#"
+            - img "Tom Zschach" [ref=e766]
+          - generic [ref=e767]:
+            - heading "Tom Zschach" [level=3] [ref=e768]
+            - paragraph [ref=e769]: SWIFT
+        - generic [ref=e770]:
+          - link "Tomasz Stanczak" [ref=e771] [cursor=pointer]:
+            - /url: https://x.com/tkstanczak
+            - img "Tomasz Stanczak" [ref=e772]
+          - generic [ref=e773]:
+            - heading "Tomasz Stanczak" [level=3] [ref=e774]
+            - paragraph [ref=e775]: Nethermind
+        - generic [ref=e776]:
+          - link "Vivek Raman" [ref=e777]:
+            - /url: "#"
+            - img "Vivek Raman" [ref=e778]
+          - generic [ref=e779]:
+            - heading "Vivek Raman" [level=3] [ref=e780]
+            - paragraph [ref=e781]: Etherealize
+        - generic [ref=e782]:
+          - link "Vlad Novakovski" [ref=e783] [cursor=pointer]:
+            - /url: https://x.com/vnovakovski
+            - img "Vlad Novakovski" [ref=e784]
+          - generic [ref=e785]:
+            - heading "Vlad Novakovski" [level=3] [ref=e786]
+            - paragraph [ref=e787]: Lighter
+        - generic [ref=e788]:
+          - link "Will Warren" [ref=e789] [cursor=pointer]:
+            - /url: https://x.com/willwarren
+            - img "Will Warren" [ref=e790]
+          - generic [ref=e791]:
+            - heading "Will Warren" [level=3] [ref=e792]
+            - paragraph [ref=e793]: 0x
+        - generic [ref=e794]:
+          - link "William Metcalfe" [ref=e795] [cursor=pointer]:
+            - /url: https://x.com/williammetcalfe
+            - img "William Metcalfe" [ref=e796]
+          - generic [ref=e797]:
+            - heading "William Metcalfe" [level=3] [ref=e798]
+            - paragraph [ref=e799]: Curvegrid
+        - generic [ref=e800]:
+          - link "William Mougayar" [ref=e801] [cursor=pointer]:
+            - /url: https://x.com/wmougayar
+            - img "William Mougayar" [ref=e802]
+          - generic [ref=e803]:
+            - heading "William Mougayar" [level=3] [ref=e804]
+            - paragraph [ref=e805]: Ethereum Market Research Center
+        - generic [ref=e806]:
+          - link "Yi Sun" [ref=e807] [cursor=pointer]:
+            - /url: https://x.com/theyisun
+            - img "Yi Sun" [ref=e808]
+          - generic [ref=e809]:
+            - heading "Yi Sun" [level=3] [ref=e810]
+            - paragraph [ref=e811]: Axiom
+        - generic [ref=e812]:
+          - link "Yoseph Ayele" [ref=e813] [cursor=pointer]:
+            - /url: https://x.com/yosephayele
+            - img "Yoseph Ayele" [ref=e814]
+          - generic [ref=e815]:
+            - heading "Yoseph Ayele" [level=3] [ref=e816]
+            - paragraph [ref=e817]: LAVA
+        - generic [ref=e818]:
+          - link "Youssef El Saadany" [ref=e819] [cursor=pointer]:
+            - /url: https://x.com/yssf_io
+            - img "Youssef El Saadany" [ref=e820]
+          - generic [ref=e821]:
+            - heading "Youssef El Saadany" [level=3] [ref=e822]
+            - paragraph [ref=e823]: ZedCubed
+        - generic [ref=e824]:
+          - link "Jan Gorzny" [ref=e825] [cursor=pointer]:
+            - /url: https://x.com/jgorzny
+            - img "Jan Gorzny" [ref=e826]
+          - generic [ref=e827]:
+            - heading "Jan Gorzny" [level=3] [ref=e828]
+            - paragraph [ref=e829]: Zircuit
+        - generic [ref=e830]:
+          - link "Jeff Wentworth" [ref=e831] [cursor=pointer]:
+            - /url: https://x.com/JeffInTokyo
+            - img "Jeff Wentworth" [ref=e832]
+          - generic [ref=e833]:
+            - heading "Jeff Wentworth" [level=3] [ref=e834]
+            - paragraph [ref=e835]: Curvegrid
+        - generic [ref=e836]:
+          - link "Solene Daviaud" [ref=e837] [cursor=pointer]:
+            - /url: https://x.com/_SDAV
+            - img "Solene Daviaud" [ref=e838]
+          - generic [ref=e839]:
+            - heading "Solene Daviaud" [level=3] [ref=e840]
+            - paragraph [ref=e841]: Dev3pack
+        - generic [ref=e842]:
+          - link "Tereza Bizkova" [ref=e843] [cursor=pointer]:
+            - /url: https://x.com/TerezaBizkova
+            - img "Tereza Bizkova" [ref=e844]
+          - generic [ref=e845]:
+            - heading "Tereza Bizkova" [level=3] [ref=e846]
+            - paragraph [ref=e847]: Funding the Commons
+        - generic [ref=e848]:
+          - link "Tushar Ojha" [ref=e849] [cursor=pointer]:
+            - /url: https://x.com/techtusharojha
+            - img "Tushar Ojha" [ref=e850]
+          - generic [ref=e851]:
+            - heading "Tushar Ojha" [level=3] [ref=e852]
+            - paragraph [ref=e853]: True Network
+    - generic [ref=e858]:
+      - heading "Partners" [level=2] [ref=e859]
+      - generic [ref=e860]:
+        - generic [ref=e861]:
+          - link "Google Cloud logo" [ref=e863] [cursor=pointer]:
+            - /url: https://cloud.google.com/web3
+            - img "Google Cloud logo" [ref=e864]
+          - link "ENS logo" [ref=e866] [cursor=pointer]:
+            - /url: https://ens.domains
+            - img "ENS logo" [ref=e867]
+        - generic [ref=e868]:
+          - link "Uniswap logo" [ref=e870] [cursor=pointer]:
+            - /url: https://www.uniswapfoundation.org/build
+            - img "Uniswap logo" [ref=e871]
+          - link "Sui logo" [ref=e873] [cursor=pointer]:
+            - /url: https://www.sui.io/
+            - img "Sui logo" [ref=e874]
+          - link "World logo" [ref=e876] [cursor=pointer]:
+            - /url: https://world.org
+            - img "World logo" [ref=e877]
+          - link "Arc logo" [ref=e879] [cursor=pointer]:
+            - /url: https://www.arc.network/
+            - img "Arc logo" [ref=e880]
+          - link "Chainlink Labs logo" [ref=e882] [cursor=pointer]:
+            - /url: https://chain.link/
+            - img "Chainlink Labs logo" [ref=e883]
+          - link "Ledger logo" [ref=e885] [cursor=pointer]:
+            - /url: https://ledger.com
+            - img "Ledger logo" [ref=e886]
+          - link "Hedera logo" [ref=e888] [cursor=pointer]:
+            - /url: https://hedera.com/
+            - img "Hedera logo" [ref=e889]
+          - link "Privy logo" [ref=e891] [cursor=pointer]:
+            - /url: https://www.privy.io/
+            - img "Privy logo" [ref=e892]
+          - link "LI.FI logo" [ref=e894] [cursor=pointer]:
+            - /url: https://li.fi/
+            - img "LI.FI logo" [ref=e895]
+        - generic [ref=e896]:
+          - link "Canton Network logo" [ref=e898] [cursor=pointer]:
+            - /url: https://www.canton.network
+            - img "Canton Network logo" [ref=e899]
+          - link "Dynamic logo" [ref=e901] [cursor=pointer]:
+            - /url: https://www.dynamic.xyz/
+            - img "Dynamic logo" [ref=e902]
+        - link "Unlink logo" [ref=e905] [cursor=pointer]:
+          - /url: https://www.unlink.xyz/
+          - img "Unlink logo" [ref=e906]
+        - generic [ref=e907]:
+          - text: Interested in partnering?
+          - link "Reach out to us" [ref=e908] [cursor=pointer]:
+            - /url: /partner-with-us
+            - text: Reach out to us
+            - img [ref=e909]
+    - generic [ref=e913]:
+      - generic:
+        - img "Venue Image"
+      - generic [ref=e916]:
+        - heading "Metropolitan Pavilion" [level=2] [ref=e917]
+        - heading [level=3]
+        - generic [ref=e918]:
+          - img [ref=e919]
+          - text: 125 W 18th St, New York, NY 10011, United States
+        - link "Get directions" [ref=e921] [cursor=pointer]:
+          - /url: https://maps.app.goo.gl/GK9PVcYQvno7WYDJ8
+    - generic [ref=e925]:
+      - generic [ref=e926]:
+        - heading "FAQ" [level=2] [ref=e927]
+        - paragraph [ref=e928]: We’ve done our best to summarize the most commonly asked questions, but contact us if you can’t find the answer you’re looking for.
+      - generic [ref=e929]:
+        - textbox "Search" [ref=e930]
+        - generic [ref=e931]:
+          - button "General" [expanded] [ref=e932] [cursor=pointer]:
+            - heading "General" [level=3] [ref=e933]
+            - img [ref=e935]
+          - generic [ref=e938]:
+            - button "Who can attend this event?" [ref=e940] [cursor=pointer]:
+              - text: Who can attend this event?
+              - img [ref=e942]
+            - button "What is ETHGlobal New York 2026?" [ref=e945] [cursor=pointer]:
+              - text: What is ETHGlobal New York 2026?
+              - img [ref=e947]
+            - button "How much does it cost to attend?" [ref=e950] [cursor=pointer]:
+              - text: How much does it cost to attend?
+              - img [ref=e952]
+            - button "I'm new to Ethereum - can I still participate?" [ref=e955] [cursor=pointer]:
+              - text: I'm new to Ethereum - can I still participate?
+              - img [ref=e957]
+            - button "Where can I find all projects ever built at an ETHGlobal event?" [ref=e960] [cursor=pointer]:
+              - text: Where can I find all projects ever built at an ETHGlobal event?
+              - img [ref=e962]
+            - button "Will ETHGlobal offer travel scholarships to hackers?" [ref=e965] [cursor=pointer]:
+              - text: Will ETHGlobal offer travel scholarships to hackers?
+              - img [ref=e967]
+            - button "Can I attend your events as an attendee?" [ref=e970] [cursor=pointer]:
+              - text: Can I attend your events as an attendee?
+              - img [ref=e972]
+            - button "How can I get ETHGlobal to host a hackathon at my city?" [ref=e975] [cursor=pointer]:
+              - text: How can I get ETHGlobal to host a hackathon at my city?
+              - img [ref=e977]
+            - button "Where can I find current and past video content?" [ref=e980] [cursor=pointer]:
+              - text: Where can I find current and past video content?
+              - img [ref=e982]
+            - button "Where can I find some great content and resources about Ethereum and our community?" [ref=e985] [cursor=pointer]:
+              - text: Where can I find some great content and resources about Ethereum and our community?
+              - img [ref=e987]
+            - button "How can I partner or collaborate with ETHGlobal?" [ref=e990] [cursor=pointer]:
+              - text: How can I partner or collaborate with ETHGlobal?
+              - img [ref=e992]
+        - generic [ref=e994]:
+          - button "Event" [expanded] [ref=e995] [cursor=pointer]:
+            - heading "Event" [level=3] [ref=e996]
+            - img [ref=e998]
+          - generic [ref=e1001]:
+            - button "Can I use AI to build my project?" [ref=e1003] [cursor=pointer]:
+              - text: Can I use AI to build my project?
+              - img [ref=e1005]
+            - button "How many Partner Prizes can I apply for?" [ref=e1008] [cursor=pointer]:
+              - text: How many Partner Prizes can I apply for?
+              - img [ref=e1010]
+            - button "What can I build during the event?" [ref=e1013] [cursor=pointer]:
+              - text: What can I build during the event?
+              - img [ref=e1015]
+            - button "Can I participate remotely at this event?" [ref=e1018] [cursor=pointer]:
+              - text: Can I participate remotely at this event?
+              - img [ref=e1020]
+            - button "Can I start working on my project before the event?" [ref=e1023] [cursor=pointer]:
+              - text: Can I start working on my project before the event?
+              - img [ref=e1025]
+            - button "Am I allowed to work on my project before the hackathon begins?" [ref=e1028] [cursor=pointer]:
+              - text: Am I allowed to work on my project before the hackathon begins?
+              - img [ref=e1030]
+            - button "If I’m working on my project before the hackathon begins, will I be eligible for partner prizes?" [ref=e1033] [cursor=pointer]:
+              - text: If I’m working on my project before the hackathon begins, will I be eligible for partner prizes?
+              - img [ref=e1035]
+            - button "When must I stop working on my project?" [ref=e1038] [cursor=pointer]:
+              - text: When must I stop working on my project?
+              - img [ref=e1040]
+            - button "Who do I go to for help if I’m stuck on my project?" [ref=e1043] [cursor=pointer]:
+              - text: Who do I go to for help if I’m stuck on my project?
+              - img [ref=e1045]
+            - button "Will I be able to sleep at the venue for IRL events?" [ref=e1048] [cursor=pointer]:
+              - text: Will I be able to sleep at the venue for IRL events?
+              - img [ref=e1050]
+            - button "How can I remove somebody from my team?" [ref=e1053] [cursor=pointer]:
+              - text: How can I remove somebody from my team?
+              - img [ref=e1055]
+            - button "Can I edit my project name, description, etc. after it is created?" [ref=e1058] [cursor=pointer]:
+              - text: Can I edit my project name, description, etc. after it is created?
+              - img [ref=e1060]
+        - generic [ref=e1062]:
+          - button "Hacker Application" [expanded] [ref=e1063] [cursor=pointer]:
+            - heading "Hacker Application" [level=3] [ref=e1064]
+            - img [ref=e1066]
+          - generic [ref=e1069]:
+            - button "Do I need to submit an application if I'm already part of a team?" [ref=e1071] [cursor=pointer]:
+              - text: Do I need to submit an application if I'm already part of a team?
+              - img [ref=e1073]
+            - button "How many members are allowed on my team?" [ref=e1076] [cursor=pointer]:
+              - text: How many members are allowed on my team?
+              - img [ref=e1078]
+            - button "Can I join two teams/projects?" [ref=e1081] [cursor=pointer]:
+              - text: Can I join two teams/projects?
+              - img [ref=e1083]
+            - button "Can I hack solo?" [ref=e1086] [cursor=pointer]:
+              - text: Can I hack solo?
+              - img [ref=e1088]
+            - button "Should I be worried if I don’t have a team yet?" [ref=e1091] [cursor=pointer]:
+              - text: Should I be worried if I don’t have a team yet?
+              - img [ref=e1093]
+            - button "I don’t have any ideas for what to build. Help!" [ref=e1096] [cursor=pointer]:
+              - text: I don’t have any ideas for what to build. Help!
+              - img [ref=e1098]
+            - button "What are some tips and tricks for a successful hacker application?" [ref=e1101] [cursor=pointer]:
+              - text: What are some tips and tricks for a successful hacker application?
+              - img [ref=e1103]
+            - button "How come I cannot submit my application because an optional field is blank?" [ref=e1106] [cursor=pointer]:
+              - text: How come I cannot submit my application because an optional field is blank?
+              - img [ref=e1108]
+            - button "Why haven’t I heard back about my application?" [ref=e1111] [cursor=pointer]:
+              - text: Why haven’t I heard back about my application?
+              - img [ref=e1113]
+            - button "Why am I on the waitlist?" [ref=e1116] [cursor=pointer]:
+              - text: Why am I on the waitlist?
+              - img [ref=e1118]
+            - button "I’m on the waitlist but have a team waiting for me. Can I be accepted?" [ref=e1121] [cursor=pointer]:
+              - text: I’m on the waitlist but have a team waiting for me. Can I be accepted?
+              - img [ref=e1123]
+            - button "Why was my application rejected?" [ref=e1126] [cursor=pointer]:
+              - text: Why was my application rejected?
+              - img [ref=e1128]
+            - button "Can I change my wallet address?" [ref=e1131] [cursor=pointer]:
+              - text: Can I change my wallet address?
+              - img [ref=e1133]
+            - button "Can I change my email address?" [ref=e1136] [cursor=pointer]:
+              - text: Can I change my email address?
+              - img [ref=e1138]
+            - button "I cannot afford to stake. Can you override my stake?" [ref=e1141] [cursor=pointer]:
+              - text: I cannot afford to stake. Can you override my stake?
+              - img [ref=e1143]
+            - button "Can a friend take my spot if I can no longer attend an event?" [ref=e1146] [cursor=pointer]:
+              - text: Can a friend take my spot if I can no longer attend an event?
+              - img [ref=e1148]
+        - generic [ref=e1150]:
+          - button "Staking" [expanded] [ref=e1151] [cursor=pointer]:
+            - heading "Staking" [level=3] [ref=e1152]
+            - img [ref=e1154]
+          - generic [ref=e1157]:
+            - button "What do I do if I staked my spot but my dashboard is still asking me to Stake?" [ref=e1159] [cursor=pointer]:
+              - text: What do I do if I staked my spot but my dashboard is still asking me to Stake?
+              - img [ref=e1161]
+            - button "What do I do if I accidentally double-staked?" [ref=e1164] [cursor=pointer]:
+              - text: What do I do if I accidentally double-staked?
+              - img [ref=e1166]
+            - button "Why is my stake is stuck pending?" [ref=e1169] [cursor=pointer]:
+              - text: Why is my stake is stuck pending?
+              - img [ref=e1171]
+            - button "When will I get my stake back?" [ref=e1174] [cursor=pointer]:
+              - text: When will I get my stake back?
+              - img [ref=e1176]
+            - button "I can no longer attend due to a conflict. Can I have my stake returned?" [ref=e1179] [cursor=pointer]:
+              - text: I can no longer attend due to a conflict. Can I have my stake returned?
+              - img [ref=e1181]
+            - button "How come I don’t see my returned stake transaction?" [ref=e1184] [cursor=pointer]:
+              - text: How come I don’t see my returned stake transaction?
+              - img [ref=e1186]
+            - button "How come I have not received my stake return yet?" [ref=e1189] [cursor=pointer]:
+              - text: How come I have not received my stake return yet?
+              - img [ref=e1191]
+        - generic [ref=e1193]:
+          - button "Visa" [expanded] [ref=e1194] [cursor=pointer]:
+            - heading "Visa" [level=3] [ref=e1195]
+            - img [ref=e1197]
+          - generic [ref=e1200]:
+            - button "Can I get a visa invitation letter?" [ref=e1202] [cursor=pointer]:
+              - text: Can I get a visa invitation letter?
+              - img [ref=e1204]
+            - button "What if my visa letter invitation is not accepted?" [ref=e1207] [cursor=pointer]:
+              - text: What if my visa letter invitation is not accepted?
+              - img [ref=e1209]
+        - generic [ref=e1211]:
+          - button "Mentoring & Volunteering" [expanded] [ref=e1212] [cursor=pointer]:
+            - heading "Mentoring & Volunteering" [level=3] [ref=e1213]
+            - img [ref=e1215]
+          - generic [ref=e1218]:
+            - button "What is the role of a mentor?" [ref=e1220] [cursor=pointer]:
+              - text: What is the role of a mentor?
+              - img [ref=e1222]
+            - button "What is the role of a volunteer?" [ref=e1225] [cursor=pointer]:
+              - text: What is the role of a volunteer?
+              - img [ref=e1227]
+            - button "Can I apply for a mentor or volunteer role if my native language isn’t English?" [ref=e1230] [cursor=pointer]:
+              - text: Can I apply for a mentor or volunteer role if my native language isn’t English?
+              - img [ref=e1232]
+    - contentinfo [ref=e1234]:
+      - generic [ref=e1235]:
+        - img [ref=e1236]
+        - generic [ref=e1247]:
+          - generic [ref=e1248]:
+            - heading "Sign up to get the latest news and updates on ETHGlobal" [level=2] [ref=e1249]
+            - generic [ref=e1250]:
+              - textbox "Your email address" [ref=e1251]
+              - button [ref=e1252] [cursor=pointer]:
+                - img [ref=e1253]
+          - generic [ref=e1255]:
+            - heading "Products" [level=2] [ref=e1256]
+            - list [ref=e1257]:
+              - listitem [ref=e1258]:
+                - link "ETHConf" [ref=e1259] [cursor=pointer]:
+                  - /url: https://ethconf.com/r/egcom
+              - listitem [ref=e1260]:
+                - link "Events" [ref=e1261] [cursor=pointer]:
+                  - /url: /events
+              - listitem [ref=e1262]:
+                - link "Pragma" [ref=e1263] [cursor=pointer]:
+                  - /url: /pragma
+              - listitem [ref=e1264]:
+                - link "Packs" [ref=e1265] [cursor=pointer]:
+                  - /url: /packs
+              - listitem [ref=e1266]:
+                - link "Plus New" [ref=e1267] [cursor=pointer]:
+                  - /url: /plus
+                  - text: Plus
+                  - generic [ref=e1268]: New
+              - listitem [ref=e1269]:
+                - link "Faucet" [ref=e1270] [cursor=pointer]:
+                  - /url: /faucet
+          - generic [ref=e1271]:
+            - heading "Legal" [level=2] [ref=e1272]
+            - list [ref=e1273]:
+              - listitem [ref=e1274]:
+                - link "Rules & Conduct" [ref=e1275] [cursor=pointer]:
+                  - /url: /rules
+              - listitem [ref=e1276]:
+                - link "Privacy Policy" [ref=e1277] [cursor=pointer]:
+                  - /url: /privacy
+          - generic [ref=e1278]:
+            - heading "Company" [level=2] [ref=e1279]
+            - list [ref=e1280]:
+              - listitem [ref=e1281]:
+                - link "About" [ref=e1282] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e1283]:
+                - link "Brand" [ref=e1284] [cursor=pointer]:
+                  - /url: /brand
+              - listitem [ref=e1285]:
+                - link "Careers Hiring" [ref=e1286] [cursor=pointer]:
+                  - /url: /careers
+                  - text: Careers
+                  - generic [ref=e1287]: Hiring
+        - generic [ref=e1288]:
+          - paragraph [ref=e1289]: © 2026 ETHGlobal. All rights reserved.
+          - list [ref=e1290]:
+            - listitem [ref=e1291]:
+              - link [ref=e1292] [cursor=pointer]:
+                - /url: https://x.com/ethglobal
+                - img [ref=e1293]
+            - listitem [ref=e1296]:
+              - link [ref=e1297] [cursor=pointer]:
+                - /url: https://farcaster.xyz/ethglobal
+                - img [ref=e1298]
+            - listitem [ref=e1300]:
+              - link [ref=e1301] [cursor=pointer]:
+                - /url: /discord
+                - img [ref=e1302]
+            - listitem [ref=e1305]:
+              - link [ref=e1306] [cursor=pointer]:
+                - /url: https://www.youtube.com/ethglobal
+                - img [ref=e1307]
+            - listitem [ref=e1309]:
+              - link [ref=e1310] [cursor=pointer]:
+                - /url: https://mirror.xyz/blog.ethglobal.eth
+                - img [ref=e1311]
+  - region "Notifications alt+T"
+  - region "Notifications alt+T"
+  - alert [ref=e1315]

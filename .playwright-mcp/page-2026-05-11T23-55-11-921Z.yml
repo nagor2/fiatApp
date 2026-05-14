@@ -1,0 +1,120 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - img "Ecosystem Support Program logo" [ref=e8] [cursor=pointer]
+        - list [ref=e10]:
+          - listitem [ref=e11]:
+            - link "Home" [ref=e12] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e13]
+          - listitem [ref=e14]:
+            - img [ref=e15]
+            - link "How to Apply" [ref=e17] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e18]
+          - listitem [ref=e19]:
+            - img [ref=e20]
+            - link "Funded Projects" [ref=e22] [cursor=pointer]:
+              - /url: /funded-projects
+              - heading "Funded Projects" [level=4] [ref=e23]
+          - listitem [ref=e24]:
+            - img [ref=e25]
+            - link "About ESP" [ref=e27] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e28]
+          - listitem [ref=e29]:
+            - img [ref=e30]
+            - link "Blog" [ref=e32] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e33]
+    - main [ref=e35]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - heading "How to Apply" [level=1] [ref=e40]
+          - paragraph [ref=e41]: Whether you're working on a specific project, or you're still exploring possibilities, you can connect with our team for guidance.
+        - img "Kid watching plants grow" [ref=e43]
+      - tablist [ref=e46]:
+        - tab "Overview" [ref=e47] [cursor=pointer]:
+          - heading "Overview" [level=2] [ref=e48]
+        - tab "Office Hours" [ref=e49] [cursor=pointer]:
+          - heading "Office Hours" [level=2] [ref=e50]
+        - tab "Wishlist" [ref=e51] [cursor=pointer]:
+          - heading "Wishlist" [level=2] [ref=e52]
+        - tab "RFPs" [ref=e53] [cursor=pointer]:
+          - heading "RFPs" [level=2] [ref=e54]
+        - tab "Open Rounds" [selected] [ref=e55] [cursor=pointer]:
+          - heading "Open Rounds" [level=2] [ref=e56]
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - link "Summary" [ref=e65] [cursor=pointer]:
+            - /url: /applicants/open-rounds#description
+            - paragraph [ref=e66]: Summary
+          - link "Active Rounds" [ref=e70] [cursor=pointer]:
+            - /url: /applicants/open-rounds#active-rounds
+            - paragraph [ref=e71]: Active Rounds
+        - generic [ref=e72]:
+          - generic [ref=e74]:
+            - heading "Open Rounds" [level=2] [ref=e75]
+            - paragraph [ref=e76]: Grant rounds are time-limited funding opportunities focused on specific themes or areas of interest. Each round has its own application deadline and selection criteria. Browse active rounds below to find opportunities that match your expertise.
+          - generic [ref=e78]:
+            - heading "Active Rounds" [level=3] [ref=e79]
+            - paragraph [ref=e80]: There are no active grant rounds at this time. Please check back later or explore our Wishlist and RFP opportunities.
+    - img "People gathered around the Ethereum tree" [ref=e83]
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - img "Ethereum Foundation logo" [ref=e87]
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - link "Home" [ref=e90] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e91]
+            - link "How to Apply" [ref=e92] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e93]
+            - link "About ESP" [ref=e94] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e95]
+            - link "Blog" [ref=e96] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e97]
+          - generic [ref=e98]:
+            - link "Privacy Policy" [ref=e99] [cursor=pointer]:
+              - /url: https://ethereum.org/en/privacy-policy/
+              - heading "Privacy Policy" [level=4] [ref=e100]
+            - link "Terms of Use" [ref=e101] [cursor=pointer]:
+              - /url: https://ethereum.org/en/terms-of-use/
+              - heading "Terms of Use" [level=4] [ref=e102]
+            - link "Cookie Policy" [ref=e103] [cursor=pointer]:
+              - /url: https://ethereum.org/en/cookie-policy/
+              - heading "Cookie Policy" [level=4] [ref=e104]
+            - link "Ethereum.org" [ref=e105] [cursor=pointer]:
+              - /url: https://ethereum.org/
+              - heading "Ethereum.org" [level=4] [ref=e106]
+        - generic [ref=e107]:
+          - link "Farcaster logo" [ref=e109] [cursor=pointer]:
+            - /url: https://farcaster.xyz/ef-esp
+            - img "Farcaster logo" [ref=e110]
+          - link "Lens logo" [ref=e112] [cursor=pointer]:
+            - /url: https://hey.xyz/u/ef_esp
+            - img "Lens logo" [ref=e113]
+          - link "Bluesky logo" [ref=e115] [cursor=pointer]:
+            - /url: https://bsky.app/profile/ef-esp.bsky.social
+            - img "Bluesky logo" [ref=e116]
+          - link "GitHub logo" [ref=e118] [cursor=pointer]:
+            - /url: https://github.com/ethereum
+            - img "GitHub logo" [ref=e119]
+          - link "Twitter logo" [ref=e121] [cursor=pointer]:
+            - /url: https://twitter.com/EF_ESP
+            - img "Twitter logo" [ref=e122]
+      - generic [ref=e123]:
+        - separator [ref=e125]
+        - paragraph [ref=e127]: © 2026 Ethereum Foundation. All rights reserved.
+  - alert [ref=e128]
+  - generic:
+    - region "Notifications-top"
+    - region "Notifications-top-left"
+    - region "Notifications-top-right"
+    - region "Notifications-bottom-left"
+    - region "Notifications-bottom"
+    - region "Notifications-bottom-right"

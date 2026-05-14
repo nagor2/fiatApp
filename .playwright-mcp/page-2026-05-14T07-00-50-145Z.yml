@@ -1,0 +1,547 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - text: "ETH Price:"
+        - link "$2,267.11" [ref=e6] [cursor=pointer]:
+          - /url: /chart/etherprice
+        - generic [ref=e7]: (-1.49%)
+      - generic [ref=e8]:
+        - generic [ref=e9]:  
+        - text: "Gas:"
+        - link "0.114 Gwei" [ref=e11] [cursor=pointer]:
+          - /url: /gastracker
+    - generic [ref=e12]:
+      - generic [ref=e14]:
+        - generic "Search" [ref=e15]:
+          - generic [ref=e16]: 
+        - textbox "Search by Address / Txn Hash / Block / Token / Domain Name" [ref=e17]
+        - text:  
+        - generic [ref=e19]: /
+      - link "" [ref=e21] [cursor=pointer]:
+        - /url: /settings
+        - generic [ref=e22]: 
+      - generic [ref=e23]:
+        - button "" [ref=e24] [cursor=pointer]:
+          - generic [ref=e26]: 
+        - text:     
+      - button "Ethereum Logo" [ref=e28] [cursor=pointer]:
+        - img "Ethereum Logo" [ref=e29]
+  - banner [ref=e30]:
+    - navigation [ref=e31]:
+      - generic [ref=e32]:
+        - link "Etherscan" [ref=e33] [cursor=pointer]:
+          - /url: /
+          - img "Etherscan Logo" [ref=e34]
+        - generic: 
+        - list [ref=e36]:
+          - listitem [ref=e37]:
+            - link "Home" [ref=e38] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e39]:
+            - button "Blockchain " [ref=e40] [cursor=pointer]
+            - list:
+              - listitem:
+                - link "Transactions":
+                  - /url: /txs
+              - listitem:
+                - link "Pending Transactions":
+                  - /url: /txsPending
+              - listitem:
+                - link "Contract Internal Transactions":
+                  - /url: /txsInternal
+              - listitem:
+                - link "Cross-Chain Transactions":
+                  - /url: /txCrossChain
+              - listitem:
+                - link "Beacon Deposits":
+                  - /url: /txsBeaconDeposit
+              - listitem:
+                - link "Beacon Withdrawals":
+                  - /url: /txsBeaconWithdrawal
+              - listitem:
+                - link "View Blobs":
+                  - /url: /txsBlobs
+              - listitem:
+                - link "AA Transactions Beta":
+                  - /url: /txsAA
+                  - text: AA Transactions
+                  - generic: Beta
+              - listitem:
+                - link "EIP-7702 Authorizations Beta":
+                  - /url: /txnAuthList
+                  - text: EIP-7702 Authorizations
+                  - generic: Beta
+              - listitem:
+                - separator
+              - listitem:
+                - link "View Blocks":
+                  - /url: /blocks
+              - listitem:
+                - link "Forked Blocks (Reorgs)":
+                  - /url: /blocks_forked
+              - listitem:
+                - link "Uncles":
+                  - /url: /uncles
+              - listitem:
+                - separator
+              - listitem:
+                - link "Top Accounts":
+                  - /url: /accounts
+              - listitem:
+                - link "Verified Contracts":
+                  - /url: /contractsVerified
+          - listitem [ref=e41]:
+            - button "Tokens " [ref=e42] [cursor=pointer]
+            - list:
+              - listitem:
+                - link "Top Tokens (ERC-20)":
+                  - /url: /tokens
+              - listitem:
+                - link "Token Transfers (ERC-20)":
+                  - /url: /tokentxns
+              - listitem:
+                - link "Token Flow Visualizer Beta":
+                  - /url: /token/0xdac17f958d2ee523a2206206994597c13d831ec7#balances#flow
+                  - text: Token Flow Visualizer
+                  - generic: Beta
+          - listitem [ref=e43]:
+            - button "NFTs " [ref=e44] [cursor=pointer]
+            - list:
+              - listitem:
+                - link "Top NFTs":
+                  - /url: /nft-top-contracts
+              - listitem:
+                - link "Top Mints":
+                  - /url: /nft-top-mints
+              - listitem:
+                - link "Latest Trades":
+                  - /url: /nft-trades
+              - listitem:
+                - link "Latest Transfers":
+                  - /url: /nft-transfers
+              - listitem:
+                - link "Latest Mints":
+                  - /url: /nft-latest-mints
+          - listitem [ref=e45]:
+            - button "Resources " [ref=e46] [cursor=pointer]
+            - list:
+              - listitem:
+                - link "Charts And Stats":
+                  - /url: /charts
+              - listitem:
+                - link "Leaderboard":
+                  - /url: /leaderboard
+              - listitem:
+                - separator
+              - listitem:
+                - link "Etherscan Points Beta":
+                  - /url: /points
+                  - text: Etherscan Points
+                  - generic: Beta
+              - listitem:
+                - link "Directory":
+                  - /url: /directory
+              - listitem:
+                - link "Newsletter":
+                  - /url: https://info.etherscan.com/newsletters/
+              - listitem:
+                - link "Knowledge Base":
+                  - /url: https://info.etherscan.com/
+          - listitem [ref=e47]:
+            - button "Developers " [ref=e48] [cursor=pointer]
+            - list:
+              - listitem:
+                - link "API Plans":
+                  - /url: /apis
+              - listitem:
+                - link "API Documentation":
+                  - /url: https://docs.etherscan.io
+              - listitem:
+                - separator
+              - listitem:
+                - link "Code Reader Beta":
+                  - /url: /code-reader
+                  - text: Code Reader
+                  - generic: Beta
+              - listitem:
+                - link "Verify Contract":
+                  - /url: /verifyContract
+              - listitem:
+                - link "Similar Contract Search":
+                  - /url: /find-similar-contracts
+              - listitem:
+                - link "Smart Contract Search":
+                  - /url: /searchcontract
+              - listitem:
+                - link "Contract Diff Checker":
+                  - /url: /contractdiffchecker
+              - listitem:
+                - separator
+              - listitem:
+                - link "Vyper Online Compiler":
+                  - /url: /vyper
+              - listitem:
+                - link "Bytecode to Opcode":
+                  - /url: /opcode-tool
+              - listitem:
+                - link "Broadcast Transaction":
+                  - /url: /pushTx
+          - listitem [ref=e49]:
+            - button "More " [ref=e50] [cursor=pointer]
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - heading "Tools & Services" [level=6]
+                      - paragraph: Discover more of Etherscan's tools and services in one place.
+                    - generic:
+                      - paragraph: Sponsored
+                      - link:
+                        - /url: https://chat.blockscan.com
+                - generic:
+                  - heading "Tools" [level=6]
+                  - list:
+                    - listitem:
+                      - link " Input Data Decoder Beta":
+                        - /url: /inputdatadecoder
+                        - generic: 
+                        - text: Input Data Decoder
+                        - generic: Beta
+                    - listitem:
+                      - link " Input Data Encoder Beta":
+                        - /url: /inputdataencoder
+                        - generic: 
+                        - text: Input Data Encoder
+                        - generic: Beta
+                    - listitem:
+                      - link " Unit Converter":
+                        - /url: /unitconverter
+                        - generic: 
+                        - text: Unit Converter
+                    - listitem:
+                      - link " CSV Export":
+                        - /url: /exportData
+                        - generic: 
+                        - text: CSV Export
+                    - listitem:
+                      - link " Account Balance Checker":
+                        - /url: /balancecheck-tool
+                        - generic: 
+                        - text: Account Balance Checker
+                - generic:
+                  - heading "Explore" [level=6]
+                  - list:
+                    - listitem:
+                      - link " Gas Tracker":
+                        - /url: /gastracker
+                        - generic: 
+                        - text: Gas Tracker
+                    - listitem:
+                      - link " DEX Tracker":
+                        - /url: /dex
+                        - generic: 
+                        - text: DEX Tracker
+                    - listitem:
+                      - link " Node Tracker":
+                        - /url: /nodetracker
+                        - generic: 
+                        - text: Node Tracker
+                    - listitem:
+                      - link " Label Cloud":
+                        - /url: /labelcloud
+                        - generic: 
+                        - text: Label Cloud
+                    - listitem:
+                      - link " Domain Name Lookup":
+                        - /url: /name-lookup
+                        - generic: 
+                        - text: Domain Name Lookup
+                - generic:
+                  - heading "Services" [level=6]
+                  - list:
+                    - listitem:
+                      - link " Token Approvals Beta":
+                        - /url: /tokenapprovalchecker
+                        - generic: 
+                        - text: Token Approvals
+                        - generic: Beta
+                    - listitem:
+                      - link " Verified Signature":
+                        - /url: /verifiedSignatures
+                        - generic: 
+                        - text: Verified Signature
+                    - listitem:
+                      - link " Input Data Messages (IDM) Beta":
+                        - /url: /idm
+                        - generic: 
+                        - text: Input Data Messages (IDM)
+                        - generic: Beta
+                    - listitem:
+                      - link " Advanced Filter Beta":
+                        - /url: /advanced-filter
+                        - generic: 
+                        - text: Advanced Filter
+                        - generic: Beta
+                    - listitem:
+                      - link " Blockscan Chat  Beta":
+                        - /url: https://chat.blockscan.com
+                        - generic: 
+                        - text: Blockscan Chat
+                        - generic: 
+                        - generic: Beta
+          - text:     
+          - listitem [ref=e51]: "|"
+          - listitem [ref=e52]:
+            - link " Sign In" [ref=e53] [cursor=pointer]:
+              - /url: /login
+              - generic [ref=e54]: 
+              - text: Sign In
+  - main [ref=e55]:
+    - generic [ref=e57]:
+      - generic [ref=e59]:
+        - heading "Contract" [level=1] [ref=e62]
+        - generic [ref=e63]:
+          - generic [ref=e64]: "0x44881F5ac2938AAaF4260d7DBE18997318788f9f"
+          - generic [ref=e65]:
+            - link "Copy Address" [ref=e66] [cursor=pointer]:
+              - /url: javascript:;
+              - generic [ref=e67]: 
+            - link "Click to view QR Code" [ref=e69] [cursor=pointer]:
+              - /url: javascript:;
+              - generic [ref=e70]: 
+      - generic [ref=e71]:
+        - button "Buy " [ref=e73] [cursor=pointer]
+        - button "Play " [ref=e75] [cursor=pointer]
+        - button "Gaming " [ref=e77] [cursor=pointer]
+    - generic [ref=e81]:
+      - generic [ref=e82]:
+        - generic [ref=e84]: Source Code
+        - generic [ref=e85]:
+          - link "Add Address to Watch List" [ref=e86] [cursor=pointer]:
+            - /url: /myaddress?cmd=addnew&a=0x44881F5ac2938AAaF4260d7DBE18997318788f9f#add
+            - generic [ref=e87]: 
+          - link "  API" [ref=e88] [cursor=pointer]:
+            - /url: https://docs.etherscan.io/api-reference/endpoint/balance
+            - generic [ref=e89]:  
+            - text: API
+          - generic [ref=e90]:
+            - button " " [ref=e91] [cursor=pointer]:
+              - generic [ref=e92]: 
+              - text: 
+            - text:     
+      - generic [ref=e93]:
+        - generic [ref=e96]:
+          - heading "Overview" [level=3] [ref=e98]
+          - generic [ref=e99]:
+            - heading "ETH Balance" [level=4] [ref=e100]
+            - generic [ref=e102]:
+              - generic [ref=e103]: 
+              - text: 0 ETH
+          - generic [ref=e104]:
+            - heading "Eth Value" [level=4] [ref=e105]
+            - text: $0.00
+          - generic [ref=e106]:
+            - heading "Token Holdings" [level=4] [ref=e107]
+            - generic [ref=e108]:
+              - generic [ref=e109]:
+                - button "$0.00 (1 Tokens) " [ref=e110] [cursor=pointer]:
+                  - text: $0.00
+                  - generic [ref=e111]: (1 Tokens)
+                  - text: 
+                - text:    
+              - link "Click to see assets" [ref=e112] [cursor=pointer]:
+                - /url: javascript:;
+                - generic [ref=e113]: 
+        - generic [ref=e116]:
+          - heading "More Info" [level=3] [ref=e117]
+          - generic [ref=e119]:
+            - heading "Private Name Tags" [level=4] [ref=e120]
+            - link "+ Add" [ref=e123] [cursor=pointer]:
+              - /url: /login?msg=NeedLogin&ref=address&ret=0x44881F5ac2938AAaF4260d7DBE18997318788f9f
+              - generic [ref=e124]: +
+              - text: Add
+          - generic [ref=e125]:
+            - heading "Contract Creator" [level=4] [ref=e126]:
+              - generic [ref=e127]: Contract
+              - text: Creator
+            - generic [ref=e128]:
+              - link "0xF7E89388...35820E1A5" [ref=e129] [cursor=pointer]:
+                - /url: /address/0xf7e893880679c0e63d0c817706c53ee35820e1a5
+              - link "Copy Address" [ref=e130] [cursor=pointer]:
+                - /url: javascript:;
+                - generic [ref=e131]: 
+              - generic [ref=e132]: "|"
+              - link "1 yr 113 days ago" [ref=e133] [cursor=pointer]:
+                - /url: /tx/0xc76a9a96d5b9ea88afe7d29df3519b6e72aee1c39fe7198997c81cb608e6cb0c
+        - generic [ref=e136]:
+          - heading "Multichain Info" [level=3] [ref=e137]
+          - link " $0 (Multichain Portfolio)" [ref=e139] [cursor=pointer]:
+            - /url: javascript:;
+            - generic [ref=e140]: 
+            - text: $0 (Multichain Portfolio)
+          - generic [ref=e141]: No addresses found
+          - generic [ref=e149]: Ad
+      - generic [ref=e151]:
+        - tablist [ref=e152]:
+          - tab "Transactions" [ref=e153] [cursor=pointer]
+          - tab "Internal Transactions" [ref=e154] [cursor=pointer]
+          - tab "Token Transfers (ERC-20)" [ref=e155] [cursor=pointer]
+          - tab "Other Transactions" [ref=e156] [cursor=pointer]
+          - tab "Contract " [selected] [ref=e157] [cursor=pointer]:
+            - text: Contract
+            - generic [ref=e158]: 
+          - tab "Events" [ref=e159] [cursor=pointer]
+          - tab "Analytics" [ref=e160] [cursor=pointer]
+          - tab "Assets" [ref=e161] [cursor=pointer]
+          - tab "Cards New" [ref=e162] [cursor=pointer]:
+            - text: Cards
+            - generic [ref=e163]: New
+        - generic [ref=e165]:
+          - link " Advanced Filter" [ref=e166] [cursor=pointer]:
+            - /url: /advanced-filter?fadd=0x44881F5ac2938AAaF4260d7DBE18997318788f9f&tadd=0x44881F5ac2938AAaF4260d7DBE18997318788f9f
+            - generic [ref=e167]: 
+            - text: Advanced Filter
+          - button "Toggle Dropdown " [ref=e168] [cursor=pointer]:
+            - generic [ref=e169]: Toggle Dropdown
+            - text: 
+          - text:   
+      - generic [ref=e170]:
+        - text:                                                                                                                             
+        - tabpanel "Contract " [ref=e171]:
+          - generic [ref=e173]:
+            - tablist [ref=e176]:
+              - tab "Code" [ref=e177] [cursor=pointer]
+              - tab "Read Contract" [active] [selected] [ref=e178] [cursor=pointer]: Read Contract
+              - tab "Write Contract" [ref=e179] [cursor=pointer]: Write Contract
+            - text:                                                          
+            - tabpanel [ref=e180]
+            - text: 
+        - text:   +    
+      - text: 
+      - paragraph [ref=e182]:
+        - generic [ref=e183]: 
+        - generic [ref=e184]:
+          - text: A contract address hosts a smart contract, which is a set of code stored on the blockchain that runs when predetermined conditions are met. Learn more about addresses in our
+          - link "Knowledge Base" [ref=e185] [cursor=pointer]:
+            - /url: https://info.etherscan.com/what-is-an-ethereum-address/
+          - text: .
+    - text:          
+  - text:   
+  - contentinfo [ref=e186]:
+    - generic [ref=e187]:
+      - generic [ref=e188]:
+        - generic [ref=e189]:
+          - link "X (Twitter)" [ref=e190] [cursor=pointer]:
+            - /url: https://twitter.com/etherscan
+            - generic [ref=e191]: 
+          - link "Medium" [ref=e192] [cursor=pointer]:
+            - /url: https://medium.com/etherscan-blog
+            - generic [ref=e193]: 
+          - link "Facebook" [ref=e194] [cursor=pointer]:
+            - /url: https://www.facebook.com/etherscan/
+            - generic [ref=e195]: 
+          - link "Reddit" [ref=e196] [cursor=pointer]:
+            - /url: https://www.reddit.com/r/etherscan/
+            - generic [ref=e197]: 
+        - link " Back to Top" [ref=e198] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=e199]: 
+          - text: Back to Top
+      - separator [ref=e200]
+      - generic [ref=e201]:
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - img "Ethereum Logo" [ref=e204]
+            - generic [ref=e205]: Powered by Ethereum
+          - paragraph [ref=e206]: Etherscan is a Block Explorer and Analytics Platform for Ethereum, a decentralized smart contracts platform.
+          - img "Background Map Image" [ref=e208]
+        - generic [ref=e209]:
+          - heading "Company" [level=4] [ref=e210]
+          - list [ref=e211]:
+            - listitem [ref=e212]:
+              - link "About Us" [ref=e213] [cursor=pointer]:
+                - /url: /aboutus
+            - listitem [ref=e214]:
+              - link "Brand Assets" [ref=e215] [cursor=pointer]:
+                - /url: /brandassets
+            - listitem [ref=e216]:
+              - link "Contact Us" [ref=e217] [cursor=pointer]:
+                - /url: /contactus
+            - listitem [ref=e218]:
+              - link "Careers We're Hiring!" [ref=e219] [cursor=pointer]:
+                - /url: /careers
+            - listitem [ref=e220]:
+              - link "Terms" [ref=e221] [cursor=pointer]:
+                - /url: /terms
+              - text: "&"
+              - link "Privacy" [ref=e222] [cursor=pointer]:
+                - /url: /privacyPolicy
+            - listitem [ref=e223]:
+              - link "Bug Bounty" [ref=e224] [cursor=pointer]:
+                - /url: /bugbounty
+        - generic [ref=e225]:
+          - heading "Community" [level=4] [ref=e226]
+          - list [ref=e227]:
+            - listitem [ref=e228]:
+              - link "API Documentation" [ref=e229] [cursor=pointer]:
+                - /url: https://docs.etherscan.io
+            - listitem [ref=e230]:
+              - link "Knowledge Base" [ref=e231] [cursor=pointer]:
+                - /url: https://info.etherscan.com/
+            - listitem [ref=e232]:
+              - link "Network Status" [ref=e233] [cursor=pointer]:
+                - /url: https://status.etherscan.io/
+            - listitem [ref=e234]:
+              - link "Newsletters" [ref=e235] [cursor=pointer]:
+                - /url: https://info.etherscan.com/newsletters/
+        - generic [ref=e236]:
+          - heading "Products & Services" [level=4] [ref=e237]
+          - list [ref=e238]:
+            - listitem [ref=e239]:
+              - link "Advertise" [ref=e240] [cursor=pointer]:
+                - /url: /contactusadvertise
+            - listitem [ref=e241]:
+              - link "Explorer as a Service (EaaS)" [ref=e242] [cursor=pointer]:
+                - /url: /explorer-as-a-service-eaas
+            - listitem [ref=e243]:
+              - link "API Plans" [ref=e244] [cursor=pointer]:
+                - /url: /apis
+            - listitem [ref=e245]:
+              - link "Priority Support" [ref=e246] [cursor=pointer]:
+                - /url: /priority-support
+            - listitem [ref=e247]:
+              - link "Blockscan " [ref=e248] [cursor=pointer]:
+                - /url: https://blockscan.com
+                - text: Blockscan
+                - generic [ref=e249]: 
+            - listitem [ref=e250]:
+              - link "Blockscan Chat " [ref=e251] [cursor=pointer]:
+                - /url: https://chat.blockscan.com/start
+                - text: Blockscan Chat
+                - generic [ref=e252]: 
+      - generic [ref=e254]:
+        - paragraph [ref=e256]: Etherscan © 2026 (B1)
+        - paragraph [ref=e258]:
+          - text: "Donations:"
+          - link "0x71c765...d8976f" [ref=e259] [cursor=pointer]:
+            - /url: /address/0x71c7656ec7ab88b098defb751b7401b5f6d8976f
+          - generic [ref=e260]: 
+  - alert [ref=e262]:
+    - paragraph [ref=e263]:
+      - generic [ref=e264]: 
+      - text: This website
+      - link "uses cookies to improve your experience" [ref=e265] [cursor=pointer]:
+        - /url: /terms#cookiestatement
+      - text: . By continuing to use this website, you agree to its
+      - link "Terms" [ref=e266] [cursor=pointer]:
+        - /url: /terms
+      - text: and
+      - link "Privacy Policy" [ref=e267] [cursor=pointer]:
+        - /url: /privacyPolicy
+      - text: .
+    - button "Close" [ref=e268] [cursor=pointer]: Got it!
+  - generic [ref=e269]:
+    - alert
+    - alert

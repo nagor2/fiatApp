@@ -1,0 +1,134 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - complementary [ref=e5]:
+        - generic [ref=e7]:
+          - img [ref=e9]
+          - generic [ref=e10]: Partners
+        - navigation [ref=e11]:
+          - generic [ref=e12]:
+            - paragraph [ref=e13]: Overview
+            - link "Home" [ref=e14] [cursor=pointer]:
+              - /url: /welcome
+              - img [ref=e15]
+              - text: Home
+          - generic [ref=e18]:
+            - paragraph [ref=e19]: Services
+            - link "Request & Listing" [ref=e20] [cursor=pointer]:
+              - /url: /request-form/new
+              - img [ref=e21]
+              - text: Request & Listing
+            - button "Advertising" [ref=e24] [cursor=pointer]:
+              - img [ref=e25]
+              - text: Advertising
+              - img [ref=e28]
+            - generic [ref=e30]:
+              - img [ref=e31]
+              - text: Analytics
+              - generic [ref=e32]: Coming Soon
+          - generic [ref=e33]:
+            - paragraph [ref=e34]: Settings
+            - link "Business" [ref=e35] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e36]
+              - text: Business
+            - link "Account" [ref=e39] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e40]
+              - text: Account
+        - generic [ref=e43]:
+          - link "Contact Sales" [ref=e44] [cursor=pointer]:
+            - /url: https://ads.coingecko.com/business-solutions/overview
+            - img [ref=e45]
+            - text: Contact Sales
+          - link "Support" [ref=e47] [cursor=pointer]:
+            - /url: https://support.coingecko.com/hc/en-us/requests/new
+            - img [ref=e48]
+            - text: Support
+          - link "Log in" [ref=e56] [cursor=pointer]:
+            - /url: /sign-in
+      - generic [ref=e57]:
+        - generic [ref=e59]:
+          - button "Toggle Sidebar" [ref=e60] [cursor=pointer]:
+            - img
+            - generic [ref=e61]: Toggle Sidebar
+          - navigation "breadcrumb" [ref=e62]:
+            - list [ref=e63]:
+              - listitem [ref=e64]:
+                - link "Request & Listing" [ref=e65] [cursor=pointer]:
+                  - /url: /request-form/submissions
+              - listitem [ref=e66]:
+                - img [ref=e67]
+              - listitem [ref=e69]:
+                - link "Form Request" [disabled] [ref=e70]
+        - main [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - heading "Request Form" [level=1] [ref=e74]
+              - paragraph [ref=e75]:
+                - text: Kindly fill up the form according to your request. If your request(s) are not accommodated by this form, please submit a ticket at
+                - link "support@coingecko.com" [ref=e76] [cursor=pointer]:
+                  - /url: mailto:support@coingecko.com
+            - generic [ref=e77]:
+              - tablist [ref=e78]:
+                - tab "CoinGecko CoinGecko" [selected] [ref=e79] [cursor=pointer]:
+                  - img "CoinGecko" [ref=e80]
+                  - text: CoinGecko
+                - tab "GeckoTerminal GeckoTerminal" [ref=e81] [cursor=pointer]:
+                  - img "GeckoTerminal" [ref=e82]
+                  - text: GeckoTerminal
+              - tabpanel "CoinGecko CoinGecko" [ref=e83]:
+                - generic [ref=e84]:
+                  - generic [ref=e85]:
+                    - heading "Coins" [level=2] [ref=e86]
+                    - paragraph [ref=e87]:
+                      - text: What is your project type? Need some help? Do check our
+                      - link "FAQ" [ref=e88] [cursor=pointer]:
+                        - /url: https://www.coingecko.com/en/faq
+                      - text: or
+                      - link "Methodology" [ref=e89] [cursor=pointer]:
+                        - /url: https://www.coingecko.com/en/methodology
+                    - generic [ref=e90]:
+                      - button "New Coin/ Token Listing Built on its own mainnet or smart-contract platforms (e.g., Bitcoin, Solana, ERC-20, BEP2)." [ref=e91] [cursor=pointer]:
+                        - img [ref=e93]
+                        - heading "New Coin/ Token Listing" [level=3] [ref=e98]
+                        - paragraph [ref=e99]: Built on its own mainnet or smart-contract platforms (e.g., Bitcoin, Solana, ERC-20, BEP2).
+                      - button "Update Coin or Token Info Minor updates (e.g links) or category tag addition" [ref=e100] [cursor=pointer]:
+                        - img [ref=e102]
+                        - heading "Update Coin or Token Info" [level=3] [ref=e105]
+                        - paragraph [ref=e106]: Minor updates (e.g links) or category tag addition
+                      - button "Contract Migration or Rebranding Token swap to a new contract address and/or rebranding (name, logo, website, ticker changes)." [ref=e107] [cursor=pointer]:
+                        - img [ref=e109]
+                        - heading "Contract Migration or Rebranding" [level=3] [ref=e114]
+                        - paragraph [ref=e115]: Token swap to a new contract address and/or rebranding (name, logo, website, ticker changes).
+                      - button "Token Supply Verify/Update Token Supply." [ref=e116] [cursor=pointer]:
+                        - img [ref=e118]
+                        - heading "Token Supply" [level=3] [ref=e121]
+                        - paragraph [ref=e122]: Verify/Update Token Supply.
+                  - generic [ref=e123]:
+                    - heading "Exchanges" [level=2] [ref=e124]
+                    - paragraph [ref=e125]: To ensure a smooth exchange listing process, we kindly request that any exchange (Spot/Derivatives) submitting a request have publicly accessible API documentation. Please refer to the documented ideal Exchange API endpoints.
+                    - generic [ref=e126]:
+                      - button "Centralized Spot Exchange Exchange is centralized and provide spot markets" [ref=e127] [cursor=pointer]:
+                        - img [ref=e129]
+                        - heading "Centralized Spot Exchange" [level=3] [ref=e131]
+                        - paragraph [ref=e132]: Exchange is centralized and provide spot markets
+                      - button "Centralized Derivatives Exchange Exchange is centralized and provide derivatives markets" [ref=e133] [cursor=pointer]:
+                        - img [ref=e135]
+                        - heading "Centralized Derivatives Exchange" [level=3] [ref=e137]
+                        - paragraph [ref=e138]: Exchange is centralized and provide derivatives markets
+                      - button "Decentralized Spot Exchange Exchange is decentralized and provide spot markets" [ref=e139] [cursor=pointer]:
+                        - img [ref=e141]
+                        - heading "Decentralized Spot Exchange" [level=3] [ref=e151]
+                        - paragraph [ref=e152]: Exchange is decentralized and provide spot markets
+                      - button "Decentralized Derivatives Exchange Exchange is decentralized and provide derivatives markets" [ref=e153] [cursor=pointer]:
+                        - img [ref=e155]
+                        - heading "Decentralized Derivatives Exchange" [level=3] [ref=e165]
+                        - paragraph [ref=e166]: Exchange is decentralized and provide derivatives markets
+                  - generic [ref=e167]:
+                    - heading "NFT" [level=2] [ref=e168]
+                    - button "New NFT NFT collection, eg. Pudgy Penguins, Bored Ape Yacht Club, Mad Lads." [ref=e170] [cursor=pointer]:
+                      - img [ref=e172]
+                      - heading "New NFT" [level=3] [ref=e176]
+                      - paragraph [ref=e177]: NFT collection, eg. Pudgy Penguins, Bored Ape Yacht Club, Mad Lads.
+  - alert [ref=e178]

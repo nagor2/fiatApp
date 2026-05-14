@@ -123,6 +123,7 @@ services:
       - prod
       - workers
       - backend
+      - oracle-alert
 
   # Background workers (block-watcher, etc)
   app-workers:
@@ -162,7 +163,7 @@ services:
         condition: service_healthy
     environment:
       - DAO_ADDRESS=${CRYPTOFIAT_DAO_ADDRESS}
-      - RPC_HTTP_URL=${RPC_HTTP_URL:-https://ethereum.publicnode.com}
+      - RPC_URL=${RPC_URL:-https://ethereum.publicnode.com}
       - RPC_WS_URL=${RPC_WS_URL}
       - TELEGRAM_BOT_TOKEN=${ORACLE_ALERT_TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHANNEL_ID=${ORACLE_ALERT_TELEGRAM_CHANNEL_ID}

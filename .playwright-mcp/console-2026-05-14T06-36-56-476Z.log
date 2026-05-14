@@ -1,0 +1,2 @@
+[    2077ms] [LOG] using RPC proxy: https://beta.app.dotflat.io/api/rpc @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2368ms] [WARNING] Error while trying to use the following icon from the Manifest: https://beta.app.dotflat.io/assets/logo.png (Resource size is not correct - typo in the Manifest?) @ https://beta.app.dotflat.io/deposits:0

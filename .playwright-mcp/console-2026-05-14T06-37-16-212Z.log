@@ -1,0 +1,22 @@
+[     353ms] [LOG] using RPC proxy: https://beta.app.dotflat.io/api/rpc @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[     419ms] [WARNING] Error while trying to use the following icon from the Manifest: https://beta.app.dotflat.io/assets/logo.png (Resource size is not correct - typo in the Manifest?) @ https://beta.app.dotflat.io/contracts/Deposit:0
+[    2127ms] [LOG] [Cache HIT] dao.params(depositRate) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2127ms] [LOG] [Cache HIT] flatCoin.balanceOf(0x44881F5ac2938AAaF4260d7DBE18997318788f9f) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2130ms] [LOG] [Cache HIT] deposit.depositsCounter() @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2328ms] [LOG] [Cache HIT] flatCoin.balanceOf(0x44881F5ac2938AAaF4260d7DBE18997318788f9f) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2329ms] [LOG] [Cache HIT] deposit.depositsCounter() @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2329ms] [LOG] [Cache HIT] dao.params(depositRate) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2425ms] [LOG] [Cache MISS] deposit.overallInterest(2) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2434ms] [LOG] [Cache MISS] deposit.overallInterest(1) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2438ms] [LOG] [Cache MISS] deposit.overallInterest(5) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2535ms] [LOG] [Cache MISS] deposit.overallInterest(6) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2540ms] [LOG] [Cache MISS] deposit.overallInterest(3) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2542ms] [LOG] [Cache MISS] deposit.overallInterest(4) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2558ms] [LOG] [Cache MISS] deposit.overallInterest(7) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    2642ms] [LOG] [Cache MISS] deposit.overallInterest(2) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    3570ms] [LOG] [Cache MISS] deposit.overallInterest(1) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    3570ms] [LOG] [Cache MISS] deposit.overallInterest(4) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    3570ms] [LOG] [Cache MISS] deposit.overallInterest(3) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    3571ms] [LOG] [Cache MISS] deposit.overallInterest(5) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    3571ms] [LOG] [Cache MISS] deposit.overallInterest(6) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1
+[    3571ms] [LOG] [Cache MISS] deposit.overallInterest(7) @ https://beta.app.dotflat.io/static/js/main.3a32f6c3.js:1

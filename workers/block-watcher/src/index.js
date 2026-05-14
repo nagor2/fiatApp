@@ -1054,10 +1054,7 @@ class BlockWatcher {
       }
 
       try {
-        const decodedEvent = logContractInstance._decodeEventABI.call({
-          name: 'ALLEVENTS',
-          jsonInterface: logContractInstance.options.jsonInterface
-        }, log);
+        const decodedEvent = this._decodeEventFromLog(logContractInstance, log);
 
         if (!decodedEvent || !decodedEvent.event) {
           continue;
@@ -1095,6 +1092,42 @@ class BlockWatcher {
       }
     }
     return indexedCount;
+  }
+
+  // Decode a raw log entry using the contract's ABI.
+  // web3.js v4 removed the internal _decodeEventABI method that v1 exposed —
+  // this replacement matches by topic[0] and calls web3.eth.abi.decodeLog.
+  _decodeEventFromLog(contractInstance, log) {
+    const topic0 = log.topics?.[0];
+    if (!topic0) return null;
+
+    const jsonInterface = contractInstance.options.jsonInterface;
+    for (const item of jsonInterface) {
+      if (item.type !== 'event') continue;
+
+      const paramTypes = item.inputs.map(i => i.type).join(',');
+      const hash = this.web3.utils.keccak256(`${item.name}(${paramTypes})`);
+      if (hash.toLowerCase() !== topic0.toLowerCase()) continue;
+
+      try {
+        const decoded = this.web3.eth.abi.decodeLog(
+          item.inputs,
+          log.data,
+          item.anonymous ? log.topics : log.topics.slice(1)
+        );
+
+        const returnValues = {};
+        item.inputs.forEach((input, i) => {
+          returnValues[input.name] = decoded[i] !== undefined ? decoded[i] : decoded[input.name];
+          returnValues[i]          = returnValues[input.name];
+        });
+
+        return { event: item.name, returnValues };
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 
   // Подхват событий контракта ровно для одного блока через getPastEvents.

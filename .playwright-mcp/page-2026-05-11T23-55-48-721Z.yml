@@ -1,0 +1,138 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - img "Ecosystem Support Program logo" [ref=e8] [cursor=pointer]
+        - list [ref=e10]:
+          - listitem [ref=e11]:
+            - link "Home" [ref=e12] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e13]
+          - listitem [ref=e14]:
+            - img [ref=e15]
+            - link "How to Apply" [ref=e17] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e18]
+          - listitem [ref=e19]:
+            - img [ref=e20]
+            - link "Funded Projects" [ref=e22] [cursor=pointer]:
+              - /url: /funded-projects
+              - heading "Funded Projects" [level=4] [ref=e23]
+          - listitem [ref=e24]:
+            - img [ref=e25]
+            - link "About ESP" [ref=e27] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e28]
+          - listitem [ref=e29]:
+            - img [ref=e30]
+            - link "Blog" [ref=e32] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e33]
+    - main [ref=e35]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - heading "How to Apply" [level=1] [ref=e40]
+          - paragraph [ref=e41]: Whether you're working on a specific project, or you're still exploring possibilities, you can connect with our team for guidance.
+        - img "Kid watching plants grow" [ref=e43]
+      - tablist [ref=e46]:
+        - tab "Overview" [ref=e47] [cursor=pointer]:
+          - heading "Overview" [level=2] [ref=e48]
+        - tab "Office Hours" [ref=e49] [cursor=pointer]:
+          - heading "Office Hours" [level=2] [ref=e50]
+        - tab "Wishlist" [selected] [ref=e51] [cursor=pointer]:
+          - heading "Wishlist" [level=2] [ref=e52]
+        - tab "RFPs" [ref=e53] [cursor=pointer]:
+          - heading "RFPs" [level=2] [ref=e54]
+        - tab "Open Rounds" [ref=e55] [cursor=pointer]:
+          - heading "Open Rounds" [level=2] [ref=e56]
+      - generic [ref=e59]:
+        - generic [ref=e61]:
+          - heading "Glamsterdam Grants Round" [level=2] [ref=e62]
+          - paragraph [ref=e63]: "The upcoming Glamsterdam upgrade is expected to introduce changes to EVM capabilities, protocol architecture, Ethereum's gas pricing, etc. Among the changes being considered are a comprehensive gas repricing package, new EVM opcodes, increased max contract size, native ETH transfer logs, validator exit/consolidation improvements, and two protocol-level headliners: Enshrined Proposer-Builder Separation (ePBS) and Block-Level Access Lists (BALs). Some of these changes, particularly gas repricing, may affect every transaction and deployed contract on Ethereum. We are seeking grant proposals that help the Ethereum community prepare for and adapt to the Glamsterdam upgrade. Areas of interest include, but are not limited to: - Developer tooling updates - Impact analysis tooling - Added support for block explorers and indexers - Validator tooling - Monitoring tooling - Data-driven research Proposals should include clear deliverables, milestones, and a realistic timeline. Evidence of demonstrable prior relevant work – such as contributions to previous upgrade readiness efforts, existing open-source Ethereum tooling, or published research on protocol changes – will be considered favourably during evaluation. For reference, the previous Pectra Grant Round awarded a total of around $250k across more than 10 projects. Note: some Glamsterdam EIPs are still under consideration and may not be included in the final upgrade. Applicants should review the current status of relevant EIPs via EIP-7773 and Forkcast.org."
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: Tags
+            - list [ref=e67]:
+              - listitem [ref=e68]:
+                - generic [ref=e69]: Ethereum Protocol
+              - listitem [ref=e70]:
+                - generic [ref=e71]: Other
+          - generic [ref=e72]:
+            - paragraph [ref=e73]: Out of Scope
+            - paragraph [ref=e74]: "- Proposals focused on EIPs that have been declined for Glamsterdam (see EIP-7773 for the full list of declined EIPs) - Proposals for EIPs scheduled for future upgrades (e.g. FOCIL/EIP-7805 is scheduled for Hegotá) - Proprietary or closed-source tools - Tools primarily serving a single product or company - LLM-vibe-written proposals without meaningful technical output or insights"
+          - generic [ref=e75]:
+            - paragraph [ref=e76]: Resources
+            - paragraph [ref=e77]:
+              - text: "-"
+              - link "https://eips.ethereum.org/EIPS/eip-7773" [ref=e78] [cursor=pointer]:
+                - /url: https://eips.ethereum.org/EIPS/eip-7773
+              - text: (Glamsterdam Meta EIP) -
+              - link "https://forkcast.org/upgrade/glamsterdam" [ref=e79] [cursor=pointer]:
+                - /url: https://forkcast.org/upgrade/glamsterdam
+              - text: "-"
+              - link "https://ethereum.org/roadmap/glamsterdam/" [ref=e80] [cursor=pointer]:
+                - /url: https://ethereum.org/roadmap/glamsterdam/
+              - text: "-"
+              - link "https://github.com/ethereum/pm" [ref=e81] [cursor=pointer]:
+                - /url: https://github.com/ethereum/pm
+              - text: (Ethereum All Core Devs calls)
+        - link "Apply" [ref=e83] [cursor=pointer]:
+          - /url: /applicants/wishlist/glamsterdam-round/apply
+          - heading "Apply" [level=2] [ref=e87]
+    - img "People gathered around the Ethereum tree" [ref=e90]
+    - generic [ref=e91]:
+      - generic [ref=e92]:
+        - img "Ethereum Foundation logo" [ref=e94]
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - link "Home" [ref=e97] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e98]
+            - link "How to Apply" [ref=e99] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e100]
+            - link "About ESP" [ref=e101] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e102]
+            - link "Blog" [ref=e103] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e104]
+          - generic [ref=e105]:
+            - link "Privacy Policy" [ref=e106] [cursor=pointer]:
+              - /url: https://ethereum.org/en/privacy-policy/
+              - heading "Privacy Policy" [level=4] [ref=e107]
+            - link "Terms of Use" [ref=e108] [cursor=pointer]:
+              - /url: https://ethereum.org/en/terms-of-use/
+              - heading "Terms of Use" [level=4] [ref=e109]
+            - link "Cookie Policy" [ref=e110] [cursor=pointer]:
+              - /url: https://ethereum.org/en/cookie-policy/
+              - heading "Cookie Policy" [level=4] [ref=e111]
+            - link "Ethereum.org" [ref=e112] [cursor=pointer]:
+              - /url: https://ethereum.org/
+              - heading "Ethereum.org" [level=4] [ref=e113]
+        - generic [ref=e114]:
+          - link "Farcaster logo" [ref=e116] [cursor=pointer]:
+            - /url: https://farcaster.xyz/ef-esp
+            - img "Farcaster logo" [ref=e117]
+          - link "Lens logo" [ref=e119] [cursor=pointer]:
+            - /url: https://hey.xyz/u/ef_esp
+            - img "Lens logo" [ref=e120]
+          - link "Bluesky logo" [ref=e122] [cursor=pointer]:
+            - /url: https://bsky.app/profile/ef-esp.bsky.social
+            - img "Bluesky logo" [ref=e123]
+          - link "GitHub logo" [ref=e125] [cursor=pointer]:
+            - /url: https://github.com/ethereum
+            - img "GitHub logo" [ref=e126]
+          - link "Twitter logo" [ref=e128] [cursor=pointer]:
+            - /url: https://twitter.com/EF_ESP
+            - img "Twitter logo" [ref=e129]
+      - generic [ref=e130]:
+        - separator [ref=e132]
+        - paragraph [ref=e134]: © 2026 Ethereum Foundation. All rights reserved.
+  - alert [ref=e135]
+  - generic:
+    - region "Notifications-top"
+    - region "Notifications-top-left"
+    - region "Notifications-top-right"
+    - region "Notifications-bottom-left"
+    - region "Notifications-bottom"
+    - region "Notifications-bottom-right"

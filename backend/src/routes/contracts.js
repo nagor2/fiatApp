@@ -59,6 +59,19 @@ router.get('/abis', (req, res) => {
   }
 });
 
+// GET /api/contracts/dfc/supply — plain number for CoinGecko Total Supply API
+router.get('/dfc/supply', async (req, res) => {
+  try {
+    const raw = await contractService.callMethod('DFC', 'totalSupply', []);
+    const supply = BigInt(raw) / BigInt(1e18);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.send(supply.toString());
+  } catch (err) {
+    logger.error('Error fetching DFC supply:', err.message);
+    res.status(500).send('0');
+  }
+});
+
 // Получить состояние CDP контракта
 router.get('/cdp/state', async (req, res) => {
   try {

@@ -1,0 +1,296 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - generic [ref=e203]:
+      - complementary [ref=e204]:
+        - generic [ref=e206]:
+          - img [ref=e208]
+          - generic [ref=e209]: Partners
+        - navigation [ref=e210]:
+          - generic [ref=e211]:
+            - paragraph [ref=e212]: Overview
+            - link "Home" [ref=e213] [cursor=pointer]:
+              - /url: /welcome
+              - img [ref=e214]
+              - text: Home
+          - generic [ref=e217]:
+            - paragraph [ref=e218]: Services
+            - link "Request & Listing" [ref=e219] [cursor=pointer]:
+              - /url: /request-form/new
+              - img [ref=e220]
+              - text: Request & Listing
+            - button "Advertising" [ref=e223] [cursor=pointer]:
+              - img [ref=e224]
+              - text: Advertising
+              - img [ref=e227]
+            - generic [ref=e229]:
+              - img [ref=e230]
+              - text: Analytics
+              - generic [ref=e231]: Coming Soon
+          - generic [ref=e232]:
+            - paragraph [ref=e233]: Settings
+            - link "Business" [ref=e234] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e235]
+              - text: Business
+            - link "Account" [ref=e238] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e239]
+              - text: Account
+        - generic [ref=e242]:
+          - link "Contact Sales" [ref=e243] [cursor=pointer]:
+            - /url: https://ads.coingecko.com/business-solutions/overview
+            - img [ref=e244]
+            - text: Contact Sales
+          - link "Support" [ref=e246] [cursor=pointer]:
+            - /url: https://support.coingecko.com/hc/en-us/requests/new
+            - img [ref=e247]
+            - text: Support
+          - link "Log in" [ref=e255] [cursor=pointer]:
+            - /url: /sign-in
+      - generic [ref=e256]:
+        - generic [ref=e258]:
+          - button "Toggle Sidebar" [ref=e259] [cursor=pointer]:
+            - img
+            - generic [ref=e260]: Toggle Sidebar
+          - navigation "breadcrumb" [ref=e261]:
+            - list [ref=e262]:
+              - listitem [ref=e263]:
+                - link "Request & Listing" [ref=e264] [cursor=pointer]:
+                  - /url: /request-form/submissions
+              - listitem [ref=e265]:
+                - img [ref=e266]
+              - listitem [ref=e268]:
+                - link "Form Request" [ref=e269] [cursor=pointer]:
+                  - /url: /request-form/new
+              - listitem [ref=e270]:
+                - img [ref=e271]
+              - listitem [ref=e273]:
+                - link "New Coin/Token Listing" [disabled] [ref=e274]
+        - main [ref=e275]:
+          - generic [ref=e276]:
+            - generic [ref=e277]:
+              - generic [ref=e278]:
+                - generic [ref=e279]:
+                  - heading "New Coin Listing Request Form" [level=1] [ref=e280]
+                  - paragraph [ref=e281]:
+                    - text: Use this form for live and traded coins. For coins that are not live yet, submit a preview listing request using the
+                    - button "preview listing form" [ref=e282] [cursor=pointer]
+                    - text: .
+                  - paragraph [ref=e283]:
+                    - text: If you're looking to update existing coin information, kindly use our dedicated form for updates
+                    - link "here" [ref=e284] [cursor=pointer]:
+                      - /url: /request-form/coins/update?updateType=logo
+                    - text: .
+                - generic [ref=e285]:
+                  - generic [ref=e286]:
+                    - generic [ref=e288]: 1. Basic Coin/Token Information
+                    - generic [ref=e289]:
+                      - generic [ref=e290]:
+                        - generic [ref=e291]: Choose Your Listing Type*
+                        - combobox "Choose Your Listing Type*" [ref=e292] [cursor=pointer]:
+                          - generic: Active Listing
+                          - img [ref=e293]
+                        - combobox [ref=e295]
+                        - paragraph [ref=e296]:
+                          - text: "- Active Listing: For coins or tokens that are live and actively traded."
+                          - text: "- Preview Listing: For coins or tokens that haven't launched yet."
+                      - generic [ref=e297]:
+                        - generic [ref=e298]: Coin/Token Name*
+                        - textbox "Coin/Token Name*" [ref=e299]:
+                          - /placeholder: Name of the coin/token, e.g Bitcoin
+                        - paragraph [ref=e300]:
+                          - text: Kindly adhere to the
+                          - link "Asset Naming Methodology" [ref=e301] [cursor=pointer]:
+                            - /url: https://support.coingecko.com/hc/en-us/articles/33608537461913-CoinGecko-Asset-Naming-Methodology
+                          - text: "if your asset falls under one of the following categories:"
+                          - text: "- Stablecoins, Wrapped Assets, Bridged Assets, Merged Assets, Tokenized RWA Assets, Synthetic Assets, Staked Assets,LST's/LRT's, and Escrowed Assets"
+                      - generic [ref=e302]:
+                        - generic [ref=e303]: Coin/Token Symbol*
+                        - textbox "Coin/Token Symbol*" [ref=e304]:
+                          - /placeholder: Symbol of the coin/token, e.g BTC
+                      - generic [ref=e305]:
+                        - generic [ref=e306]:
+                          - generic [ref=e307]: Website URL*
+                          - textbox "Website URL*" [ref=e308]:
+                            - /placeholder: https://
+                        - generic [ref=e309]:
+                          - text: Website URL (2)
+                          - textbox "Website URL (2)" [ref=e310]:
+                            - /placeholder: https://
+                      - generic [ref=e311]:
+                        - generic [ref=e312]:
+                          - text: Website URL (3)
+                          - textbox "Website URL (3)" [ref=e313]:
+                            - /placeholder: https://
+                        - generic [ref=e314]:
+                          - text: Whitepaper Link
+                          - textbox "Whitepaper Link" [ref=e315]:
+                            - /placeholder: https://
+                          - paragraph [ref=e316]: Please include the link to your project whitepaper
+                      - generic [ref=e317]:
+                        - generic [ref=e318]:
+                          - text: Submitter's Role
+                          - textbox "Submitter's Role" [ref=e319]:
+                            - /placeholder: e.g Founder, Developer, Marketing Man...
+                          - paragraph [ref=e320]: Your relationship to this project
+                        - generic [ref=e321]:
+                          - text: Submitter's Telegram Username
+                          - textbox "Submitter's Telegram Username" [ref=e322]:
+                            - /placeholder: ""
+                          - paragraph [ref=e323]: Please provide your Telegram username. Our team may reach out to you via Telegram (if needed) for further information and potential promotional opportunities related to your listing.
+                  - generic [ref=e324]:
+                    - generic [ref=e325]:
+                      - generic [ref=e326]: 2. Project Information
+                      - generic [ref=e328]:
+                        - paragraph [ref=e329]: Please provide a clear and concise description of the project written in the third person. Descriptions that are vague, "shilly" or written in the first person (i.e. Our project is the best AMM in the world) will result in listing DELAYS and/or REJECTION.
+                        - paragraph [ref=e330]: "Guidelines:"
+                        - list [ref=e331]:
+                          - listitem [ref=e332]: Keep it factual and avoid making bold claims.
+                          - listitem [ref=e333]: Focus on providing information, NOT persuading users to invest in your project.
+                          - listitem [ref=e334]: Write in third person-narrative. E.g. Ethereum is a Proof-of-Stake blockchain, NOT We are building a Proof-of-Stake blockchain.
+                        - paragraph [ref=e335]:
+                          - text: "For more ideas on putting together your description, please refer to our Ethereum page:"
+                          - link "https://www.coingecko.com/en/coins/ethereum" [ref=e336] [cursor=pointer]:
+                            - /url: https://www.coingecko.com/en/coins/ethereum
+                    - generic [ref=e337]:
+                      - generic [ref=e338]:
+                        - generic [ref=e339]: What is the project about? *
+                        - group [ref=e340]:
+                          - textbox [ref=e341]
+                          - group [ref=e342]:
+                            - generic [ref=e343]: 0/400 characters minimum
+                        - paragraph [ref=e344]: Please provide a clear and concise description of the project (eg. purpose, function, utility etc). Vague or "shilly" description will result in listing DELAYS and/or REJECTION. Minimum 400 characters.
+                      - generic [ref=e345]:
+                        - text: What makes your project unique?
+                        - group [ref=e346]:
+                          - textbox [ref=e347]
+                          - group [ref=e348]:
+                            - generic [ref=e349]: 0/400 characters minimum
+                        - paragraph [ref=e350]: Please provide a clear and concise description of the project (eg. purpose, function, utility etc). Vague or "shilly" description will result in listing DELAYS and/or REJECTION. Minimum 400 characters.
+                      - generic [ref=e351]:
+                        - text: History of your project?
+                        - group [ref=e352]:
+                          - textbox [ref=e353]
+                          - group [ref=e354]:
+                            - generic [ref=e355]: 0/400 characters minimum
+                        - paragraph [ref=e356]: Please provide a clear and concise description of the project (eg. purpose, function, utility etc). Vague or "shilly" description will result in listing DELAYS and/or REJECTION. Minimum 400 characters.
+                      - generic [ref=e357]:
+                        - text: What's next for your project?
+                        - group [ref=e358]:
+                          - textbox [ref=e359]
+                          - group [ref=e360]:
+                            - generic [ref=e361]: 0/400 characters minimum
+                        - paragraph [ref=e362]: Please provide a clear and concise description of the project (eg. purpose, function, utility etc). Vague or "shilly" description will result in listing DELAYS and/or REJECTION. Minimum 400 characters.
+                      - generic [ref=e363]:
+                        - text: What can your coin/token be used for?
+                        - group [ref=e364]:
+                          - textbox [ref=e365]
+                          - group [ref=e366]:
+                            - generic [ref=e367]: 0/400 characters minimum
+                        - paragraph [ref=e368]: Please provide a clear and concise description of the project (eg. purpose, function, utility etc). Vague or "shilly" description will result in listing DELAYS and/or REJECTION. Minimum 400 characters.
+                  - generic [ref=e369]:
+                    - generic [ref=e370]:
+                      - generic [ref=e371]: 3. Exchange Trading Information
+                      - generic [ref=e373]:
+                        - paragraph [ref=e374]: "IMPORTANT NOTE:"
+                        - list [ref=e375]:
+                          - listitem [ref=e376]: Please select the exchange from the list, and
+                          - listitem [ref=e377]: Please provide the EXACT Link to the market pairs. Failure to properly link to exchange pairs may result in LISTING DELAYS.
+                        - paragraph [ref=e378]: In case of AMM such as Uniswap, please link to the analytics page of the pair. i.e. https://info.uniswap.org/tokens/[ADDRESS]
+                        - paragraph [ref=e379]: If you can't find your exchange in the list, it might not be on CoinGecko yet, and we're unable to proceed.
+                    - generic [ref=e380]:
+                      - generic [ref=e382]:
+                        - 'heading "Trading Pair #1" [level=4] [ref=e384]'
+                        - generic [ref=e385]:
+                          - generic [ref=e386]: Exchange Name*
+                          - generic [ref=e389]:
+                            - combobox [expanded] [ref=e390]
+                            - button [ref=e391] [cursor=pointer]:
+                              - img [ref=e392]
+                        - generic [ref=e394]:
+                          - generic [ref=e395]: Exchange Trade URL*
+                          - textbox "Exchange Trade URL*" [ref=e396]:
+                            - /placeholder: https://
+                      - button "Add New Pair" [ref=e397] [cursor=pointer]:
+                        - img
+                        - text: Add New Pair
+                  - generic [ref=e398]:
+                    - generic [ref=e399]:
+                      - generic [ref=e400]: 4. Block Explorer Links
+                      - generic [ref=e402]:
+                        - text: Please provide explorer link(s) of the token. For example, if this is an ERC20 token please provide the Etherscan URL.
+                        - text: e.g. https://etherscan.io/token/[token_contract_address]
+                    - generic [ref=e403]:
+                      - generic [ref=e404]:
+                        - generic [ref=e405]: Explorer Link *
+                        - textbox "Explorer Link *" [ref=e406]:
+                          - /placeholder: https://
+                      - generic [ref=e407]:
+                        - generic [ref=e408]: Explorer Link (2)
+                        - textbox "Explorer Link (2)" [ref=e409]:
+                          - /placeholder: https://
+                      - generic [ref=e410]:
+                        - generic [ref=e411]: Explorer Link (3)
+                        - textbox "Explorer Link (3)" [ref=e412]:
+                          - /placeholder: https://
+                      - generic [ref=e413]:
+                        - generic [ref=e414]: Explorer Link (4)
+                        - textbox "Explorer Link (4)" [ref=e415]:
+                          - /placeholder: https://
+                      - generic [ref=e416]:
+                        - generic [ref=e417]: Explorer Link (5)
+                        - textbox "Explorer Link (5)" [ref=e418]:
+                          - /placeholder: https://
+                  - generic [ref=e419]:
+                    - generic [ref=e420]:
+                      - generic [ref=e421]: 5. Asset Type & Details
+                      - generic [ref=e423]: Select whether this asset is a Coin or Token.*
+                    - generic [ref=e424]:
+                      - radiogroup [ref=e426]:
+                        - generic [ref=e427] [cursor=pointer]:
+                          - radio "Coin Built on own Mainnet.eg. Bitcoin, Monero, Zcoin etc" [ref=e428]
+                          - radio
+                          - generic [ref=e429]:
+                            - generic [ref=e430]: Coin
+                            - paragraph [ref=e431]: Built on own Mainnet.eg. Bitcoin, Monero, Zcoin etc
+                        - generic [ref=e432] [cursor=pointer]:
+                          - radio "Token Built on Smart Contract platforms, eg. ERC-20, BEP2, tokens etc." [checked] [ref=e433]
+                          - radio [checked]
+                          - generic [ref=e436]:
+                            - generic [ref=e437]: Token
+                            - paragraph [ref=e438]: Built on Smart Contract platforms, eg. ERC-20, BEP2, tokens etc.
+                      - generic [ref=e439]:
+                        - generic [ref=e440]:
+                          - generic [ref=e441]:
+                            - generic [ref=e442]: Blockchain Platform (1) *
+                            - generic [ref=e445]:
+                              - combobox [expanded] [ref=e446]
+                              - button [ref=e447] [cursor=pointer]:
+                                - img [ref=e448]
+                          - generic [ref=e450]:
+                            - generic [ref=e451]: Contract Address (1) *
+                            - textbox "Contract Address (1) *" [ref=e452]
+                            - paragraph [ref=e453]: Please add token contract address (eg. 0x4d24895f1d3221896246da for Ethereum ERC-20 tokens)
+                          - generic [ref=e454]:
+                            - generic [ref=e455]: Contract Decimal Places (1) *
+                            - textbox "Contract Decimal Places (1) *" [ref=e456]:
+                              - /placeholder: ""
+                            - paragraph [ref=e457]:
+                              - text: Here's how you can find the decimal places of a token
+                              - link "https://support.coingecko.com/hc/en-us/articles/5298401805337" [ref=e458] [cursor=pointer]:
+                                - /url: https://support.coingecko.com/hc/en-us/articles/5298401805337
+                        - button "Add New Platform" [ref=e459] [cursor=pointer]:
+                          - img
+                          - text: Add New Platform
+              - generic [ref=e462]:
+                - generic [ref=e464]:
+                  - generic [ref=e465]: "1"
+                  - generic [ref=e466]: Basic Coin Information
+                - generic [ref=e470]:
+                  - generic [ref=e471]: "2"
+                  - generic [ref=e472]: Supply Information
+                - generic [ref=e476]:
+                  - generic [ref=e477]: "3"
+                  - generic [ref=e478]: Additional Information
+            - 'button "Next: Supply Information" [ref=e480] [cursor=pointer]'
+  - alert [ref=e178]

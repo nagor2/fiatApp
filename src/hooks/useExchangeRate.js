@@ -115,7 +115,7 @@ export default function useExchangeRate() {
       }
 
       // History via worker only
-      const txs = await getContractTransactions(oracleAddress, 50);
+      const txs = await getContractTransactions(oracleAddress, 100);
       const transactions = txs.filter((tx) => tx.method === 'updateSeveralPrices');
 
       const priceMap = new Map();
@@ -219,6 +219,11 @@ export default function useExchangeRate() {
   }, [contracts?.oracle, contracts?.basket, web3]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const t = setInterval(load, 30_000);
+    return () => clearInterval(t);
+  }, [load]);
 
   return { ...state, reload: load };
 }

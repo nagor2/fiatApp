@@ -1,0 +1,215 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - img "Ecosystem Support Program logo" [ref=e8] [cursor=pointer]
+        - list [ref=e10]:
+          - listitem [ref=e11]:
+            - link "Home" [ref=e12] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e13]
+          - listitem [ref=e14]:
+            - img [ref=e15]
+            - link "How to Apply" [ref=e17] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e18]
+          - listitem [ref=e19]:
+            - img [ref=e20]
+            - link "Funded Projects" [ref=e22] [cursor=pointer]:
+              - /url: /funded-projects
+              - heading "Funded Projects" [level=4] [ref=e23]
+          - listitem [ref=e24]:
+            - img [ref=e25]
+            - link "About ESP" [ref=e27] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e28]
+          - listitem [ref=e29]:
+            - img [ref=e30]
+            - link "Blog" [ref=e32] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e33]
+    - main [ref=e35]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - heading "How to Apply" [level=1] [ref=e40]
+          - paragraph [ref=e41]: Whether you're working on a specific project, or you're still exploring possibilities, you can connect with our team for guidance.
+        - img "Kid watching plants grow" [ref=e43]
+      - tablist [ref=e46]:
+        - tab "Overview" [selected] [ref=e47] [cursor=pointer]:
+          - heading "Overview" [level=2] [ref=e48]
+        - tab "Office Hours" [ref=e49] [cursor=pointer]:
+          - heading "Office Hours" [level=2] [ref=e50]
+        - tab "Wishlist" [ref=e51] [cursor=pointer]:
+          - heading "Wishlist" [level=2] [ref=e52]
+        - tab "RFPs" [ref=e53] [cursor=pointer]:
+          - heading "RFPs" [level=2] [ref=e54]
+        - tab "Open Rounds" [ref=e55] [cursor=pointer]:
+          - heading "Open Rounds" [level=2] [ref=e56]
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - link "Mission and Scope" [ref=e65] [cursor=pointer]:
+            - /url: /applicants#mission-and-scope
+            - paragraph [ref=e66]: Mission and Scope
+          - link "Process" [ref=e70] [cursor=pointer]:
+            - /url: /applicants#process
+            - paragraph [ref=e71]: Process
+          - link "Selection criteria" [ref=e75] [cursor=pointer]:
+            - /url: /applicants#selection-criteria
+            - paragraph [ref=e76]: Selection criteria
+          - link "FAQ" [ref=e80] [cursor=pointer]:
+            - /url: /applicants#faq
+            - paragraph [ref=e81]: FAQ
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - heading "Mission and Scope" [level=2] [ref=e85]
+            - paragraph [ref=e86]: ESP provides financial and/or non-financial support to eligible projects working to improve Ethereum. We focus on work that strengthens Ethereum's foundations and enables future builders. The work we support is free, open-source, non-commercial, and designed to create positive sum outcomes for the community.
+            - paragraph [ref=e87]: "Our support is generally directed toward enabling builders rather than end-users: strengthening Ethereum's infrastructure, expanding the range of tools available to those building on Ethereum, gaining a deeper understanding of cryptographic primitives, growing the builder ecosystem through education and community development, etc."
+          - generic [ref=e88]:
+            - heading "Process" [level=3] [ref=e89]
+            - generic [ref=e90]:
+              - generic [ref=e91]:
+                - heading "Browse" [level=4] [ref=e94]
+                - paragraph [ref=e96]: Browse the available Wishlist or RFP items and find one that matches your interests and expertise. Each item includes a detailed description and, when applicable, relevant resources.
+                - img "next step arrow" [ref=e99]
+              - generic [ref=e100]:
+                - heading "Apply" [level=4] [ref=e103]
+                - paragraph [ref=e105]: Submit your application detailing how you plan to address the Wishlist or RFP item. Describe how your background and approach align with the project requirements by providing clear information on your methodology, timeline, and deliverables. Once submitted, you will receive a confirmation email.
+                - img "next step arrow" [ref=e108]
+              - generic [ref=e109]:
+                - heading "Review" [level=4] [ref=e112]
+                - paragraph [ref=e114]: "The Grant Management (GM) team reviews applications in collaboration with the EF team responsible for the corresponding Wishlist or RFP item. The evaluation process may include: an interview to discuss your proposal in detail, project rescoping, or budget negotiations."
+                - img "next step arrow" [ref=e117]
+              - generic [ref=e118]:
+                - heading "Decision" [level=4] [ref=e121]
+                - paragraph [ref=e123]: You will be notified of funding decisions via email. If your project is selected, we will work closely with you to establish a clear grant structure with milestone-based payments. All grant recipients also complete an onboarding process, involving KYC verification and signing a legal grant agreement.
+                - img "next step arrow" [ref=e126]
+              - generic [ref=e127]:
+                - heading "Execute" [level=4] [ref=e130]
+                - paragraph [ref=e132]: Begin work on your project with ongoing support from the GM team. You will be paired with a Grant Evaluator for regular check-ins, milestone reviews, and support as you progress.
+                - img "next step arrow" [ref=e135]
+              - generic [ref=e136]:
+                - heading "Complete" [level=4] [ref=e139]
+                - paragraph [ref=e141]: Once the scope of work is completed, you will share the results publicly in a report or post.
+          - generic [ref=e142]:
+            - heading "Selection criteria" [level=3] [ref=e143]
+            - paragraph [ref=e144]: "Applications are evaluated based on several key factors, such as:"
+            - list [ref=e145]:
+              - listitem [ref=e146]:
+                - strong [ref=e147]: Technical approach
+                - text: ": Soundness, feasibility, and clarity of your proposed methodology and implementation plan"
+              - listitem [ref=e148]:
+                - strong [ref=e149]: Ecosystem impact
+                - text: ": Potential benefit to the Ethereum community and alignment with ecosystem priorities"
+              - listitem [ref=e150]:
+                - strong [ref=e151]: Open source
+                - text: ": All outputs must be open-source or otherwise freely available; for-profit companies are welcome to apply, but the specific grant-funded work must be open-source and accessible to the community"
+              - listitem [ref=e152]:
+                - strong [ref=e153]: Budget
+                - text: ": Cost-effectiveness and appropriate allocation of resources; since we are offering non-dilutive capital, we generally anticipate some flexibility below standard market rates"
+              - listitem [ref=e154]:
+                - strong [ref=e155]: Experience
+                - text: ": Relevant background, skills, and prior work that demonstrate capability"
+              - listitem [ref=e156]:
+                - strong [ref=e157]: Alignment
+                - text: ": Understanding of Ethereum's values and ecosystem needs, and how your work contributes to them"
+          - generic [ref=e158]:
+            - heading "FAQ" [level=3] [ref=e159]
+            - generic [ref=e160]:
+              - button "What's the difference between Wishlist and RFP items?" [ref=e162] [cursor=pointer]:
+                - img [ref=e163]
+                - heading "What's the difference between Wishlist and RFP items?" [level=4] [ref=e166]
+              - button "Can I apply for multiple Wishlist or RFP items simultaneously?" [ref=e168] [cursor=pointer]:
+                - img [ref=e169]
+                - heading "Can I apply for multiple Wishlist or RFP items simultaneously?" [level=4] [ref=e172]
+              - button "How long does the evaluation process take?" [ref=e174] [cursor=pointer]:
+                - img [ref=e175]
+                - heading "How long does the evaluation process take?" [level=4] [ref=e178]
+              - button "How often are new Wishlist or RFP items added?" [ref=e180] [cursor=pointer]:
+                - img [ref=e181]
+                - heading "How often are new Wishlist or RFP items added?" [level=4] [ref=e184]
+              - button "What is the typical funding range for a grant awarded through the Wishlist or RFP?" [ref=e186] [cursor=pointer]:
+                - img [ref=e187]
+                - heading "What is the typical funding range for a grant awarded through the Wishlist or RFP?" [level=4] [ref=e190]
+          - generic [ref=e191]:
+            - heading "Other EcoDev Teams" [level=3] [ref=e192]
+            - paragraph [ref=e193]: Looking for different support? Connect with the team that best matches your next step in the ecosystem.
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - img "Illustration representing founder success support" [ref=e197]
+                - heading "Founders" [level=4] [ref=e198]
+                - paragraph [ref=e199]: Level up your founder journey with access to programs, mentorship, and visibility across the Ethereum ecosystem.
+                - link "Founder Success" [ref=e200] [cursor=pointer]:
+                  - /url: https://ethereum.org/founders/
+                  - heading "Founder Success" [level=2] [ref=e203]
+              - generic [ref=e204]:
+                - img "Building illustration representing business growth" [ref=e206]
+                - heading "Businesses" [level=4] [ref=e207]
+                - paragraph [ref=e208]: Explore potential pathways and opportunities for businesses and enterprise looking to leverage Ethereum.
+                - link "Enterprise Team" [ref=e209] [cursor=pointer]:
+                  - /url: https://institutions.ethereum.org/
+                  - heading "Enterprise Team" [level=2] [ref=e212]
+              - generic [ref=e213]:
+                - img "Community illustration representing collaboration" [ref=e215]
+                - heading "Community Builders" [level=4] [ref=e216]
+                - paragraph [ref=e217]: Request support for organizing an event or launching a community initiative.
+                - link "Ethereum Everywhere" [ref=e218] [cursor=pointer]:
+                  - /url: https://docs.google.com/forms/d/e/1FAIpQLSeA-W8iy2PJxrY3TD4lMYXyky_wLd4QB_7NRwqSxCd0e19MUg/viewform
+                  - heading "Ethereum Everywhere" [level=2] [ref=e221]
+    - img "People gathered around the Ethereum tree" [ref=e224]
+    - generic [ref=e225]:
+      - generic [ref=e226]:
+        - img "Ethereum Foundation logo" [ref=e228]
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - link "Home" [ref=e231] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e232]
+            - link "How to Apply" [ref=e233] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e234]
+            - link "About ESP" [ref=e235] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e236]
+            - link "Blog" [ref=e237] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e238]
+          - generic [ref=e239]:
+            - link "Privacy Policy" [ref=e240] [cursor=pointer]:
+              - /url: https://ethereum.org/en/privacy-policy/
+              - heading "Privacy Policy" [level=4] [ref=e241]
+            - link "Terms of Use" [ref=e242] [cursor=pointer]:
+              - /url: https://ethereum.org/en/terms-of-use/
+              - heading "Terms of Use" [level=4] [ref=e243]
+            - link "Cookie Policy" [ref=e244] [cursor=pointer]:
+              - /url: https://ethereum.org/en/cookie-policy/
+              - heading "Cookie Policy" [level=4] [ref=e245]
+            - link "Ethereum.org" [ref=e246] [cursor=pointer]:
+              - /url: https://ethereum.org/
+              - heading "Ethereum.org" [level=4] [ref=e247]
+        - generic [ref=e248]:
+          - link "Farcaster logo" [ref=e250] [cursor=pointer]:
+            - /url: https://farcaster.xyz/ef-esp
+            - img "Farcaster logo" [ref=e251]
+          - link "Lens logo" [ref=e253] [cursor=pointer]:
+            - /url: https://hey.xyz/u/ef_esp
+            - img "Lens logo" [ref=e254]
+          - link "Bluesky logo" [ref=e256] [cursor=pointer]:
+            - /url: https://bsky.app/profile/ef-esp.bsky.social
+            - img "Bluesky logo" [ref=e257]
+          - link "GitHub logo" [ref=e259] [cursor=pointer]:
+            - /url: https://github.com/ethereum
+            - img "GitHub logo" [ref=e260]
+          - link "Twitter logo" [ref=e262] [cursor=pointer]:
+            - /url: https://twitter.com/EF_ESP
+            - img "Twitter logo" [ref=e263]
+      - generic [ref=e264]:
+        - separator [ref=e266]
+        - paragraph [ref=e268]: © 2026 Ethereum Foundation. All rights reserved.
+  - alert [ref=e269]
+  - generic:
+    - region "Notifications-top"
+    - region "Notifications-top-left"
+    - region "Notifications-top-right"
+    - region "Notifications-bottom-left"
+    - region "Notifications-bottom"
+    - region "Notifications-bottom-right"

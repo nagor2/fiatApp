@@ -1,23 +1,40 @@
 {
   "instruments": [
-    {
-      "id": 1,
-      "symbol": "ETH/USD",
-      "coingeckoId": "ethereum",
-      "vsUsd": true
-    },
-    {
-      "id": 2,
-      "symbol": "XAU/USD",
-      "coingeckoId": "gold",
-      "vsUsd": true
-    },
-    {
-      "id": 3,
-      "symbol": "BTC/USD",
-      "coingeckoId": "bitcoin",
-      "vsUsd": true
-    }
-  ],
-  "comment": "Add your instruments here. coingeckoId is used to fetch market price from CoinGecko (leave empty for commodities — bot will compare with previous on-chain price instead)."
+    { "id": 0,  "symbol": "Unknown",        "decimals": 6 },
+    { "id": 1,  "symbol": "ETH/USD",        "decimals": 6, "coingeckoId": "ethereum" },
+    { "id": 2,  "symbol": "Gold",           "decimals": 6 },
+    { "id": 3,  "symbol": "Silver",         "decimals": 6 },
+    { "id": 4,  "symbol": "Copper",         "decimals": 6 },
+    { "id": 5,  "symbol": "Platinum",       "decimals": 6 },
+    { "id": 6,  "symbol": "XAU/USD",        "decimals": 6 },
+    { "id": 7,  "symbol": "XAG/USD",        "decimals": 6 },
+    { "id": 8,  "symbol": "Palladium",      "decimals": 6 },
+    { "id": 9,  "symbol": "Crude Oil WTI",  "decimals": 6 },
+    { "id": 10, "symbol": "Brent Oil",      "decimals": 6 },
+    { "id": 11, "symbol": "Natural Gas",    "decimals": 6 },
+    { "id": 12, "symbol": "Heating Oil",    "decimals": 6 },
+    { "id": 13, "symbol": "Gasoline RBOB",  "decimals": 6 },
+    { "id": 14, "symbol": "London Gas Oil", "decimals": 6 },
+    { "id": 15, "symbol": "Aluminium",      "decimals": 6 },
+    { "id": 16, "symbol": "Zinc",           "decimals": 6 },
+    { "id": 17, "symbol": "Nickel",         "decimals": 6 },
+    { "id": 18, "symbol": "Copper London",  "decimals": 6 },
+    { "id": 19, "symbol": "US Wheat",       "decimals": 6 },
+    { "id": 20, "symbol": "Rough Rice",     "decimals": 6 },
+    { "id": 21, "symbol": "US Corn",        "decimals": 6 },
+    { "id": 22, "symbol": "US Soybeans",    "decimals": 6 },
+    { "id": 23, "symbol": "US Soybean Oil", "decimals": 6 },
+    { "id": 24, "symbol": "US Soybean Meal","decimals": 6 },
+    { "id": 25, "symbol": "US Cotton",      "decimals": 6 },
+    { "id": 26, "symbol": "US Cocoa",       "decimals": 6 },
+    { "id": 27, "symbol": "US Coffee C",    "decimals": 6 },
+    { "id": 28, "symbol": "London Coffee",  "decimals": 6 },
+    { "id": 29, "symbol": "US Sugar",       "decimals": 6 },
+    { "id": 30, "symbol": "Live Cattle",    "decimals": 6 },
+    { "id": 31, "symbol": "Lean Hogs",      "decimals": 6 },
+    { "id": 32, "symbol": "Feeder Cattle",  "decimals": 6 },
+    { "id": 33, "symbol": "Lumber",         "decimals": 6 },
+    { "id": 34, "symbol": "Oats",           "decimals": 6 },
+    { "id": 35, "symbol": "Orange Juice",   "decimals": 6 }
+  ]
 }

@@ -1,0 +1,2 @@
+[  654555ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://esp.ethereum.foundation/api/wishlist:0
+[  654568ms] [ERROR] There has been a problem with your operation:  Network response was not OK @ https://esp.ethereum.foundation/_next/static/chunks/pages/_app-b95d39885fd0cb1d.js:11

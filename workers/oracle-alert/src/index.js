@@ -37,12 +37,8 @@ const DAO_ABI = [
 
 const ORACLE_ABI = [
   {
-    type: 'event', name: 'PriceSubmitted',
-    inputs: [
-      { name: 'id',          type: 'uint16',  indexed: true  },
-      { name: 'price',       type: 'uint256', indexed: false },
-      { name: 'effectiveAt', type: 'uint256', indexed: false }
-    ]
+    type: 'event', name: 'priceUpdated',
+    inputs: [{ name: 'id', type: 'uint16', indexed: false }]
   },
   {
     type: 'event', name: 'highVolatility',
@@ -95,7 +91,7 @@ const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 class OracleAlertBot {
   constructor() {
     this.daoAddress        = process.env.DAO_ADDRESS;
-    this.rpcHttpUrl        = (process.env.RPC_HTTP_URL || '').split(',')[0].trim();
+    this.rpcHttpUrl        = (process.env.RPC_URL || '').split(',')[0].trim();
     this.rpcWsUrl          = process.env.RPC_WS_URL;
     this.telegramToken     = process.env.TELEGRAM_BOT_TOKEN;
     this.channelId         = process.env.TELEGRAM_CHANNEL_ID || null;
@@ -165,7 +161,7 @@ class OracleAlertBot {
   _validateConfig() {
     if (!this.telegramToken) throw new Error('Missing TELEGRAM_BOT_TOKEN');
     if (!this.daoAddress)    throw new Error('Missing DAO_ADDRESS');
-    if (!this.rpcHttpUrl && !this.rpcWsUrl) throw new Error('Need RPC_HTTP_URL or RPC_WS_URL');
+    if (!this.rpcHttpUrl && !this.rpcWsUrl) throw new Error('Need RPC_URL or RPC_WS_URL');
     logger.info(`Alert threshold: ${this.alertThresholdPct}% | Block-watcher: ${this.blockWatcherUrl}`);
   }
 
@@ -173,7 +169,7 @@ class OracleAlertBot {
     try {
       const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/instruments.json'), 'utf8'));
       for (const inst of cfg.instruments) {
-        this.instrumentMap.set(inst.id, { symbol: inst.symbol, coingeckoId: inst.coingeckoId || null });
+        this.instrumentMap.set(inst.id, { symbol: inst.symbol, decimals: inst.decimals || 6, coingeckoId: inst.coingeckoId || null });
       }
       logger.info(`Instruments: ${[...this.instrumentMap.values()].map(i => i.symbol).join(', ')}`);
     } catch (err) {
@@ -333,7 +329,7 @@ class OracleAlertBot {
   async _initRedisPoller() {
     // Initialise lastSeenBlock from current top of each sorted set
     // so we don't replay old events on mode switch.
-    await this._initLastSeen(`events:${this.bwOracleKey}:PriceSubmitted:list`);
+    await this._initLastSeen(`events:${this.bwOracleKey}:priceUpdated:list`);
     await this._initLastSeen(`events:${this.bwOracleKey}:highVolatility:list`);
     await this._initLastSeen(`events:${this.bwCdpKey}:liquidationStatusChanged:list`);
 
@@ -359,8 +355,8 @@ class OracleAlertBot {
 
     await Promise.all([
       this._drainRedisEvents(
-        `events:${this.bwOracleKey}:PriceSubmitted:list`,
-        e => this._handlePriceSubmitted(e)
+        `events:${this.bwOracleKey}:priceUpdated:list`,
+        e => this._handlePriceUpdated(e)
       ),
       this._drainRedisEvents(
         `events:${this.bwOracleKey}:highVolatility:list`,
@@ -429,12 +425,12 @@ class OracleAlertBot {
     const to   = Math.min(latest, this._rpcLastBlock + 50);
 
     const [priceEvents, volatilityEvents, liquidationEvents] = await Promise.all([
-      this.oracleContract.getPastEvents('PriceSubmitted',           { fromBlock: from, toBlock: to }),
+      this.oracleContract.getPastEvents('priceUpdated',             { fromBlock: from, toBlock: to }),
       this.oracleContract.getPastEvents('highVolatility',           { fromBlock: from, toBlock: to }),
       this.cdpContract   .getPastEvents('liquidationStatusChanged', { fromBlock: from, toBlock: to })
     ]);
 
-    for (const e of priceEvents)       await this._handlePriceSubmitted(e).catch(err => logger.error(err.message));
+    for (const e of priceEvents)       await this._handlePriceUpdated(e).catch(err => logger.error(err.message));
     for (const e of volatilityEvents)  await this._handleHighVolatility(e).catch(err => logger.error(err.message));
     for (const e of liquidationEvents) await this._handleLiquidation(e).catch(err => logger.error(err.message));
 
@@ -443,45 +439,38 @@ class OracleAlertBot {
 
   // ── event handlers ─────────────────────────────────────────────────────────
 
-  async _handlePriceSubmitted(event) {
-    const id          = Number(event.returnValues.id);
-    const newPrice    = BigInt(event.returnValues.price);
-    const effectiveAt = Number(event.returnValues.effectiveAt);
-
+  async _handlePriceUpdated(event) {
+    const id   = Number(event.returnValues.id);
     const inst = this.instrumentMap.get(id) || { symbol: `Instrument #${id}`, coingeckoId: null };
-    const effectiveTime = new Date(effectiveAt * 1000).toUTCString();
 
-    logger.info(`PriceSubmitted ${inst.symbol} price=${newPrice} effectiveAt=${effectiveTime}`);
+    const decimals = inst.decimals ?? 6;
+    logger.info(`priceUpdated id=${id} (${inst.symbol})`);
 
-    const lines = [
-      `⏳ <b>Oracle price submitted</b>`,
-      `Instrument: <b>${inst.symbol}</b>`,
-      `Submitted: <code>${this._fmtPrice(newPrice)}</code>`,
-      `Goes live: <code>${effectiveTime}</code>`,
-      ``
-    ];
-
-    // Deviation from current live on-chain price
+    // Fetch the now-live price from chain (priceUpdated only carries id)
+    let newPrice = null;
     try {
       const onchain = await this.oracleContract.methods.instruments(id).call();
-      const prevPrice = BigInt(onchain.price);
-      if (prevPrice > 0n) {
-        const devPct = this._devPct(prevPrice, newPrice);
-        lines.push(`Previous live: <code>${this._fmtPrice(prevPrice)}</code>`);
-        lines.push(`Move: <code>${devPct.toFixed(2)}%</code>`);
-        if (devPct > this.alertThresholdPct) lines.push(`⚠️ <b>Above ${this.alertThresholdPct}% threshold!</b>`);
-        lines.push('');
-      }
+      newPrice = BigInt(onchain.price);
     } catch (err) {
       logger.warn(`Could not fetch on-chain price for id=${id}: ${err.message}`);
     }
 
+    const lines = [
+      `🔄 <b>Oracle price updated</b>`,
+      `Instrument: <b>${inst.symbol}</b>`,
+    ];
+
+    if (newPrice !== null && newPrice > 0n) {
+      lines.push(`New price: <code>$${this._fmtPrice(newPrice, decimals)}</code>`);
+    }
+
     // Market comparison via CoinGecko
-    if (inst.coingeckoId) {
+    if (inst.coingeckoId && newPrice !== null && newPrice > 0n) {
       try {
         const marketUsd = await this._fetchMarketPrice(inst.coingeckoId);
         if (marketUsd !== null) {
-          const marketRaw = BigInt(Math.round(marketUsd * 1e18));
+          const scale    = 10 ** decimals;
+          const marketRaw = BigInt(Math.round(marketUsd * scale));
           const devPct    = this._devPct(marketRaw, newPrice);
           lines.push(`CoinGecko market: <code>$${marketUsd.toFixed(2)}</code>`);
           lines.push(`Deviation: <code>${devPct.toFixed(2)}%</code>`);
@@ -637,9 +626,9 @@ class OracleAlertBot {
     return (Number(diff) / Number(a)) * 100;
   }
 
-  _fmtPrice(raw) {
-    const f = Number(raw) / 1e18;
-    return f < 1 ? f.toFixed(8) : f.toFixed(2);
+  _fmtPrice(raw, decimals = 6) {
+    const f = Number(raw) / 10 ** decimals;
+    return f < 1 ? f.toFixed(6) : f.toFixed(2);
   }
 
   // ── shutdown ───────────────────────────────────────────────────────────────

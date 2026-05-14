@@ -1,0 +1,15 @@
+[    2743ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://ethglobal.com/events/newyork2026:0
+[    5241ms] [WARNING] ApolloError: Access denied! You need to be authenticated to perform this action!
+    at new n (https://ethglobal.com/_next/static/chunks/0alg82kox~oja.js:1:49766)
+    at https://ethglobal.com/_next/static/chunks/097ymuoja7~.~.js:1:50680
+    at a (https://ethglobal.com/_next/static/chunks/097ymuoja7~.~.js:1:25848)
+    at https://ethglobal.com/_next/static/chunks/097ymuoja7~.~.js:1:25763
+    at new Promise (<anonymous>)
+    at Object.then (https://ethglobal.com/_next/static/chunks/097ymuoja7~.~.js:1:25730)
+    at Object.next (https://ethglobal.com/_next/static/chunks/097ymuoja7~.~.js:1:25858)
+    at v (https://ethglobal.com/_next/static/chunks/0alg82kox~oja.js:1:15473)
+    at m (https://ethglobal.com/_next/static/chunks/0alg82kox~oja.js:1:15995)
+    at t.next (https://ethglobal.com/_next/static/chunks/0alg82kox~oja.js:1:16496) @ https://ethglobal.com/_next/static/chunks/184f_jkvk-tch.js:0
+[    6225ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://ethglobal.com/events/newyork2026:0
+[    6225ms] [ERROR] Error checking Cross-Origin-Opener-Policy: HTTP error! status: 500 @ https://ethglobal.com/_next/static/chunks/0nalrq4ur7w-..js:2
+[   13336ms] [LOG] Download the Apollo DevTools for a better development experience: %s https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm @ https://ethglobal.com/_next/static/chunks/0alg82kox~oja.js:0

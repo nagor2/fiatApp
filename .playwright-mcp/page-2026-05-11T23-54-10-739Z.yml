@@ -1,0 +1,182 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - img "Ecosystem Support Program logo" [ref=e8] [cursor=pointer]
+        - list [ref=e10]:
+          - listitem [ref=e11]:
+            - link "Home" [ref=e12] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e13]
+          - listitem [ref=e14]:
+            - img [ref=e15]
+            - link "How to Apply" [ref=e17] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e18]
+          - listitem [ref=e19]:
+            - img [ref=e20]
+            - link "Funded Projects" [ref=e22] [cursor=pointer]:
+              - /url: /funded-projects
+              - heading "Funded Projects" [level=4] [ref=e23]
+          - listitem [ref=e24]:
+            - img [ref=e25]
+            - link "About ESP" [ref=e27] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e28]
+          - listitem [ref=e29]:
+            - img [ref=e30]
+            - link "Blog" [ref=e32] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e33]
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - heading "We provide support to builders creating public goods for the Ethereum ecosystem." [level=1] [ref=e36]
+        - generic [ref=e37]:
+          - link "Grant support" [ref=e38] [cursor=pointer]:
+            - /url: /applicants
+            - heading "Grant support" [level=2] [ref=e42]
+          - link "Ecosystem support" [ref=e43] [cursor=pointer]:
+            - /url: "#other-support"
+            - heading "Ecosystem support" [level=2] [ref=e47]
+      - img "People gathered around the Ethereum tree" [ref=e50]
+    - generic [ref=e53]:
+      - generic [ref=e56]:
+        - heading "Our Mission" [level=3] [ref=e57]
+        - paragraph [ref=e58]: "The Ecosystem Support Program is an ecosystem development cluster within the Ethereum Foundation comprising two teams: Grant Management and Funding Coordination. Together, we focus on strengthening Ethereum's foundations, supporting teams across the ecosystem, and enabling future builders."
+      - generic [ref=e61]:
+        - img "small succulent plant representing allocation in 2019" [ref=e64]
+        - generic [ref=e66]:
+          - heading "2021" [level=4] [ref=e67]
+          - paragraph [ref=e69]: 136 projects
+          - paragraph [ref=e70]: $26.9 million
+        - img "medium succulent plant representing allocation in 2020" [ref=e73]
+        - generic [ref=e75]:
+          - heading "2022" [level=4] [ref=e76]
+          - paragraph [ref=e78]: 397 projects
+          - paragraph [ref=e79]: $30.0 million
+        - img "medium succulent plant representing allocation in 2020" [ref=e82]
+        - generic [ref=e84]:
+          - heading "2023" [level=4] [ref=e85]
+          - paragraph [ref=e87]: 498 projects
+          - paragraph [ref=e88]: $61.1 million
+        - img "big opened succulent plant representing allocation in 2021" [ref=e91]
+        - generic [ref=e93]:
+          - heading "2024" [level=4] [ref=e94]
+          - paragraph [ref=e96]: 677 projects
+          - paragraph [ref=e97]: $44.4 million
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - heading "Our Role" [level=3] [ref=e102]
+          - img "supported categories tree" [ref=e104]
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - paragraph [ref=e107]: "ESP comprises two teams:"
+            - list [ref=e108]:
+              - listitem [ref=e109]:
+                - paragraph [ref=e110]: "Grant Management: Supporting the strategic allocation of resources to projects that are most critical to Ethereum’s resilience and usability"
+              - listitem [ref=e111]:
+                - paragraph [ref=e112]: "Funding Coordination: Streamlining access to funding and resources across multiple channels to support impactful projects"
+          - link "Read more" [ref=e114] [cursor=pointer]:
+            - /url: /about
+            - heading "Read more" [level=2] [ref=e118]
+      - generic [ref=e121]:
+        - generic [ref=e122]:
+          - heading "Our Focus" [level=3] [ref=e123]
+          - img "supported categories tree" [ref=e125]
+        - generic [ref=e126]:
+          - paragraph [ref=e128]: We support free and open-source projects that strengthen Ethereum's foundations, with a particular focus on builder tools, infrastructure, research, community resources, and other public goods. Our support is generally directed towards builders, rather than end users.
+          - link "Read more" [ref=e130] [cursor=pointer]:
+            - /url: /applicants
+            - heading "Read more" [level=2] [ref=e134]
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - heading "Our Approach" [level=3] [ref=e139]
+          - img "people making research about supported categories" [ref=e141]
+        - generic [ref=e142]:
+          - paragraph [ref=e144]: Financial support is offered through our Wishlist and RFPs, which highlight funding opportunities curated by EF teams. Non-financial support is available through Office Hours, where builders can receive project feedback, guidance on navigating the ecosystem, or advice on aligning their project with a Wishlist or RFP item.
+          - link "Read more" [ref=e146] [cursor=pointer]:
+            - /url: /applicants
+            - heading "Read more" [level=2] [ref=e150]
+      - generic [ref=e152]:
+        - heading "Other EcoDev Teams" [level=3] [ref=e153]
+        - paragraph [ref=e154]: Looking for different support? Connect with the team that best matches your next step in the ecosystem.
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - img "Illustration representing founder success support" [ref=e158]
+            - heading "Founders" [level=4] [ref=e159]
+            - paragraph [ref=e160]: Level up your founder journey with access to programs, mentorship, and visibility across the Ethereum ecosystem.
+            - link "Founder Success" [ref=e161] [cursor=pointer]:
+              - /url: https://ethereum.org/founders/
+              - heading "Founder Success" [level=2] [ref=e164]
+          - generic [ref=e165]:
+            - img "Building illustration representing business growth" [ref=e167]
+            - heading "Businesses" [level=4] [ref=e168]
+            - paragraph [ref=e169]: Explore potential pathways and opportunities for businesses and enterprise looking to leverage Ethereum.
+            - link "Enterprise Team" [ref=e170] [cursor=pointer]:
+              - /url: https://institutions.ethereum.org/
+              - heading "Enterprise Team" [level=2] [ref=e173]
+          - generic [ref=e174]:
+            - img "Community illustration representing collaboration" [ref=e176]
+            - heading "Community Builders" [level=4] [ref=e177]
+            - paragraph [ref=e178]: Request support for organizing an event or launching a community initiative.
+            - link "Ethereum Everywhere" [ref=e179] [cursor=pointer]:
+              - /url: https://docs.google.com/forms/d/e/1FAIpQLSeA-W8iy2PJxrY3TD4lMYXyky_wLd4QB_7NRwqSxCd0e19MUg/viewform
+              - heading "Ethereum Everywhere" [level=2] [ref=e182]
+    - img "People gathered around the Ethereum tree" [ref=e185]
+    - generic [ref=e186]:
+      - generic [ref=e187]:
+        - img "Ethereum Foundation logo" [ref=e189]
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - link "Home" [ref=e192] [cursor=pointer]:
+              - /url: /
+              - heading "Home" [level=4] [ref=e193]
+            - link "How to Apply" [ref=e194] [cursor=pointer]:
+              - /url: /applicants
+              - heading "How to Apply" [level=4] [ref=e195]
+            - link "About ESP" [ref=e196] [cursor=pointer]:
+              - /url: /about
+              - heading "About ESP" [level=4] [ref=e197]
+            - link "Blog" [ref=e198] [cursor=pointer]:
+              - /url: https://blog.ethereum.org/category/ecosystem-support-program/
+              - heading "Blog" [level=4] [ref=e199]
+          - generic [ref=e200]:
+            - link "Privacy Policy" [ref=e201] [cursor=pointer]:
+              - /url: https://ethereum.org/en/privacy-policy/
+              - heading "Privacy Policy" [level=4] [ref=e202]
+            - link "Terms of Use" [ref=e203] [cursor=pointer]:
+              - /url: https://ethereum.org/en/terms-of-use/
+              - heading "Terms of Use" [level=4] [ref=e204]
+            - link "Cookie Policy" [ref=e205] [cursor=pointer]:
+              - /url: https://ethereum.org/en/cookie-policy/
+              - heading "Cookie Policy" [level=4] [ref=e206]
+            - link "Ethereum.org" [ref=e207] [cursor=pointer]:
+              - /url: https://ethereum.org/
+              - heading "Ethereum.org" [level=4] [ref=e208]
+        - generic [ref=e209]:
+          - link "Farcaster logo" [ref=e211] [cursor=pointer]:
+            - /url: https://farcaster.xyz/ef-esp
+            - img "Farcaster logo" [ref=e212]
+          - link "Lens logo" [ref=e214] [cursor=pointer]:
+            - /url: https://hey.xyz/u/ef_esp
+            - img "Lens logo" [ref=e215]
+          - link "Bluesky logo" [ref=e217] [cursor=pointer]:
+            - /url: https://bsky.app/profile/ef-esp.bsky.social
+            - img "Bluesky logo" [ref=e218]
+          - link "GitHub logo" [ref=e220] [cursor=pointer]:
+            - /url: https://github.com/ethereum
+            - img "GitHub logo" [ref=e221]
+          - link "Twitter logo" [ref=e223] [cursor=pointer]:
+            - /url: https://twitter.com/EF_ESP
+            - img "Twitter logo" [ref=e224]
+      - generic [ref=e225]:
+        - separator [ref=e227]
+        - paragraph [ref=e229]: © 2026 Ethereum Foundation. All rights reserved.
+  - alert [ref=e230]
+  - generic:
+    - region "Notifications-top"
+    - region "Notifications-top-left"
+    - region "Notifications-top-right"
+    - region "Notifications-bottom-left"
+    - region "Notifications-bottom"
+    - region "Notifications-bottom-right"

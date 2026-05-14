@@ -4,7 +4,7 @@
     "rule": ["Transfer", "Approval"],
     "flatCoin": ["Transfer", "Approval"],
     "cdp": ["PositionOpened", "PositionUpdated", "liquidateCollateral", "liquidationStatusChanged"],
-    "oracle": ["priceUpdated", "priceUpdateRequest"],
+    "oracle": ["priceUpdated", "priceUpdateRequest", "highVolatility"],
     "deposit": ["DepositOpened"],
     "basket": ["instrumentAdded", "shareChanged"],
     "auction": ["newAuction", "newBid", "auctionFinished", "bidCanceled"],

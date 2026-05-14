@@ -1,0 +1,199 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "Paragraph" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "Paragraph" [ref=e9]
+      - generic [ref=e10]:
+        - generic [ref=e17]:
+          - link "Our Story" [ref=e20] [cursor=pointer]:
+            - /url: /story
+          - link "Explore" [ref=e23] [cursor=pointer]:
+            - /url: /home
+          - link "Agents" [ref=e26] [cursor=pointer]:
+            - /url: /agents
+          - link "Docs" [ref=e29] [cursor=pointer]:
+            - /url: https://paragraph.com/docs
+        - generic [ref=e30]:
+          - button "Go to section 1" [ref=e31] [cursor=pointer]
+          - button "Go to section 2" [ref=e33] [cursor=pointer]
+          - button "Go to section 3" [ref=e35] [cursor=pointer]
+          - button "Go to section 4" [ref=e37] [cursor=pointer]
+          - button "Go to section 5" [ref=e39] [cursor=pointer]
+      - generic [ref=e47]:
+        - button "Start writing" [disabled]
+  - generic [ref=e48]:
+    - main [ref=e49]:
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - heading "Where Ideas Thrive" [level=1] [ref=e55]
+            - paragraph [ref=e56]: Reach more readers and give them meaningful ways to support you.
+          - generic [ref=e57]:
+            - generic [ref=e63]:
+              - button "Sign in" [disabled]
+            - link "Start reading" [ref=e64] [cursor=pointer]:
+              - /url: /home
+              - button "Start reading" [ref=e65]:
+                - generic [ref=e66]:
+                  - text: Start reading
+                  - img [ref=e68]
+        - region [ref=e71]:
+          - generic [ref=e73]:
+            - group [ref=e75]:
+              - img "Paragraph mobile interface shown on an iPhone screen" [ref=e77]
+            - img [ref=e79]
+      - generic [ref=e81]:
+        - img [ref=e83]
+        - generic [ref=e85]:
+          - heading "Why Paragraph?" [level=2] [ref=e86]
+          - paragraph [ref=e87]: Paragraph makes it easy to publish your ideas, grow your audience, and let readers support you in meaningful ways.
+          - generic [ref=e88]:
+            - generic [ref=e90]:
+              - img [ref=e91]
+              - generic [ref=e97]:
+                - heading "New ways for readers to support you" [level=3] [ref=e98]
+                - paragraph [ref=e99]: Let readers support you, signal they were early, and share in your growth.
+            - generic [ref=e101]:
+              - img [ref=e102]
+              - generic [ref=e106]:
+                - heading "Reach more readers" [level=3] [ref=e107]
+                - paragraph [ref=e108]: Grow your audience by sharing seamlessly across social & more.
+            - generic [ref=e110]:
+              - img [ref=e111]
+              - generic [ref=e115]:
+                - heading "Own your audience & writing" [level=3] [ref=e116]
+                - paragraph [ref=e117]: No more platform-dependent followers - readers can subscribe via email or wallet.
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - heading "Ideas that matter" [level=2] [ref=e121]
+          - paragraph [ref=e122]: Read the voices driving today's most important conversations.
+        - generic [ref=e127]:
+          - link "AVC" [ref=e129] [cursor=pointer]:
+            - /url: /@avc
+            - generic [ref=e135]: AVC
+          - link "Coop Records" [ref=e137] [cursor=pointer]:
+            - /url: /@cooprecs
+            - generic [ref=e143]: Coop Records
+          - link "Variant" [ref=e145] [cursor=pointer]:
+            - /url: /@variantwriting
+            - generic [ref=e151]: Variant
+          - link "Brandon Donnelly" [ref=e153] [cursor=pointer]:
+            - /url: /@brandondonnelly
+            - generic [ref=e159]: Brandon Donnelly
+          - link "Decentralized Pictures" [ref=e161] [cursor=pointer]:
+            - /url: /@decentralizedpictures
+            - generic [ref=e167]: Decentralized Pictures
+          - link "Paragraph" [ref=e169] [cursor=pointer]:
+            - /url: /@blog
+            - generic [ref=e175]: Paragraph
+          - link "Babylon" [ref=e177] [cursor=pointer]:
+            - /url: /@playbabylon
+            - generic [ref=e183]: Babylon
+          - link "Assetux" [ref=e185] [cursor=pointer]:
+            - /url: /@assetux
+            - generic [ref=e191]: Assetux
+          - link "Taiko Labs" [ref=e193] [cursor=pointer]:
+            - /url: /@taiko-labs
+            - generic [ref=e199]: Taiko Labs
+          - link "FOLIO" [ref=e201] [cursor=pointer]:
+            - /url: /@folio
+            - generic [ref=e207]: FOLIO
+          - link "GranFondo Riviera Nayarit News" [ref=e209] [cursor=pointer]:
+            - /url: /@granfondo-riviera-nayarit
+            - generic [ref=e215]: GranFondo Riviera Nayarit News
+          - link "News from RBC GranFondo" [ref=e217] [cursor=pointer]:
+            - /url: /@rbcgranfondo
+            - generic [ref=e223]: News from RBC GranFondo
+          - link "Reef Chain News" [ref=e225] [cursor=pointer]:
+            - /url: /@reefchain
+            - generic [ref=e231]: Reef Chain News
+          - link "DHK dao Web3 公民教育 | Civic education for web3." [ref=e233] [cursor=pointer]:
+            - /url: /@dhk
+            - generic [ref=e234]:
+              - generic [ref=e239]: DHK dao
+              - paragraph [ref=e240]: Web3 公民教育 | Civic education for web3.
+          - link "Horizen Blog" [ref=e242] [cursor=pointer]:
+            - /url: /@horizenofficial-2
+            - generic [ref=e248]: Horizen Blog
+          - link "The BSCN Debrief" [ref=e250] [cursor=pointer]:
+            - /url: /@bscnalpha
+            - generic [ref=e256]: The BSCN Debrief
+          - link "What Wilson Heard" [ref=e258] [cursor=pointer]:
+            - /url: /@hanverstraete.eth
+            - generic [ref=e264]: What Wilson Heard
+          - link "Devcon newsletter" [ref=e266] [cursor=pointer]:
+            - /url: /@efevents
+            - generic [ref=e272]: Devcon newsletter
+          - link "talent" [ref=e274] [cursor=pointer]:
+            - /url: /@talent
+            - generic [ref=e280]: talent
+          - link "AyaHQ" [ref=e282] [cursor=pointer]:
+            - /url: /@ayahq
+            - generic [ref=e288]: AyaHQ
+          - link "Bakaka" [ref=e290] [cursor=pointer]:
+            - /url: /@bakaka
+            - generic [ref=e296]: Bakaka
+          - link "Onchain @ Zerion" [ref=e298] [cursor=pointer]:
+            - /url: /@zerion
+            - generic [ref=e304]: Onchain @ Zerion
+          - link "GCR" [ref=e306] [cursor=pointer]:
+            - /url: /@globalcoinrsrch
+            - generic [ref=e312]: GCR
+          - link "Safecast" [ref=e314] [cursor=pointer]:
+            - /url: /@safecast
+            - generic [ref=e320]: Safecast
+          - link "Proof of PortCo" [ref=e322] [cursor=pointer]:
+            - /url: /@mhventures
+            - generic [ref=e328]: Proof of PortCo
+          - link "Chainbase Network - Blog" [ref=e330] [cursor=pointer]:
+            - /url: /@chainbase
+            - generic [ref=e336]: Chainbase Network - Blog
+          - link "Officer's Blog" [ref=e338] [cursor=pointer]:
+            - /url: /@officercia
+            - generic [ref=e344]: Officer's Blog
+      - generic [ref=e347]:
+        - heading "From crypto to cooking, & everything in between" [level=2] [ref=e348]
+        - paragraph [ref=e349]: Discover what writers, thinkers, and storytellers are talking about today.
+      - generic [ref=e1161]:
+        - generic [ref=e1162]:
+          - heading "A better place for ideas to grow" [level=2] [ref=e1164]
+          - generic [ref=e1165]:
+            - paragraph [ref=e1166]:
+              - text: We're building a new model for writing, one powered by readers directly supporting the writers that inspire them, that they believe in.
+              - text: No paywalls or subscription treadmills. No algorithms deciding your worth. Just readers who can support the writing they love.
+            - generic [ref=e1173]:
+              - button "Sign in" [disabled]:
+                - text: Sign in
+                - img
+        - img "Paragraph collector dialog showing how readers can collect a post" [ref=e1175]
+    - contentinfo "Site footer" [ref=e1176]:
+      - generic [ref=e1177]:
+        - generic [ref=e1178]:
+          - link "Go to homepage" [ref=e1180] [cursor=pointer]:
+            - /url: /
+            - img "Paragraph" [ref=e1181]
+          - navigation "Footer navigation" [ref=e1182]:
+            - link "Home" [ref=e1184] [cursor=pointer]:
+              - /url: /
+            - link "Read" [ref=e1186] [cursor=pointer]:
+              - /url: /home
+            - link "Explore" [ref=e1188] [cursor=pointer]:
+              - /url: /explore
+            - link "Contact" [ref=e1190] [cursor=pointer]:
+              - /url: mailto:hello@paragraph.com
+        - generic [ref=e1191]:
+          - paragraph [ref=e1192]:
+            - text: Copyright © 2025
+            - link "Paragraph Technologies Inc" [ref=e1193] [cursor=pointer]:
+              - /url: /
+            - text: . All rights reserved.
+          - navigation "Legal links" [ref=e1194]:
+            - link "Brand" [ref=e1195] [cursor=pointer]:
+              - /url: https://paragraph.com/brand
+            - link "Privacy Policy" [ref=e1196] [cursor=pointer]:
+              - /url: https://paragraph.com/privacy
+            - link "Terms of Use" [ref=e1197] [cursor=pointer]:
+              - /url: https://paragraph.com/terms-of-use
+            - link "Content Guidelines" [ref=e1198] [cursor=pointer]:
+              - /url: https://paragraph.com/content-guidelines

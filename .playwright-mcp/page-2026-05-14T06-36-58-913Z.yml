@@ -1,0 +1,30 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - link "Home" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - img "DotFlat" [ref=e6]
+      - generic [ref=e7]: DotFlat
+    - generic [ref=e8]:
+      - button "Theme" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - button "Connect wallet" [ref=e12] [cursor=pointer]
+  - complementary [ref=e13]:
+    - img [ref=e15] [cursor=pointer]
+    - img [ref=e20] [cursor=pointer]
+    - img [ref=e23] [cursor=pointer]
+    - img [ref=e26] [cursor=pointer]
+    - img [ref=e30] [cursor=pointer]
+    - img [ref=e35] [cursor=pointer]
+    - img [ref=e39] [cursor=pointer]
+    - img [ref=e44] [cursor=pointer]
+    - img [ref=e48] [cursor=pointer]
+    - img [ref=e53] [cursor=pointer]
+  - main [ref=e56]:
+    - generic [ref=e58]:
+      - heading "Yield deposits" [level=1] [ref=e59]
+      - paragraph [ref=e61]: Earn interest by locking DFC into the protocol.
+    - generic [ref=e62]:
+      - img [ref=e64]
+      - heading "Connect a wallet to manage deposits" [level=3] [ref=e67]
+      - paragraph [ref=e68]: You'll need a connected wallet to open new deposits, top up, or claim interest.
+      - button "Connect wallet" [ref=e69] [cursor=pointer]

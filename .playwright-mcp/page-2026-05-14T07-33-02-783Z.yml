@@ -1,0 +1,173 @@
+- generic:
+  - generic:
+    - main:
+      - generic:
+        - complementary:
+          - generic:
+            - generic:
+              - generic:
+                - img
+              - generic: Partners
+          - navigation:
+            - generic:
+              - paragraph: Overview
+              - link:
+                - /url: /welcome
+                - img
+                - text: Home
+            - generic:
+              - paragraph: Services
+              - link:
+                - /url: /request-form/new
+                - img
+                - text: Request & Listing
+              - button:
+                - img
+                - text: Advertising
+                - img
+              - generic:
+                - img
+                - text: Analytics
+                - generic: Coming Soon
+            - generic:
+              - paragraph: Settings
+              - link:
+                - /url: "#"
+                - img
+                - text: Business
+              - link:
+                - /url: "#"
+                - img
+                - text: Account
+          - generic:
+            - link:
+              - /url: https://ads.coingecko.com/business-solutions/overview
+              - img
+              - text: Contact Sales
+            - link:
+              - /url: https://support.coingecko.com/hc/en-us/requests/new
+              - img
+              - text: Support
+            - generic:
+              - link:
+                - /url: /sign-in
+                - text: Log in
+        - generic:
+          - generic:
+            - generic:
+              - button:
+                - img
+                - generic: Toggle Sidebar
+              - navigation:
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /request-form/submissions
+                      - text: Request & Listing
+                  - listitem:
+                    - img
+                  - listitem:
+                    - link [disabled]: Form Request
+          - main:
+            - generic:
+              - generic:
+                - heading [level=1]: Request Form
+                - paragraph:
+                  - text: Kindly fill up the form according to your request. If your request(s) are not accommodated by this form, please submit a ticket at
+                  - link:
+                    - /url: mailto:support@coingecko.com
+                    - text: support@coingecko.com
+              - generic:
+                - tablist:
+                  - tab [selected]:
+                    - img
+                    - text: CoinGecko
+                  - tab:
+                    - img
+                    - text: GeckoTerminal
+                - tabpanel:
+                  - generic:
+                    - generic:
+                      - heading [level=2]: Coins
+                      - paragraph:
+                        - text: What is your project type? Need some help? Do check our
+                        - link:
+                          - /url: https://www.coingecko.com/en/faq
+                          - text: FAQ
+                        - text: or
+                        - link:
+                          - /url: https://www.coingecko.com/en/methodology
+                          - text: Methodology
+                      - generic:
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: New Coin/ Token Listing
+                          - paragraph: Built on its own mainnet or smart-contract platforms (e.g., Bitcoin, Solana, ERC-20, BEP2).
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Update Coin or Token Info
+                          - paragraph: Minor updates (e.g links) or category tag addition
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Contract Migration or Rebranding
+                          - paragraph: Token swap to a new contract address and/or rebranding (name, logo, website, ticker changes).
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Token Supply
+                          - paragraph: Verify/Update Token Supply.
+                    - generic:
+                      - heading [level=2]: Exchanges
+                      - paragraph: To ensure a smooth exchange listing process, we kindly request that any exchange (Spot/Derivatives) submitting a request have publicly accessible API documentation. Please refer to the documented ideal Exchange API endpoints.
+                      - generic:
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Centralized Spot Exchange
+                          - paragraph: Exchange is centralized and provide spot markets
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Centralized Derivatives Exchange
+                          - paragraph: Exchange is centralized and provide derivatives markets
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Decentralized Spot Exchange
+                          - paragraph: Exchange is decentralized and provide spot markets
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: Decentralized Derivatives Exchange
+                          - paragraph: Exchange is decentralized and provide derivatives markets
+                    - generic:
+                      - heading [level=2]: NFT
+                      - generic:
+                        - button:
+                          - generic:
+                            - img
+                          - heading [level=3]: New NFT
+                          - paragraph: NFT collection, eg. Pudgy Penguins, Bored Ape Yacht Club, Mad Lads.
+  - alert
+  - dialog "Choose Your Listing Type" [ref=e180]:
+    - generic [ref=e181]:
+      - heading "Choose Your Listing Type" [level=2] [ref=e182]
+      - paragraph [ref=e183]: Select the type of listing that matches your coin's/token's current status.
+    - radiogroup [ref=e184]:
+      - generic [ref=e185] [cursor=pointer]:
+        - radio "Active Listing For coins or tokens that are live and actively traded." [checked] [active] [ref=e186]
+        - generic [ref=e189]:
+          - generic [ref=e190]: Active Listing
+          - generic [ref=e191]: For coins or tokens that are live and actively traded.
+      - generic [ref=e192] [cursor=pointer]:
+        - radio "Preview Listing For coins or tokens that haven't launched yet." [ref=e193]
+        - generic [ref=e194]:
+          - generic [ref=e195]: Preview Listing
+          - generic [ref=e196]: For coins or tokens that haven't launched yet.
+    - button "Next" [ref=e197] [cursor=pointer]
+    - button "Close" [ref=e198] [cursor=pointer]:
+      - img [ref=e199]
+      - generic [ref=e202]: Close

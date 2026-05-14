@@ -1,0 +1,250 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e3]:
+    - link "CoinGecko Help Center home page" [ref=e5] [cursor=pointer]:
+      - /url: /hc/en-us
+      - img "CoinGecko Help Center home page" [ref=e6]
+    - navigation [ref=e8]:
+      - list [ref=e9]:
+        - listitem
+        - listitem [ref=e10]:
+          - link "Submit a request" [ref=e11] [cursor=pointer]:
+            - /url: /hc/en-us/requests/new
+        - listitem
+  - main [ref=e12]:
+    - generic [ref=e14]:
+      - navigation [ref=e15]:
+        - list [ref=e16]:
+          - listitem "CoinGecko" [ref=e17]:
+            - link "CoinGecko" [ref=e18] [cursor=pointer]:
+              - /url: /hc/en-us
+          - listitem "General" [ref=e19]:
+            - text: ">"
+            - link "General" [ref=e20] [cursor=pointer]:
+              - /url: /hc/en-us/categories/4473571812377-General
+          - listitem "Token/Coin Listing" [ref=e21]:
+            - text: ">"
+            - link "Token/Coin Listing" [ref=e22] [cursor=pointer]:
+              - /url: /hc/en-us/sections/32146983631641-Token-Coin-Listing
+        - generic [ref=e23]:
+          - img
+          - search [ref=e24]:
+            - searchbox "Search" [ref=e25]
+      - generic [ref=e26]:
+        - complementary "Articles in this section" [ref=e27]:
+          - generic [ref=e28]:
+            - text: Articles in this section
+            - generic [ref=e29]:
+              - list [ref=e30]:
+                - listitem [ref=e31]:
+                  - link "How do I view Market Cap rankings for Rehypothecated tokens?" [ref=e32] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/55049960792985-How-do-I-view-Market-Cap-rankings-for-Rehypothecated-tokens
+                - listitem [ref=e33]:
+                  - link "How to List a New Cryptocurrency on CoinGecko" [ref=e34] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/7291312302617-How-to-List-a-New-Cryptocurrency-on-CoinGecko
+                - listitem [ref=e35]:
+                  - link "How to Preview List Tokens on CoinGecko" [ref=e36] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/40576012083097-How-to-Preview-List-Tokens-on-CoinGecko
+                - listitem [ref=e37]:
+                  - link "What to Do If Your Request is Marked as \"Action Needed\"" [ref=e38] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/44991121184793-What-to-Do-If-Your-Request-is-Marked-as-Action-Needed
+                - listitem [ref=e39]:
+                  - link "Verification Guide for Listing/Update Requests on CoinGecko" [ref=e40] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/23725417857817-Verification-Guide-for-Listing-Update-Requests-on-CoinGecko
+                - listitem [ref=e41]:
+                  - link "CoinGecko Asset Naming Methodology" [ref=e42] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/33608537461913-CoinGecko-Asset-Naming-Methodology
+                - listitem [ref=e43]:
+                  - link "Why Do We List Native vs. Non-native Cryptocurrencies Separately on CoinGecko?" [ref=e44] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/33615475042329-Why-Do-We-List-Native-vs-Non-native-Cryptocurrencies-Separately-on-CoinGecko
+                - listitem [ref=e45]:
+                  - link "How to Update Stablecoin Contract Addresses on CoinGecko" [ref=e46] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/33173186501913-How-to-Update-Stablecoin-Contract-Addresses-on-CoinGecko
+                - listitem [ref=e47]:
+                  - link "Why is my token not listed on CoinGecko?" [ref=e48] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/4498809321369-Why-is-my-token-not-listed-on-CoinGecko
+                - listitem [ref=e49]:
+                  - link "Why is My Token Price Visible on the Website but Missing on the App or API?" [ref=e50] [cursor=pointer]:
+                    - /url: /hc/en-us/articles/21606478450201-Why-is-My-Token-Price-Visible-on-the-Website-but-Missing-on-the-App-or-API
+              - link "See more" [ref=e51] [cursor=pointer]:
+                - /url: /hc/en-us/sections/32146983631641-Token-Coin-Listing
+        - article [ref=e52]:
+          - generic [ref=e53]:
+            - heading "How to List a New Cryptocurrency on CoinGecko" [level=1] [ref=e54]
+            - list [ref=e57]:
+              - listitem [ref=e58]:
+                - time [ref=e59]: 23 days ago
+                - text: ·
+              - listitem [ref=e60]: Updated
+            - generic [ref=e62]:
+              - button "Follow Article" [ref=e63] [cursor=pointer]: Follow
+              - generic [ref=e64]: Not yet followed by anyone
+          - generic [ref=e67]:
+            - paragraph [ref=e68]:
+              - text: Before applying, please ensure you meet our important prerequisites. First, your cryptocurrency must be actively tradable on a cryptocurrency exchange tracked by CoinGecko; you can view our supported markets on our
+              - link "Exchange page" [ref=e69] [cursor=pointer]:
+                - /url: https://www.coingecko.com/en/exchanges
+              - text: .
+            - paragraph [ref=e70]: Additionally, please do not ask your community to spam CoinGecko with "When list?" inquiries, as repeated spam will result in your coin or token being disqualified from listing.
+            - heading "Step-by-Step Submission Guide" [level=3] [ref=e71]:
+              - strong [ref=e72]: Step-by-Step Submission Guide
+            - paragraph [ref=e73]: "To submit your token or coin for listing, please follow these simple steps:"
+            - list [ref=e74]:
+              - listitem [ref=e75]:
+                - strong [ref=e76]: "Log In:"
+                - text: Log in to your CoinGecko account. If you do not have an account, you will need to sign up first. You can read this article,
+                - emphasis [ref=e77]: "["
+                - link "How do I sign up for a CoinGecko account?" [ref=e78] [cursor=pointer]:
+                  - /url: https://support.coingecko.com/hc/en-us/articles/7248470874649-How-do-I-sign-up-for-a-CoinGecko-account
+                  - emphasis [ref=e79]: How do I sign up for a CoinGecko account?
+                - emphasis [ref=e80]: "]"
+                - text: ", for further information."
+            - paragraph [ref=e81]:
+              - img [ref=e83]
+            - list [ref=e84]:
+              - listitem [ref=e85]:
+                - strong [ref=e86]: "Access the Form:"
+                - text: Scroll to the bottom of the CoinGecko homepage and click on
+                - strong [ref=e87]: Request Form
+                - text: . Or you can visit this
+                - link "link" [ref=e88] [cursor=pointer]:
+                  - /url: https://partner.coingecko.com/request-form/new
+                - text: directly.
+            - paragraph [ref=e89]:
+              - img [ref=e90]
+            - list [ref=e91]:
+              - listitem [ref=e92]:
+                - strong [ref=e93]: "Select Request Type:"
+                - text: Once inside the
+                - strong [ref=e94]: Request & Listing
+                - text: tab, select
+                - strong [ref=e95]: New Coin/Token Listing
+                - text: .
+            - paragraph [ref=e96]:
+              - img [ref=e98]
+            - list [ref=e99]:
+              - listitem [ref=e100]:
+                - strong [ref=e101]: "Choose Active or Preview:"
+                - text: Select either
+                - strong [ref=e102]: Active Listing
+                - text: or
+                - strong [ref=e103]: Preview Listing
+                - text: .
+                - emphasis [ref=e104]: (If your token has not launched yet, please refer to our guide on [
+                - link "How to Preview List tokens on CoinGecko?" [ref=e105] [cursor=pointer]:
+                  - /url: https://support.coingecko.com/hc/en-us/articles/40576012083097-How-to-Preview-List-tokens-on-CoinGecko
+                  - emphasis [ref=e106]: How to Preview List tokens on CoinGecko?
+                - emphasis [ref=e107]: "])"
+            - paragraph [ref=e108]:
+              - img [ref=e110]
+            - list [ref=e111]:
+              - listitem [ref=e112]:
+                - strong [ref=e113]: "Fill in the Details:"
+                - text: Complete the form. Fields marked with an asterisk (*) are mandatory, but we highly encourage providing as much detail as possible. Ensure you upload your token/coin image under the Attachments section.
+            - paragraph [ref=e114]:
+              - img [ref=e116]
+            - list [ref=e117]:
+              - listitem [ref=e118]:
+                - strong [ref=e119]: "Additional Details:"
+                - text: Feel free to type in any additional information that you would like to share with the CoinGecko team.
+            - paragraph [ref=e120]:
+              - img [ref=e122]
+            - list [ref=e123]:
+              - listitem [ref=e124]:
+                - strong [ref=e125]: "Choose Your Review Speed:"
+                - text: "Before submitting, select how fast you want your application reviewed:"
+                - list [ref=e126]:
+                  - listitem [ref=e127]:
+                    - strong [ref=e128]: "Fast Pass:"
+                    - text: Expedites your review to within 24 hours.
+                    - emphasis [ref=e129]: (For more details, see
+                    - link "[What does the CoinGecko Fast Pass feature cover?" [ref=e130] [cursor=pointer]:
+                      - /url: https://support.coingecko.com/hc/en-us/articles/37298264234649-What-does-the-CoinGecko-Fast-Pass-feature-cover
+                      - emphasis [ref=e131]: "[What does the CoinGecko Fast Pass feature cover?"
+                    - emphasis [ref=e132]: "] and ["
+                    - link "How to Purchase CoinGecko Fast Pass" [ref=e133] [cursor=pointer]:
+                      - /url: https://support.coingecko.com/hc/en-us/articles/37529551769497-How-to-Purchase-CoinGecko-Fast-Pass
+                      - emphasis [ref=e134]: How to Purchase CoinGecko Fast Pass
+                    - emphasis [ref=e135]: "])"
+                  - listitem [ref=e136]:
+                    - strong [ref=e137]: "Regular Pass:"
+                    - text: Standard review process, which takes up to 5 days.
+            - paragraph [ref=e138]:
+              - img [ref=e140]
+            - list [ref=e141]:
+              - listitem [ref=e142]:
+                - strong [ref=e143]: "Submit:"
+                - text: Acknowledge the terms and conditions, complete the captcha, and click the
+                - strong [ref=e144]: Submit Request
+                - text: button.
+            - paragraph [ref=e145]:
+              - img [ref=e147]
+            - heading [level=3] [ref=e148]
+            - heading "Tracking Your Application" [level=3] [ref=e149]:
+              - strong [ref=e150]: Tracking Your Application
+            - paragraph [ref=e151]: Upon successful submission, a success message will display on your screen, and you will receive a confirmation email.
+            - paragraph [ref=e152]:
+              - img [ref=e154]
+            - paragraph [ref=e155]:
+              - img [ref=e157]
+            - paragraph [ref=e158]:
+              - text: You can monitor the real-time status of your listing request at any time by navigating to the
+              - strong [ref=e159]: Request & Listing
+              - text: tab in your dashboard. Our operations team will process your application based on the pass you selected.
+            - paragraph [ref=e160]:
+              - img [ref=e162]
+            - paragraph [ref=e163]
+            - heading "Need Help?" [level=3] [ref=e164]:
+              - strong [ref=e165]: Need Help?
+            - paragraph [ref=e166]:
+              - text: If you have further questions or encounter issues, please submit a ticket at our
+              - link "Support Center" [ref=e167] [cursor=pointer]:
+                - /url: https://support.coingecko.com/hc/en-us/requests/new
+              - text: .
+          - generic [ref=e168]:
+            - text: Was this article helpful?
+            - group "Was this article helpful?" [ref=e170]:
+              - button "This article was helpful" [ref=e171] [cursor=pointer]: "Yes"
+              - button "This article was not helpful" [ref=e172] [cursor=pointer]: "No"
+            - generic [ref=e173]: 472 out of 567 found this helpful
+      - generic [ref=e174]:
+        - text: Have more questions?
+        - link "Submit a request" [ref=e175] [cursor=pointer]:
+          - /url: /hc/en-us/requests/new
+      - generic [ref=e177]:
+        - heading "Related articles" [level=2] [ref=e178]
+        - list [ref=e179]:
+          - listitem [ref=e180]:
+            - link "Why is my token not listed on CoinGecko?" [ref=e181] [cursor=pointer]:
+              - /url: /hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJl37nUXBDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBlqFKShBjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJNL2hjL2VuLXVzL2FydGljbGVzLzQ0OTg4MDkzMjEzNjktV2h5LWlzLW15LXRva2VuLW5vdC1saXN0ZWQtb24tQ29pbkdlY2tvBjsIVDoJcmFua2kG--bfb8f43590ecdd14359cd84db7142cb08249bc91
+          - listitem [ref=e182]:
+            - link "How to Find Token Decimals Using a Blockchain Explorer" [ref=e183] [cursor=pointer]:
+              - /url: /hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBmEW6HRBDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBlqFKShBjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJcL2hjL2VuLXVzL2FydGljbGVzLzUyOTg0MDE4MDUzMzctSG93LXRvLUZpbmQtVG9rZW4tRGVjaW1hbHMtVXNpbmctYS1CbG9ja2NoYWluLUV4cGxvcmVyBjsIVDoJcmFua2kH--0f1e51af02967873dc892da488c6ed8cf586eb39
+          - listitem [ref=e184]:
+            - link "How do I sign up for a CoinGecko account?" [ref=e185] [cursor=pointer]:
+              - /url: /hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBkaiKqXBjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBlqFKShBjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzcyNDg0NzA4NzQ2NDktSG93LWRvLUktc2lnbi11cC1mb3ItYS1Db2luR2Vja28tYWNjb3VudAY7CFQ6CXJhbmtpCA%3D%3D--3dde2def213eb7c139a8b0e168368f3883aebae5
+          - listitem [ref=e186]:
+            - link "Guide to the CoinGecko Self-Serve Request Form" [ref=e187] [cursor=pointer]:
+              - /url: /hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJks5xcXHjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBlqFKShBjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJVL2hjL2VuLXVzL2FydGljbGVzLzMzMDg0NTM0MTA3Mjg5LUd1aWRlLXRvLXRoZS1Db2luR2Vja28tU2VsZi1TZXJ2ZS1SZXF1ZXN0LUZvcm0GOwhUOglyYW5raQk%3D--15afe84a50d073b7570323a03ffbadb5dfa58bc7
+          - listitem [ref=e188]:
+            - 'link "Guide: How to Use the CoinGecko Exchange Listing Request Form" [ref=e189] [cursor=pointer]':
+              - /url: /hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJk6WzEXBDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBlqFKShBjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJiL2hjL2VuLXVzL2FydGljbGVzLzQ0OTc2NTg4MjEyNzMtR3VpZGUtSG93LXRvLVVzZS10aGUtQ29pbkdlY2tvLUV4Y2hhbmdlLUxpc3RpbmctUmVxdWVzdC1Gb3JtBjsIVDoJcmFua2kK--80c1d378645015460b25523e0166e2bc8ac47d07
+      - generic [ref=e190]:
+        - generic [ref=e191]:
+          - heading "Comments" [level=2] [ref=e192]
+          - paragraph [ref=e193]: 0 comments
+        - list
+        - paragraph [ref=e194]:
+          - text: Please
+          - link "sign in" [ref=e195] [cursor=pointer]:
+            - /url: https://coingecko.zendesk.com/access?locale=en-us&brand_id=4473384703257&return_to=https%3A%2F%2Fsupport.coingecko.com%2Fhc%2Fen-us%2Farticles%2F7291312302617-How-to-List-a-New-Cryptocurrency-on-CoinGecko
+          - text: to leave a comment.
+  - contentinfo [ref=e196]:
+    - generic [ref=e197]:
+      - link "CoinGecko" [ref=e198] [cursor=pointer]:
+        - /url: /hc/en-us
+      - button "Cookie Settings" [ref=e199] [cursor=pointer]
+  - button "AI Support Chat avatar" [ref=e203] [cursor=pointer]:
+    - generic [ref=e204]: AI Support
+    - img "Chat avatar" [ref=e206]
